@@ -9,8 +9,8 @@
   --safe-right: env(safe-area-inset-right);
 }
 
-html, body, #root {
-  height: 100dvh;
+html, body {
+  height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
@@ -28,6 +28,18 @@ body {
   -webkit-user-select: none;
   background: #0f1724;
   color: #f0f4f8;
+  display: flex;
+  justify-content: center;
+}
+
+#root {
+  width: 100%;
+  max-width: 390px;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: relative;
+  flex-shrink: 0;
 }
 
 * {

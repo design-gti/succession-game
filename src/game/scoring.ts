@@ -1,5 +1,4 @@
-import { getCandidateById, BEST_CANDIDATE_ID } from '../data/scenario'
-import type { CandidateId, GameState, ScoreBreakdown, Persona } from './types'
+import type { ScoreBreakdown, Persona } from './types'
 
 export function personaFor(total: number): Persona {
   if (total >= 90) return 'TALENT ARCHITECT'
@@ -8,60 +7,22 @@ export function personaFor(total: number): Persona {
   return 'GUT-FEEL MANAGER'
 }
 
-// Scoring model (adapted from GDD §29-30 for timer mechanic):
-// - discoveryBonus: +30 if user revealed Nadia's fit (found the best candidate)
-// - pickBonus:      +30 if user's final pick is Nadia (chose the best candidate)
-// - finalRoleFit:   0-30 proportional to final pick's Role Fit %
-// - searchEfficiency: 0-10 based on how early Nadia was revealed
-export function computeScore(
-  finalPickId: CandidateId,
-  firstPickId: CandidateId,
-  revealOrder: CandidateId[],
-  matchChecksUsed: number,
-): ScoreBreakdown {
-  const finalCandidate = getCandidateById(finalPickId)
-  const firstCandidate = getCandidateById(firstPickId)
-
-  const nadiaRevealed = revealOrder.includes(BEST_CANDIDATE_ID)
-  const bestMatchFound = finalPickId === BEST_CANDIDATE_ID
-
-  const discoveryBonus = nadiaRevealed ? 30 : 0
-  const pickBonus = bestMatchFound ? 30 : 0
-
-  const finalRoleFitPoints = Math.round((finalCandidate.roleFit / 100) * 30)
-
-  const nadiaRevealIndex = revealOrder.indexOf(BEST_CANDIDATE_ID)
-  let searchEfficiencyPoints = 0
-  if (nadiaRevealIndex === 0) searchEfficiencyPoints = 10
-  else if (nadiaRevealIndex === 1) searchEfficiencyPoints = 7
-  else if (nadiaRevealIndex === 2) searchEfficiencyPoints = 4
-
-  const total = Math.min(100, discoveryBonus + pickBonus + finalRoleFitPoints + searchEfficiencyPoints)
+// Scoring model:
+// - fitnessPoints: 0-80, proportional to overall team fitness %
+// - speedPoints:   0-20, proportional to time remaining out of 60s
+export function computeScore(overallFit: number, timeLeft: number): ScoreBreakdown {
+  const fitnessPoints = Math.round(overallFit * 0.8)
+  const speedPoints = Math.round((Math.max(0, timeLeft) / 60) * 20)
+  const total = Math.min(100, fitnessPoints + speedPoints)
 
   return {
-    discoveryBonus,
-    pickBonus,
-    finalRoleFitPoints,
-    searchEfficiencyPoints,
+    fitnessPoints,
+    speedPoints,
+    overallFit,
+    timeLeft,
     total,
     persona: personaFor(total),
-    firstPickFit: firstCandidate.roleFit,
-    finalFit: finalCandidate.roleFit,
-    matchChecksUsed,
-    bestMatchFound,
   }
-}
-
-export function computeScoreFromState(state: GameState): ScoreBreakdown {
-  if (!state.finalPickId || !state.firstPickId) {
-    throw new Error('Cannot compute score without final and first picks')
-  }
-  return computeScore(
-    state.finalPickId,
-    state.firstPickId,
-    state.revealOrder,
-    state.matchChecksUsed,
-  )
 }
 
 export function fitColor(fit: number): string {

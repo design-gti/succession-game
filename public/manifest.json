@@ -4,7 +4,7 @@
   "description": "Talentlytica succession game — find the strongest candidate",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "portrait",
   "background_color": "#0f1724",
   "theme_color": "#1D6FF2",
   "icons": [

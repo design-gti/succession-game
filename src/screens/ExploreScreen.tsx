@@ -5,7 +5,7 @@ import { PrimaryButton } from '../components/PrimaryButton'
 import { Avatar } from '../components/Avatar'
 import { FitRingWithLabel } from '../components/FitRing'
 import { TimerBar } from '../components/TimerBar'
-import { getCandidateById, EXTERNAL_CANDIDATES, BEST_CANDIDATE_ID, type Readiness, type Assessment } from '../data/scenario'
+import { getCandidateById, EXTERNAL_CANDIDATES, BEST_CANDIDATE_ID, type Candidate, type Readiness, type Assessment } from '../data/scenario'
 import { fitColor } from '../game/scoring'
 import type { CandidateId } from '../game/types'
 import { logEvent } from '../lib/api'
@@ -112,12 +112,14 @@ function aspectColor(value: number, std: number): string {
   return '#ef4444'
 }
 
-function AspectBars({ assessment, standard }: { assessment: Assessment | null; standard: Assessment }) {
+function AspectBars({ assessment, standard, showStandard = true }: { assessment: Assessment | null; standard: Assessment; showStandard?: boolean }) {
   return (
     <div className="w-full flex flex-col gap-[3px]">
       {ASPECT_LABELS.map(({ key, label }) => {
         const std = standard[key]
         const value = assessment?.[key] ?? null
+        const barColor = showStandard && value !== null ? aspectColor(value, std) : '#1D6FF2'
+        const textColor = showStandard && value !== null ? aspectColor(value, std) : 'rgba(240,244,248,0.5)'
         return (
           <div key={key} className="flex items-center gap-1">
             <span className="text-white/35 text-[5.5px] font-bold tracking-wider w-[26px] text-right flex-shrink-0">{label}</span>
@@ -128,18 +130,19 @@ function AspectBars({ assessment, standard }: { assessment: Assessment | null; s
                   animate={{ width: `${value}%` }}
                   transition={{ duration: 0.4, ease: 'easeOut' }}
                   className="absolute inset-y-0 left-0 rounded-full"
-                  style={{ backgroundColor: aspectColor(value, std) }}
+                  style={{ backgroundColor: barColor }}
                 />
               )}
               {value === null && (
                 <div className="absolute inset-y-0 left-0 rounded-full bg-brand/60" style={{ width: `${std}%` }} />
               )}
-              {/* standard notch */}
-              <div className="absolute top-[-1.5px] bottom-[-1.5px] w-[1.5px] bg-white/70 rounded-full" style={{ left: `${std}%` }} />
+              {showStandard && (
+                <div className="absolute top-[-1.5px] bottom-[-1.5px] w-[1.5px] bg-white/70 rounded-full" style={{ left: `${std}%` }} />
+              )}
             </div>
             <span
               className="text-[5.5px] font-bold w-[12px] flex-shrink-0 tabular-nums"
-              style={{ color: value !== null ? aspectColor(value, std) : '#1D6FF2' }}
+              style={{ color: value !== null ? textColor : '#1D6FF2' }}
             >
               {value ?? std}
             </span>
@@ -533,7 +536,7 @@ function ArcGauge({ value }: { value: number }) {
 
 function OrgTree({
   assignments, activeVacancyId, vacancyQueue, nodeRef, isDragOver, onDrop, onDragMove,
-  activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect,
+  activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect, initialZoom = 1.0,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -548,10 +551,11 @@ function OrgTree({
   onUnplace: (posId: PositionId) => void
   onMovePlaced: (fromPosId: PositionId, candidateId: CandidateId, point: { x: number; y: number }) => boolean
   onSelect: (id: CandidateId) => void
+  initialZoom?: number
 }) {
   const isDragging = activeDragId !== null
-  const [zoom, setZoom] = useState(1.0)
-  const zoomRef = useRef(1.0)
+  const [zoom, setZoom] = useState(initialZoom)
+  const zoomRef = useRef(initialZoom)
   const outerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { zoomRef.current = zoom }, [zoom])
@@ -570,6 +574,8 @@ function OrgTree({
     }
     function onTouchStart(e: TouchEvent) {
       if (e.touches.length === 2) {
+        e.preventDefault()
+        e.stopPropagation()
         startDist = pinchDist(e)
         startZoom = zoomRef.current
       }
@@ -577,27 +583,31 @@ function OrgTree({
     function onTouchMove(e: TouchEvent) {
       if (e.touches.length === 2 && startDist !== null) {
         e.preventDefault()
-        const next = Math.min(1.6, Math.max(0.5, startZoom * (pinchDist(e) / startDist)))
+        e.stopPropagation()
+        const next = Math.min(1.6, Math.max(0.4, startZoom * (pinchDist(e) / startDist)))
         zoomRef.current = next
         setZoom(next)
       }
     }
     function onTouchEnd(e: TouchEvent) {
-      if (e.touches.length < 2) startDist = null
+      if (e.touches.length < 2) {
+        if (startDist !== null) { e.stopPropagation(); e.preventDefault() }
+        startDist = null
+      }
     }
 
-    el.addEventListener('touchstart', onTouchStart, { passive: false })
-    el.addEventListener('touchmove', onTouchMove, { passive: false })
-    el.addEventListener('touchend', onTouchEnd)
+    el.addEventListener('touchstart', onTouchStart, { passive: false, capture: true })
+    el.addEventListener('touchmove', onTouchMove, { passive: false, capture: true })
+    el.addEventListener('touchend', onTouchEnd, { capture: true })
     return () => {
-      el.removeEventListener('touchstart', onTouchStart)
-      el.removeEventListener('touchmove', onTouchMove)
-      el.removeEventListener('touchend', onTouchEnd)
+      el.removeEventListener('touchstart', onTouchStart, { capture: true } as EventListenerOptions)
+      el.removeEventListener('touchmove', onTouchMove, { capture: true } as EventListenerOptions)
+      el.removeEventListener('touchend', onTouchEnd, { capture: true } as EventListenerOptions)
     }
   }, [])
 
   function changeZoom(delta: number) {
-    const next = Math.min(1.6, Math.max(0.5, zoomRef.current + delta))
+    const next = Math.min(1.6, Math.max(0.4, zoomRef.current + delta))
     zoomRef.current = next
     setZoom(next)
   }
@@ -657,6 +667,8 @@ function OrgTree({
         className="w-7 h-7 rounded-lg bg-white/10 border border-white/15 text-white/60 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none"
       >−</button>
     </div>
+    {/* Centering wrapper — ensures scale pivot is always at horizontal center of container */}
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', height: '100%' }}>
     <div
       className="flex flex-col items-center py-2 min-w-max min-h-full"
       style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', willChange: 'transform' }}
@@ -664,12 +676,11 @@ function OrgTree({
       <BossNode />
       <div className={`w-px h-2 mx-auto ${connBase} transition-colors duration-300`} />
 
-      <div className="relative flex items-start gap-1.5 flex-shrink-0">
-        <div className={`absolute top-0 left-[78px] right-[78px] h-px ${connBase} transition-colors duration-300`} />
+      {/* Vertical stack of all branches */}
+      <div className="flex flex-col items-center">
 
-        {/* Maya branch — 156px (76+4+76) */}
-        <div className="flex flex-col items-center flex-shrink-0 w-[156px]">
-          <div className={`w-px h-2 ${connBase} transition-colors duration-300`} />
+        {/* Maya branch */}
+        <div className="flex flex-col items-center flex-shrink-0">
           {renderSlot('maya')}
           <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
           <div className="relative flex gap-1">
@@ -683,9 +694,10 @@ function OrgTree({
           </div>
         </div>
 
-        {/* Sales Manager branch — 306px */}
-        <div className="flex flex-col items-center flex-shrink-0 w-[306px]">
-          <div className={`w-px h-2 ${connBase} transition-colors duration-300`} />
+        <div className={`w-px h-3 ${connBase} transition-colors duration-300`} />
+
+        {/* Sales Manager branch */}
+        <div className="flex flex-col items-center flex-shrink-0">
           {renderSlot('sales_manager')}
           <div className={`w-px h-2 ${connBase} transition-colors duration-300`} />
           <div className="relative flex gap-1.5">
@@ -699,9 +711,10 @@ function OrgTree({
           </div>
         </div>
 
-        {/* Dimas branch — 156px (76+4+76) */}
-        <div className="flex flex-col items-center flex-shrink-0 w-[156px]">
-          <div className={`w-px h-2 ${connBase} transition-colors duration-300`} />
+        <div className={`w-px h-3 ${connBase} transition-colors duration-300`} />
+
+        {/* Dimas branch */}
+        <div className="flex flex-col items-center flex-shrink-0">
           {renderSlot('dimas')}
           <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
           <div className="relative flex gap-1">
@@ -714,8 +727,10 @@ function OrgTree({
             ))}
           </div>
         </div>
+
       </div>
     </div>
+    </div> {/* end centering wrapper */}
     </div>
   )
 }
@@ -723,7 +738,7 @@ function OrgTree({
 // ─── ExternalCandidateSlot ────────────────────────────────────────────────────
 
 function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed }: {
-  candidate: typeof EXTERNAL_CANDIDATES[number]
+  candidate: Candidate
   alreadyPlaced: boolean
   onDrop: (id: CandidateId, point: { x: number; y: number }) => boolean
   onDragMove: (point: { x: number; y: number } | null) => void
@@ -806,6 +821,162 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
   )
 }
 
+// ─── Candidate bottom sheet ───────────────────────────────────────────────────
+
+function CandidateSheet({
+  candidateId, benchPos, onClose,
+}: {
+  candidateId: CandidateId
+  benchPos: PositionDef
+  onClose: () => void
+}) {
+  const c = getCandidateById(candidateId)
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        className="fixed inset-0 z-40"
+        style={{ background: 'rgba(0,0,0,0.45)' }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+      />
+      {/* Sheet */}
+      <motion.div
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t border-white/10"
+        style={{ background: '#1a2840' }}
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+      >
+        {/* Drag handle / tap to close */}
+        <div className="flex justify-center pt-3 pb-2 cursor-pointer" onClick={onClose}>
+          <div className="w-9 h-1 rounded-full bg-white/25" />
+        </div>
+        <div className="px-4 pb-6 pt-1">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-3">
+            <FitRingWithLabel fit={c.roleFit} size={44} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[#f0f4f8] font-bold text-sm leading-tight truncate">{c.name}</p>
+              <p className="text-white/40 text-xs mt-0.5 truncate">{c.currentRole}</p>
+            </div>
+          </div>
+          {/* Aspect bars — no standard marker, player decides from raw values */}
+          <AspectBars assessment={c.assessment} standard={benchPos.standard} showStandard={false} />
+        </div>
+      </motion.div>
+    </>
+  )
+}
+
+// ─── Portrait bottom panel ────────────────────────────────────────────────────
+
+function PortraitBottomPanel({
+  assignments, activeVacancyId, allFilled,
+  onExternalDrop, onExternalDragMove, onConfirm,
+  activeDragId, onDragStart, onDragEnd, onSelect,
+}: {
+  assignments: Partial<Record<PositionId, CandidateId>>
+  activeVacancyId: PositionId | null
+  allFilled: boolean
+  onExternalDrop: (id: CandidateId, point: { x: number; y: number }) => boolean
+  onExternalDragMove: (point: { x: number; y: number } | null) => void
+  onConfirm: () => void
+  activeDragId: CandidateId | null
+  onDragStart: (id: CandidateId) => void
+  onDragEnd: () => void
+  onSelect: (id: CandidateId) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const overallFit = computeOverallFit(assignments)
+  const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
+  const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
+
+  // Auto-expand when dragging (so drop target is accessible)
+  useEffect(() => {
+    if (activeDragId !== null) setExpanded(true)
+  }, [activeDragId])
+
+  return (
+    <div className="border-t border-white/10 flex-shrink-0">
+
+      {/* Gauge row — always visible, tap to toggle expand */}
+      <div
+        className="flex gap-2 px-3 pt-2 pb-1.5 cursor-pointer select-none"
+        onClick={() => setExpanded(v => !v)}
+      >
+        <div className="w-[80px] flex-shrink-0 rounded-xl border border-white/10 bg-[#1a2840] pt-1 pb-0 px-1">
+          <ArcGauge value={overallFit} />
+        </div>
+        <div className="flex-1 min-w-0">
+          {vacantPos ? (
+            <div className="h-full rounded-xl border border-red-500/25 bg-red-500/5 px-2 py-1">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-red-400 text-[6px] font-bold uppercase tracking-widest">Needs</p>
+                <p className="text-[#f0f4f8] text-[7px] font-bold">{vacantPos.shortRole}</p>
+              </div>
+              <AspectBars assessment={null} standard={vacantPos.standard} />
+            </div>
+          ) : (
+            <div className="h-full rounded-xl border border-green-500/25 bg-green-500/5 px-2.5 flex items-center justify-center">
+              <p className="text-green-400 text-[7px] font-bold text-center">✓ All positions filled</p>
+            </div>
+          )}
+        </div>
+        {/* Expand chevron */}
+        <div className="flex-shrink-0 flex items-center">
+          <div
+            className="text-white/30 text-[10px] leading-none transition-transform duration-200"
+            style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          >
+            ▼
+          </div>
+        </div>
+      </div>
+
+      {/* External pool + confirm — only when expanded */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            key="expanded"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-col gap-2 px-3 pt-1 pb-3">
+              <div>
+                <p className="text-white/40 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+                  {EXTERNAL_CANDIDATES.map(c => (
+                    <ExternalCandidateSlot
+                      key={c.id}
+                      candidate={c}
+                      alreadyPlaced={usedCandidateIds.has(c.id)}
+                      onDrop={onExternalDrop}
+                      onDragMove={onExternalDragMove}
+                      onDragStart={() => onDragStart(c.id)}
+                      onDragEnd={onDragEnd}
+                      onSelect={() => onSelect(c.id)}
+                      dimmed={activeDragId !== null && activeDragId !== c.id}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <PrimaryButton onClick={onConfirm} disabled={!allFilled}>Confirm →</PrimaryButton>
+                {!allFilled && activeVacancyId && (
+                  <p className="text-white/30 text-[7px] text-center mt-1">Fill all positions first</p>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 // ─── Right panel ──────────────────────────────────────────────────────────────
 
 function RightPanel({
@@ -884,10 +1055,7 @@ function RightPanel({
                             <p className="text-white/40 text-[7px] truncate">{c.currentRole}</p>
                           </div>
                         </div>
-                        <p className="text-white/30 text-[5.5px] uppercase tracking-widest text-left">
-                          vs <span className="text-brand font-bold">{benchPos.shortRole}</span> standard <span className="text-white/50">▏</span>
-                        </p>
-                        <AspectBars assessment={c.assessment} standard={benchPos.standard} />
+                        <AspectBars assessment={c.assessment} standard={benchPos.standard} showStandard={false} />
                       </motion.div>
                     )
                   })()
@@ -899,7 +1067,7 @@ function RightPanel({
                         <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
-                    <p className="text-white/25 text-[7px] leading-tight">Tap a card to compare<br/>against the standard</p>
+                    <p className="text-white/25 text-[7px] leading-tight">Tap a card to see<br/>their profile</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1040,7 +1208,6 @@ export function ExploreScreen() {
         state.sessionId,
         { candidateId }
       )
-      actions.revealFit(candidateId)
     }
     return true
   }
@@ -1086,41 +1253,58 @@ export function ExploreScreen() {
         timerStartedAt={state.timerStartedAt}
         onTick={setTimeLeft}
         onExpire={() => {
-          const pick = smOccupant ?? state.firstPickId ?? BEST_CANDIDATE_ID
-          actions.readyToDecide(pick)
+          const pick = smOccupant ?? null
+          actions.timeUp(pick, computeOverallFit(assignments))
         }}
       />
-      <div className="flex flex-1 min-h-0">
-        <OrgTree
-          assignments={assignments}
-          activeVacancyId={activeVacancyId}
-          vacancyQueue={vacancyQueue}
-          nodeRef={vacantRef}
-          isDragOver={isDragOver}
-          onDrop={handleDrop}
-          onDragMove={handleDragMove}
-          activeDragId={activeDragId}
-          onDragStart={(id) => setActiveDragId(id)}
-          onDragEnd={() => setActiveDragId(null)}
-          onUnplace={handleUnplace}
-          onMovePlaced={handleMovePlaced}
-          onSelect={setSelectedCandidateId}
-        />
-        <RightPanel
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex-1 min-h-0 flex flex-col">
+          <OrgTree
+            assignments={assignments}
+            activeVacancyId={activeVacancyId}
+            vacancyQueue={vacancyQueue}
+            nodeRef={vacantRef}
+            isDragOver={isDragOver}
+            onDrop={handleDrop}
+            onDragMove={handleDragMove}
+            activeDragId={activeDragId}
+            onDragStart={(id) => setActiveDragId(id)}
+            onDragEnd={() => setActiveDragId(null)}
+            onUnplace={handleUnplace}
+            onMovePlaced={handleMovePlaced}
+            onSelect={setSelectedCandidateId}
+            initialZoom={0.55}
+          />
+        </div>
+        <PortraitBottomPanel
           assignments={assignments}
           activeVacancyId={activeVacancyId}
           allFilled={allFilled}
-          smOccupant={smOccupant}
           onExternalDrop={handleDrop}
           onExternalDragMove={handleDragMove}
-          onConfirm={() => smOccupant && actions.readyToDecide(smOccupant)}
+          onConfirm={() => {
+            if (smOccupant) {
+              actions.confirmExplore(smOccupant, computeOverallFit(assignments), timeLeft)
+            }
+          }}
           activeDragId={activeDragId}
           onDragStart={(id) => setActiveDragId(id)}
           onDragEnd={() => setActiveDragId(null)}
           onSelect={setSelectedCandidateId}
-          selectedCandidateId={selectedCandidateId}
         />
       </div>
+
+      {/* Candidate detail bottom sheet */}
+      <AnimatePresence>
+        {selectedCandidateId && (
+          <CandidateSheet
+            key={selectedCandidateId}
+            candidateId={selectedCandidateId}
+            benchPos={POSITIONS.find(p => p.id === (activeVacancyId ?? 'sales_manager'))!}
+            onClose={() => setSelectedCandidateId(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -1,5 +1,5 @@
-import type { GameState, GameAction, CandidateId } from './types'
-import { computeScoreFromState } from './scoring'
+import type { GameState, GameAction } from './types'
+import { computeScore } from './scoring'
 
 export const TIMER_DURATION = 60 // seconds
 
@@ -12,10 +12,6 @@ export const initialState: GameState = {
   sessionId: makeSessionId(),
   playerName: '',
   playerAvatar: 0,
-  firstPickId: null,
-  revealedFits: {},
-  revealOrder: [],
-  matchChecksUsed: 0,
   timerStartedAt: null,
   timerExpired: false,
   finalPickId: null,
@@ -34,7 +30,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'SUBMIT_NAME': {
       if (p.name !== 'nameEntry') return state
-      // Straight into the game — the cinematic intro already covers the resignation story
       return {
         ...state,
         playerName: action.name,
@@ -51,70 +46,36 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'START_SEARCHING': {
       if (p.name !== 'jobNeeds') return state
-      return {
-        ...state,
-        phase: { name: 'exploring' },
-        timerStartedAt: Date.now(),
-      }
+      return { ...state, phase: { name: 'exploring' }, timerStartedAt: Date.now() }
     }
 
-    case 'REVEAL_FIT': {
+    case 'CONFIRM_EXPLORE': {
       if (p.name !== 'exploring') return state
-      // Ignore if already revealed
-      if (state.revealedFits[action.id] !== undefined) return state
-
-      const newRevealedFits = { ...state.revealedFits, [action.id]: action.fit }
-      const newRevealOrder = [...state.revealOrder, action.id]
-      const newMatchChecksUsed = state.matchChecksUsed + 1
-      const newFirstPickId = state.firstPickId ?? (action.id as CandidateId)
-
+      const score = computeScore(action.overallFit, action.timeLeft)
       return {
         ...state,
-        revealedFits: newRevealedFits,
-        revealOrder: newRevealOrder,
-        matchChecksUsed: newMatchChecksUsed,
-        firstPickId: newFirstPickId,
-      }
-    }
-
-    case 'READY_TO_DECIDE': {
-      if (p.name !== 'exploring') return state
-      const pickId = action.id ?? state.firstPickId
-      if (!pickId) return state
-      const firstId = state.firstPickId ?? pickId
-      const base = { ...state, finalPickId: pickId, firstPickId: firstId }
-      try {
-        const score = computeScoreFromState(base)
-        return { ...base, score, phase: { name: 'finalReveal' } }
-      } catch {
-        return { ...base, phase: { name: 'finalReveal' } }
+        finalPickId: action.finalPickId,
+        score,
+        phase: { name: 'finalReveal' },
       }
     }
 
     case 'TIME_UP': {
       if (p.name !== 'exploring') return state
       if (state.timerExpired) return state
-      const pickId = action.id ?? state.firstPickId
-      if (!pickId) return { ...state, timerExpired: true, phase: { name: 'finalReveal' } }
-      const firstId = state.firstPickId ?? pickId
-      const base = { ...state, timerExpired: true, finalPickId: pickId, firstPickId: firstId }
-      try {
-        const score = computeScoreFromState(base)
-        return { ...base, score, phase: { name: 'finalReveal' } }
-      } catch {
-        return { ...base, phase: { name: 'finalReveal' } }
+      const score = computeScore(action.overallFit, 0)
+      return {
+        ...state,
+        timerExpired: true,
+        finalPickId: action.finalPickId ?? null,
+        score,
+        phase: { name: action.finalPickId ? 'finalReveal' : 'result' },
       }
     }
 
     case 'CONFIRM_FINAL': {
       if (p.name !== 'finalDecision') return state
-      const newState = { ...state, finalPickId: action.id }
-      try {
-        const score = computeScoreFromState(newState)
-        return { ...newState, score, phase: { name: 'finalReveal' } }
-      } catch {
-        return newState
-      }
+      return { ...state, finalPickId: action.id, phase: { name: 'finalReveal' } }
     }
 
     case 'SHOW_RESULT': {

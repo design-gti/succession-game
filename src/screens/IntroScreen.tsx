@@ -138,7 +138,10 @@ export function IntroScreen() {
   const [name, setName] = useState('')
   const [avatarId, setAvatarId] = useState(0)
   const [beat, setBeat] = useState(0)
+  const [scrolled, setScrolled] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastScrollRef = useRef(0)
+  const touchStartY = useRef(0)
   const phase = state.phase.name
   const isFinal = beat >= N_BEATS
 
@@ -150,7 +153,23 @@ export function IntroScreen() {
 
   function advance() {
     if (timerRef.current) clearTimeout(timerRef.current)
+    setScrolled(true)
     setBeat(b => Math.min(b + 1, N_BEATS))
+  }
+
+  function goBack() {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    setScrolled(true)
+    setBeat(b => Math.max(b - 1, 0))
+  }
+
+  function handleWheel(e: React.WheelEvent) {
+    if (isFinal) return
+    const now = Date.now()
+    if (now - lastScrollRef.current < 600) return
+    lastScrollRef.current = now
+    if (e.deltaY > 0) advance()
+    else if (e.deltaY < 0) goBack()
   }
 
   if (phase === 'intro') {
@@ -158,6 +177,13 @@ export function IntroScreen() {
       <div
         className="relative flex flex-col h-full items-center justify-center px-6 text-center overflow-hidden intro-drift"
         onClick={() => { if (!isFinal) advance() }}
+        onWheel={handleWheel}
+        onTouchStart={e => { touchStartY.current = e.touches[0].clientY }}
+        onTouchEnd={e => {
+          if (isFinal) return
+          const dy = touchStartY.current - e.changedTouches[0].clientY
+          if (Math.abs(dy) > 40) dy > 0 ? advance() : goBack()
+        }}
       >
         {/* vignette */}
         <div className="absolute inset-0 pointer-events-none"
@@ -180,19 +206,41 @@ export function IntroScreen() {
               key="final"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative flex items-center gap-8 max-w-xl"
+              className="relative flex flex-col items-center gap-6 max-w-sm w-full"
             >
-              <div className="flex flex-col items-start text-left gap-2">
+              <div className="flex flex-col items-center text-center gap-2">
                 <p className="text-brand text-xs font-semibold tracking-widest uppercase">Talentlytica</p>
-                <h1 className="text-4xl font-black text-[#f0f4f8] leading-tight">Fill the<br />Seat</h1>
+                <h1 className="text-4xl font-black text-[#f0f4f8] leading-tight">Fill the Seat</h1>
                 <p className="text-white/50 text-sm">Find the strongest candidate. Choose wisely.</p>
               </div>
-              <div className="flex flex-col gap-3">
-                <TeamRow vacantIndex={2} />
-                <PrimaryButton onClick={() => actions.startGame()}>
-                  Let's Play
-                </PrimaryButton>
-              </div>
+              <TeamRow vacantIndex={2} />
+              <PrimaryButton onClick={() => actions.startGame()}>
+                Let's Play
+              </PrimaryButton>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* scroll hint — visible on first beat until user interacts */}
+        <AnimatePresence>
+          {!isFinal && !scrolled && beat === 0 && (
+            <motion.div
+              key="scroll-hint"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ delay: 1.2, duration: 0.4 }}
+              className="absolute bottom-20 left-0 right-0 flex flex-col items-center gap-1 pointer-events-none"
+            >
+              <span className="text-white/30 text-[9px] uppercase tracking-[0.2em] font-semibold">scroll</span>
+              <motion.div
+                animate={{ y: [0, 5, 0] }}
+                transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 4l5 5 5-5" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

@@ -8,12 +8,8 @@ export type GameEventName =
   | 'job_needs_viewed'
   | 'employee_profile_opened'
   | 'external_profile_opened'
-  | 'candidate_shortlisted'
-  | 'first_pick_selected'
-  | 'match_check_used'
-  | 'role_fit_viewed'
+  | 'explore_confirmed'
   | 'final_pick_selected'
-  | 'best_match_found'
   | 'final_score'
   | 'game_completed'
   | 'lead_submitted'
@@ -47,10 +43,8 @@ export interface PlayRow {
   player_name: string
   score: number
   persona: Persona
-  first_pick_fit: number
-  final_fit: number
-  best_match_found: boolean
-  match_checks_used: number
+  overall_fit: number
+  time_left: number
   duration_seconds?: number
 }
 

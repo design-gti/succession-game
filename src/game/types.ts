@@ -17,16 +17,12 @@ export type Phase =
   | { name: 'finished' }
 
 export interface ScoreBreakdown {
-  discoveryBonus: number
-  pickBonus: number
-  finalRoleFitPoints: number
-  searchEfficiencyPoints: number
+  fitnessPoints: number   // 0-80, from overall team fit
+  speedPoints: number     // 0-20, from time remaining
+  overallFit: number      // raw team fitness %
+  timeLeft: number        // seconds remaining when confirmed
   total: number
   persona: Persona
-  firstPickFit: number
-  finalFit: number
-  matchChecksUsed: number
-  bestMatchFound: boolean
 }
 
 export type Persona =
@@ -40,10 +36,6 @@ export interface GameState {
   sessionId: string
   playerName: string
   playerAvatar: number
-  firstPickId: CandidateId | null
-  revealedFits: Partial<Record<CandidateId, number>>
-  revealOrder: CandidateId[]
-  matchChecksUsed: number
   timerStartedAt: number | null
   timerExpired: boolean
   finalPickId: CandidateId | null
@@ -56,11 +48,9 @@ export type GameAction =
   | { type: 'SUBMIT_NAME'; name: string; avatarId: number }
   | { type: 'VIEW_ORG_CHART' }
   | { type: 'START_SEARCHING' }
-  | { type: 'REVEAL_FIT'; id: CandidateId; fit: number }
-  | { type: 'READY_TO_DECIDE'; id: CandidateId }
-  | { type: 'TIME_UP'; id: CandidateId | null }
+  | { type: 'CONFIRM_EXPLORE'; finalPickId: CandidateId; overallFit: number; timeLeft: number }
+  | { type: 'TIME_UP'; finalPickId: CandidateId | null; overallFit: number }
   | { type: 'CONFIRM_FINAL'; id: CandidateId }
-  | { type: 'COMPUTE_SCORE' }
   | { type: 'SHOW_RESULT' }
   | { type: 'SHOW_LEADERBOARD' }
   | { type: 'SHOW_LEAD_CAPTURE' }

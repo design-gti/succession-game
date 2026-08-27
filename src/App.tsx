@@ -1,5 +1,4 @@
 import { GameProvider, useGame } from './game/GameProvider'
-import { RotateOverlay } from './components/RotateOverlay'
 import { IntroScreen } from './screens/IntroScreen'
 import { ExploreScreen } from './screens/ExploreScreen'
 import { FinalRevealScreen } from './screens/FinalRevealScreen'
@@ -33,7 +32,6 @@ if (phase === 'finalReveal') return <FinalRevealScreen />
 export default function App() {
   return (
     <div className="h-full bg-[#0f1724] text-[#f0f4f8] relative overflow-hidden">
-      <RotateOverlay />
       <GameProvider>
         <GameRouter />
       </GameProvider>

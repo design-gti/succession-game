@@ -35,14 +35,12 @@ export function ResultScreen() {
   const { state, actions } = useGame()
   const [copied, setCopied] = useState(false)
   const score = state.score!
-  const finalPick = getCandidateById(state.finalPickId!)
-  const firstPick = getCandidateById(state.firstPickId!)
+  const finalPick = state.finalPickId ? getCandidateById(state.finalPickId) : null
   const persona = PERSONA_CONFIG[score.persona]
-  const fitDelta = finalPick.roleFit - firstPick.roleFit
   const playerAv = PLAYER_AVATARS[state.playerAvatar ?? 0]
 
   async function handleShare() {
-    const text = `I scored ${score.total} pts in Fill the Seat!\nPersona: ${score.persona} ${persona.emoji}\nFinal pick: ${finalPick.name} — ${finalPick.roleFit}% fit\n#Talentlytica`
+    const text = `I scored ${score.total} pts in Fill the Seat!\nPersona: ${score.persona} ${persona.emoji}\nTeam Fitness: ${score.overallFit}%\n#Talentlytica`
     if (navigator.share) {
       await navigator.share({ text })
     } else {
@@ -95,23 +93,17 @@ export function ResultScreen() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="w-full grid grid-cols-3 gap-2"
+          className="w-full grid grid-cols-2 gap-2"
         >
           <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-            <div className="text-xl font-black" style={{ color: fitColor(finalPick.roleFit) }}>
-              {finalPick.roleFit}%
+            <div className="text-xl font-black" style={{ color: fitColor(score.overallFit) }}>
+              {score.overallFit}%
             </div>
-            <div className="text-white/35 text-[10px] uppercase tracking-wide mt-0.5">Final Fit</div>
+            <div className="text-white/35 text-[10px] uppercase tracking-wide mt-0.5">Team Fitness</div>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-            <div className="text-xl font-black text-[#f0f4f8]">{score.matchChecksUsed}</div>
-            <div className="text-white/35 text-[10px] uppercase tracking-wide mt-0.5">Match Checks</div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-            <div className={`text-xl font-black ${fitDelta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {fitDelta >= 0 ? '+' : ''}{fitDelta}%
-            </div>
-            <div className="text-white/35 text-[10px] uppercase tracking-wide mt-0.5">vs First Pick</div>
+            <div className="text-xl font-black text-[#f0f4f8]">{score.timeLeft}s</div>
+            <div className="text-white/35 text-[10px] uppercase tracking-wide mt-0.5">Time Remaining</div>
           </div>
         </motion.div>
 
@@ -124,10 +116,8 @@ export function ResultScreen() {
         >
           <p className="text-white/35 text-xs uppercase tracking-widest font-semibold mb-3">Score Breakdown</p>
           {[
-            { label: 'Found best candidate', points: score.discoveryBonus, max: 30 },
-            { label: 'Chose best candidate', points: score.pickBonus, max: 30 },
-            { label: 'Final role fit', points: score.finalRoleFitPoints, max: 30 },
-            { label: 'Search efficiency', points: score.searchEfficiencyPoints, max: 10 },
+            { label: 'Team fitness quality', points: score.fitnessPoints, max: 80 },
+            { label: 'Speed bonus', points: score.speedPoints, max: 20 },
           ].map(({ label, points, max }) => (
             <div key={label} className="flex items-center justify-between py-1.5 border-b border-white/8 last:border-0">
               <span className="text-white/60 text-sm">{label}</span>
@@ -137,19 +127,21 @@ export function ResultScreen() {
         </motion.div>
 
         {/* Final pick */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4"
-        >
-          <Avatar id={state.finalPickId!} name={finalPick.name} size="md" />
-          <div className="text-left">
-            <p className="text-white/40 text-xs">Your replacement</p>
-            <p className="text-[#f0f4f8] font-bold">{finalPick.name}</p>
-            <p className="text-white/40 text-xs">{finalPick.roleFit}% Role Fit</p>
-          </div>
-        </motion.div>
+        {finalPick && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4"
+          >
+            <Avatar id={state.finalPickId!} name={finalPick.name} size="md" />
+            <div className="text-left">
+              <p className="text-white/40 text-xs">Sales Manager pick</p>
+              <p className="text-[#f0f4f8] font-bold">{finalPick.name}</p>
+              <p className="text-white/40 text-xs">{finalPick.roleFit}% Role Fit</p>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0 }}

@@ -11,11 +11,8 @@ export function FinalDecisionScreen() {
   const { state, actions } = useGame()
   const [selected, setSelected] = useState<CandidateId | null>(null)
 
-  const revealed = Object.entries(state.revealedFits) as [CandidateId, number][]
-
-  // All candidates — group revealed vs. unrevealed
-  const revealedCandidates = revealed.sort((a, b) => b[1] - a[1])
-  const unrevealedCandidates = CANDIDATES.filter(c => state.revealedFits[c.id] === undefined)
+  const revealedCandidates: [CandidateId, number][] = []
+  const unrevealedCandidates = CANDIDATES
 
   return (
     <div className="flex flex-col h-full px-6 py-6">
@@ -90,9 +87,9 @@ export function FinalDecisionScreen() {
           {unrevealedCandidates.length > 0 && (
             <div className="mb-4">
               <p className="text-[#6c757d] text-xs uppercase tracking-widest font-semibold mb-3">
-                {state.matchChecksUsed === 0 ? 'Choose Without Data' : 'Not Assessed'}
+                {0 === 0 ? 'Choose Without Data' : 'Not Assessed'}
               </p>
-              {state.matchChecksUsed === 0 && (
+              {0 === 0 && (
                 <p className="text-[#adb5bd] text-xs mb-3 italic">
                   You ran out of time. Trust your gut.
                 </p>
@@ -100,7 +97,7 @@ export function FinalDecisionScreen() {
               <div className="flex flex-col gap-2">
                 {unrevealedCandidates.map(c => {
                   const isSelected = selected === c.id
-                  if (state.matchChecksUsed === 0) {
+                  if (0 === 0) {
                     return (
                       <motion.button
                         key={c.id}

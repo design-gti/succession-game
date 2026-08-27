@@ -43,7 +43,7 @@ export function FinalRevealScreen() {
 
   const finalPick = getCandidateById(state.finalPickId)
   const bestCandidate = getCandidateById(BEST_CANDIDATE_ID)
-  const isBestMatch = state.score.bestMatchFound
+  const isBestMatch = state.finalPickId === BEST_CANDIDATE_ID
   const bestAvailableFit = Math.max(...CANDIDATES.map(c => c.roleFit))
   const diff = bestAvailableFit - finalPick.roleFit
   const fitCol = fitColor(finalPick.roleFit)
