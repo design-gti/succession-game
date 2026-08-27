@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-left: env(safe-area-inset-left);
+  --safe-right: env(safe-area-inset-right);
+}
+
+html, body, #root {
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  background: #0f1724;
+  color: #f0f4f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: auto;
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@layer utilities {
+  .scrollable {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
+@keyframes slot-in {
+  from { transform: scale(0.88); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.animate-slot-in {
+  animation: slot-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes vacant-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.0), 0 0 12px 4px rgba(239,68,68,0.2); }
+  50%       { box-shadow: 0 0 0 6px rgba(239,68,68,0.0), 0 0 24px 8px rgba(239,68,68,0.35); }
+}
+.animate-vacant-glow {
+  animation: vacant-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+@keyframes pulse-vignette {
+  0%, 100% { box-shadow: inset 0 0 50px rgba(239,68,68,0.25); }
+  50%       { box-shadow: inset 0 0 80px rgba(239,68,68,0.55); }
+}
+.animate-pulse-vignette {
+  animation: pulse-vignette 0.9s ease-in-out infinite;
+}
+
+.dot-grid {
+  background-image: radial-gradient(circle, #cbd5e180 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* Drifting pattern for cinematic intro — echoes scrollytelling "moving ground" */
+@keyframes drift {
+  from { background-position: 0 0; }
+  to   { background-position: 0 -360px; }
+}
+.intro-drift {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.06) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(29,111,242,0.08) 1px, transparent 1px);
+  background-size: 36px 36px, 24px 24px;
+  background-position: 0 0, 12px 12px;
+  animation: drift 14s linear infinite;
+}
