@@ -831,107 +831,114 @@ function RightPanel({
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
 
   return (
-    <div className="flex flex-col gap-2 h-full py-2 pr-3 pl-1 flex-shrink-0 w-[182px]">
+    <div className="flex flex-col h-full pr-3 pl-1 flex-shrink-0 w-[182px]">
 
-      {/* Arc gauge — overall team fitness only */}
-      <div className="rounded-xl border border-white/10 bg-[#1a2840] pt-2 pb-1 px-2 flex-shrink-0">
-        <ArcGauge value={overallFit} />
-      </div>
+      {/* Scrollable top section: arc gauge + vacant panel + candidate detail */}
+      <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto py-2" style={{ scrollbarWidth: 'none' }}>
 
-      {/* Vacant position standard */}
-      {(() => {
-        const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
-        return vacantPos ? (
-          <div className="rounded-xl border border-red-500/25 bg-red-500/5 px-2.5 py-1.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-red-400 text-[6px] font-bold uppercase tracking-widest">Vacant · needs</p>
-              <p className="text-[#f0f4f8] text-[7px] font-bold">{vacantPos.shortRole}</p>
-            </div>
-            <AspectBars assessment={null} standard={vacantPos.standard} />
-          </div>
-        ) : (
-          <div className="rounded-xl border border-green-500/25 bg-green-500/5 px-2.5 py-1.5 flex-shrink-0">
-            <p className="text-green-400 text-[7px] font-bold text-center">✓ All positions filled</p>
-          </div>
-        )
-      })()}
+        {/* Arc gauge — overall team fitness only */}
+        <div className="rounded-xl border border-white/10 bg-[#1a2840] pt-2 pb-1 px-2 flex-shrink-0">
+          <ArcGauge value={overallFit} />
+        </div>
 
-      {/* Candidate detail */}
-      <div className="rounded-xl border border-white/10 bg-[#1a2840] flex-1 flex flex-col items-center justify-center px-2.5 py-2 min-h-0">
+        {/* Vacant position standard */}
         {(() => {
-          const benchPos = POSITIONS.find(p => p.id === (activeVacancyId ?? 'sales_manager'))!
-          return (
-            <AnimatePresence mode="wait">
-              {(selectedCandidateId ?? smOccupant) ? (
-                (() => {
-                  const detailId = selectedCandidateId ?? smOccupant!
-                  const c = getCandidateById(detailId)
-                  return (
-                    <motion.div
-                      key={detailId}
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: 'spring', damping: 16, stiffness: 300 }}
-                      className="w-full flex flex-col gap-1.5"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <FitRingWithLabel fit={c.roleFit} size={34} />
-                        <div className="min-w-0 text-left">
-                          <p className="text-[#f0f4f8] font-bold text-[10px] leading-tight truncate">{c.name}</p>
-                          <p className="text-white/40 text-[7px] truncate">{c.currentRole}</p>
-                        </div>
-                      </div>
-                      <p className="text-white/30 text-[5.5px] uppercase tracking-widest text-left">
-                        vs <span className="text-brand font-bold">{benchPos.shortRole}</span> standard <span className="text-white/50">▏</span>
-                      </p>
-                      <AspectBars assessment={c.assessment} standard={benchPos.standard} />
-                    </motion.div>
-                  )
-                })()
-              ) : (
-                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-1.5 text-center">
-                  <div className="w-8 h-8 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white/25">
-                      <circle cx="12" cy="8" r="4" fill="currentColor" />
-                      <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <p className="text-white/25 text-[7px] leading-tight">Tap a card to compare<br/>against the standard</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
+          return vacantPos ? (
+            <div className="rounded-xl border border-red-500/25 bg-red-500/5 px-2.5 py-1.5 flex-shrink-0">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-red-400 text-[6px] font-bold uppercase tracking-widest">Vacant · needs</p>
+                <p className="text-[#f0f4f8] text-[7px] font-bold">{vacantPos.shortRole}</p>
+              </div>
+              <AspectBars assessment={null} standard={vacantPos.standard} />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-green-500/25 bg-green-500/5 px-2.5 py-1.5 flex-shrink-0">
+              <p className="text-green-400 text-[7px] font-bold text-center">✓ All positions filled</p>
+            </div>
           )
         })()}
-      </div>
 
-      {/* External candidates */}
-      <div className="flex-shrink-0">
-        <p className="text-white/40 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
-        <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          {EXTERNAL_CANDIDATES.map(c => (
-            <ExternalCandidateSlot
-              key={c.id}
-              candidate={c}
-              alreadyPlaced={usedCandidateIds.has(c.id)}
-              onDrop={onExternalDrop}
-              onDragMove={onExternalDragMove}
-              onDragStart={() => onDragStart(c.id)}
-              onDragEnd={onDragEnd}
-              onSelect={() => onSelect(c.id)}
-              dimmed={activeDragId !== null && activeDragId !== c.id}
-            />
-          ))}
+        {/* Candidate detail */}
+        <div className="rounded-xl border border-white/10 bg-[#1a2840] flex-shrink-0 flex flex-col items-center justify-center px-2.5 py-2 min-h-[90px]">
+          {(() => {
+            const benchPos = POSITIONS.find(p => p.id === (activeVacancyId ?? 'sales_manager'))!
+            return (
+              <AnimatePresence mode="wait">
+                {(selectedCandidateId ?? smOccupant) ? (
+                  (() => {
+                    const detailId = selectedCandidateId ?? smOccupant!
+                    const c = getCandidateById(detailId)
+                    return (
+                      <motion.div
+                        key={detailId}
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: 'spring', damping: 16, stiffness: 300 }}
+                        className="w-full flex flex-col gap-1.5"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <FitRingWithLabel fit={c.roleFit} size={34} />
+                          <div className="min-w-0 text-left">
+                            <p className="text-[#f0f4f8] font-bold text-[10px] leading-tight truncate">{c.name}</p>
+                            <p className="text-white/40 text-[7px] truncate">{c.currentRole}</p>
+                          </div>
+                        </div>
+                        <p className="text-white/30 text-[5.5px] uppercase tracking-widest text-left">
+                          vs <span className="text-brand font-bold">{benchPos.shortRole}</span> standard <span className="text-white/50">▏</span>
+                        </p>
+                        <AspectBars assessment={c.assessment} standard={benchPos.standard} />
+                      </motion.div>
+                    )
+                  })()
+                ) : (
+                  <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-1.5 text-center">
+                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white/25">
+                        <circle cx="12" cy="8" r="4" fill="currentColor" />
+                        <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <p className="text-white/25 text-[7px] leading-tight">Tap a card to compare<br/>against the standard</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )
+          })()}
         </div>
       </div>
 
-      {/* Confirm */}
-      <div className="flex-shrink-0">
-        <PrimaryButton onClick={onConfirm} disabled={!allFilled}>
-          Confirm →
-        </PrimaryButton>
-        {!allFilled && activeVacancyId && (
-          <p className="text-white/30 text-[7px] text-center mt-1">Fill all positions first</p>
-        )}
+      {/* Fixed bottom section: external pool + confirm always visible */}
+      <div className="flex flex-col gap-2 flex-shrink-0 pb-2">
+        {/* External candidates */}
+        <div>
+          <p className="text-white/40 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
+          <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {EXTERNAL_CANDIDATES.map(c => (
+              <ExternalCandidateSlot
+                key={c.id}
+                candidate={c}
+                alreadyPlaced={usedCandidateIds.has(c.id)}
+                onDrop={onExternalDrop}
+                onDragMove={onExternalDragMove}
+                onDragStart={() => onDragStart(c.id)}
+                onDragEnd={onDragEnd}
+                onSelect={() => onSelect(c.id)}
+                dimmed={activeDragId !== null && activeDragId !== c.id}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Confirm */}
+        <div>
+          <PrimaryButton onClick={onConfirm} disabled={!allFilled}>
+            Confirm →
+          </PrimaryButton>
+          {!allFilled && activeVacancyId && (
+            <p className="text-white/30 text-[7px] text-center mt-1">Fill all positions first</p>
+          )}
+        </div>
       </div>
     </div>
   )
