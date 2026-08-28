@@ -537,6 +537,7 @@ function ArcGauge({ value }: { value: number }) {
 function OrgTree({
   assignments, activeVacancyId, vacancyQueue, nodeRef, isDragOver, onDrop, onDragMove,
   activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect, initialZoom = 1.0,
+  tutorialHighlight = false,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -552,6 +553,7 @@ function OrgTree({
   onMovePlaced: (fromPosId: PositionId, candidateId: CandidateId, point: { x: number; y: number }) => boolean
   onSelect: (id: CandidateId) => void
   initialZoom?: number
+  tutorialHighlight?: boolean
 }) {
   const isDragging = activeDragId !== null
   const [zoom, setZoom] = useState(initialZoom)
@@ -676,21 +678,18 @@ function OrgTree({
     const occupant = assignments[posId]
     if (!occupant) return <QueuedVacancy posId={posId} small={small} />
     const isNatural = occupant === (posId as string)
-    if (isNatural) {
-      return (
-        <DraggableSlot
-          id={occupant} posId={posId} onDrop={onDrop} onDragMove={onDragMove}
-          onDragStart={() => onDragStart(occupant)}
-          onDragEnd={onDragEnd}
-          onSelect={() => onSelect(occupant)}
-          dimmed={isDragging && activeDragId !== occupant}
-          floatDelay={FLOAT_DELAYS[posId] ?? 0}
-          small={small}
-          isTargeted={isDragOver && activeDragId === occupant}
-        />
-      )
-    }
-    return (
+    const slotNode = isNatural ? (
+      <DraggableSlot
+        id={occupant} posId={posId} onDrop={onDrop} onDragMove={onDragMove}
+        onDragStart={() => onDragStart(occupant)}
+        onDragEnd={onDragEnd}
+        onSelect={() => onSelect(occupant)}
+        dimmed={isDragging && activeDragId !== occupant}
+        floatDelay={FLOAT_DELAYS[posId] ?? 0}
+        small={small}
+        isTargeted={isDragOver && activeDragId === occupant}
+      />
+    ) : (
       <PlacedSlot
         id={occupant} posId={posId}
         onMove={(pt) => onMovePlaced(posId, occupant, pt)}
@@ -701,6 +700,19 @@ function OrgTree({
         onSelect={() => onSelect(occupant)}
       />
     )
+    if (tutorialHighlight && posId === 'andi') {
+      return (
+        <div className="relative">
+          <motion.div
+            className="absolute inset-[-5px] rounded-[20px] border-2 border-brand/70 pointer-events-none z-10"
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+          />
+          {slotNode}
+        </div>
+      )
+    }
+    return slotNode
   }
 
   const connBase = isDragging ? 'bg-[#016699]/70' : 'bg-[#016699]/50'
@@ -719,6 +731,24 @@ function OrgTree({
         className="w-7 h-7 rounded-lg bg-white/10 border border-white/15 text-white/60 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none"
       >−</button>
     </div>
+    {/* Tutorial: INTERNAL badge */}
+    <AnimatePresence>
+      {tutorialHighlight && (
+        <motion.div
+          key="internal-badge"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
+          className="absolute top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none whitespace-nowrap"
+        >
+          <div className="bg-brand/15 border border-brand/30 rounded-full px-3 py-1 flex items-center gap-1.5">
+            <span className="text-brand text-[9px] font-bold uppercase tracking-widest">Internal</span>
+            <span className="text-white/35 text-[9px]">· tarik dari org chart ini</span>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
     {/* Pan/explore hint */}
     <AnimatePresence>
       {!explored && (
@@ -943,7 +973,7 @@ function CandidateSheet({
 function PortraitBottomPanel({
   assignments, activeVacancyId, allFilled,
   onExternalDrop, onExternalDragMove, onConfirm,
-  activeDragId, onDragStart, onDragEnd, onSelect,
+  activeDragId, onDragStart, onDragEnd, onSelect, tutorialHighlight = false,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -955,16 +985,17 @@ function PortraitBottomPanel({
   onDragStart: (id: CandidateId) => void
   onDragEnd: () => void
   onSelect: (id: CandidateId) => void
+  tutorialHighlight?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const overallFit = computeOverallFit(assignments)
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
   const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
 
-  // Auto-expand when dragging (so drop target is accessible)
+  // Auto-expand when dragging or during tutorial
   useEffect(() => {
-    if (activeDragId !== null) setExpanded(true)
-  }, [activeDragId])
+    if (activeDragId !== null || tutorialHighlight) setExpanded(true)
+  }, [activeDragId, tutorialHighlight])
 
   return (
     <div className="border-t border-white/10 flex-shrink-0">
@@ -1015,8 +1046,25 @@ function PortraitBottomPanel({
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-2 px-3 pt-1 pb-3">
-              <div>
-                <p className="text-white/40 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
+              <div className={tutorialHighlight ? 'rounded-xl border border-amber-400/35 bg-amber-500/5 px-2 pt-1.5 pb-1' : ''}>
+                <div className="flex items-center justify-center gap-1.5 mb-1">
+                  <p className="text-white/40 text-[7px] uppercase tracking-widest text-center">External Pool</p>
+                  <AnimatePresence>
+                    {tutorialHighlight && (
+                      <motion.span
+                        key="ext-badge"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="bg-amber-500/20 border border-amber-400/40 rounded-full px-2 py-0.5 flex items-center gap-1 whitespace-nowrap"
+                      >
+                        <span className="text-amber-400 text-[8px] font-bold uppercase tracking-widest">External</span>
+                        <span className="text-[8px]">😈</span>
+                        <span className="text-white/35 text-[8px]">bajak dari luar</span>
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
                 <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
                   {EXTERNAL_CANDIDATES.map(c => (
                     <ExternalCandidateSlot
@@ -1414,6 +1462,7 @@ export function ExploreScreen() {
             onMovePlaced={handleMovePlaced}
             onSelect={setSelectedCandidateId}
             initialZoom={0.55}
+            tutorialHighlight={!tutorialDone}
           />
         </div>
         <PortraitBottomPanel
@@ -1431,6 +1480,7 @@ export function ExploreScreen() {
           onDragStart={(id) => setActiveDragId(id)}
           onDragEnd={() => setActiveDragId(null)}
           onSelect={setSelectedCandidateId}
+          tutorialHighlight={!tutorialDone}
         />
       </div>
 
