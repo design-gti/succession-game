@@ -1,6 +1,10 @@
 import { motion } from 'framer-motion'
+import { QRCodeSVG } from 'qrcode.react'
 import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
+
+// TODO: ganti dengan link booking demo Kelola yang sebenarnya
+const DEMO_URL = 'https://talentlytica.com'
 
 export function BrandMessageScreen() {
   const { actions } = useGame()
@@ -37,17 +41,23 @@ export function BrandMessageScreen() {
           </div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-left w-full max-w-xs">
-          <p className="text-white/40 text-xs uppercase tracking-widest font-semibold mb-3">
-            Talentlytica helps organizations understand:
-          </p>
-          {['Performance', 'Potential', 'Competency', 'Role Fit'].map(item => (
-            <div key={item} className="flex items-center gap-2 py-1.5 border-b border-white/8 last:border-0">
-              <div className="w-1.5 h-1.5 bg-brand rounded-full" />
-              <p className="text-white/70 text-sm">{item}</p>
-            </div>
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white/5 border border-brand/30 rounded-2xl p-4 w-full max-w-xs flex items-center gap-4"
+        >
+          <div className="bg-white rounded-xl p-2 flex-shrink-0">
+            <QRCodeSVG value={DEMO_URL} size={88} level="M" bgColor="#ffffff" fgColor="#0f1724" />
+          </div>
+          <div className="text-left min-w-0">
+            <p className="text-brand font-black text-sm leading-tight">Curious what the real thing looks like?</p>
+            <p className="text-white/50 text-xs mt-1.5 leading-snug">
+              That was 60 seconds. The real demo takes 15 minutes.
+            </p>
+            <p className="text-white/30 text-[10px] mt-1.5 uppercase tracking-wider font-semibold">Scan to book a demo</p>
+          </div>
+        </motion.div>
 
         <div className="text-center">
           <p className="text-brand text-lg font-black tracking-tight">TALENTLYTICA</p>

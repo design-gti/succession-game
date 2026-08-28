@@ -15,6 +15,7 @@ interface GameContextValue {
     timeUp: (finalPickId: CandidateId | null, overallFit: number) => void
     confirmFinal: (id: CandidateId) => void
     showResult: () => void
+    showKelolaReveal: () => void
     showLeaderboard: () => void
     showLeadCapture: () => void
     finish: () => void
@@ -98,6 +99,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     },
 
     showResult: () => dispatch({ type: 'SHOW_RESULT' }),
+    showKelolaReveal: () => {
+      dispatch({ type: 'SHOW_KELOLA_REVEAL' })
+      logEvent('kelola_reveal_viewed', state.sessionId)
+    },
     showLeaderboard: () => dispatch({ type: 'SHOW_LEADERBOARD' }),
     showLeadCapture: () => dispatch({ type: 'SHOW_LEAD_CAPTURE' }),
     finish: () => dispatch({ type: 'FINISH' }),

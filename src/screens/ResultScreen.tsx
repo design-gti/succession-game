@@ -149,8 +149,8 @@ export function ResultScreen() {
           transition={{ delay: 1.0 }}
           className="w-full flex flex-col gap-2"
         >
-          <PrimaryButton onClick={() => actions.showLeaderboard()}>
-            View Leaderboard →
+          <PrimaryButton onClick={() => actions.showKelolaReveal()}>
+            Continue →
           </PrimaryButton>
           <button
             onClick={handleShare}

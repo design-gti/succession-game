@@ -139,26 +139,17 @@ export function IntroScreen() {
   const [avatarId, setAvatarId] = useState(0)
   const [beat, setBeat] = useState(0)
   const [scrolled, setScrolled] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastScrollRef = useRef(0)
   const touchStartY = useRef(0)
   const phase = state.phase.name
   const isFinal = beat >= N_BEATS
 
-  useEffect(() => {
-    if (phase !== 'intro' || isFinal) return
-    timerRef.current = setTimeout(() => setBeat(b => b + 1), beat === 0 ? 2000 : 2600)
-    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
-  }, [phase, beat, isFinal])
-
   function advance() {
-    if (timerRef.current) clearTimeout(timerRef.current)
     setScrolled(true)
     setBeat(b => Math.min(b + 1, N_BEATS))
   }
 
   function goBack() {
-    if (timerRef.current) clearTimeout(timerRef.current)
     setScrolled(true)
     setBeat(b => Math.max(b - 1, 0))
   }
@@ -255,7 +246,7 @@ export function IntroScreen() {
               ))}
             </div>
             <button
-              onClick={e => { e.stopPropagation(); if (timerRef.current) clearTimeout(timerRef.current); setBeat(N_BEATS) }}
+              onClick={e => { e.stopPropagation(); setBeat(N_BEATS) }}
               className="text-white/30 text-[10px] uppercase tracking-widest font-semibold py-1 px-3"
             >
               Skip →

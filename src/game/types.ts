@@ -12,6 +12,7 @@ export type Phase =
   | { name: 'finalDecision' }
   | { name: 'finalReveal' }
   | { name: 'result' }
+  | { name: 'kelolaReveal' }
   | { name: 'leaderboard' }
   | { name: 'leadCapture' }
   | { name: 'finished' }
@@ -52,6 +53,7 @@ export type GameAction =
   | { type: 'TIME_UP'; finalPickId: CandidateId | null; overallFit: number }
   | { type: 'CONFIRM_FINAL'; id: CandidateId }
   | { type: 'SHOW_RESULT' }
+  | { type: 'SHOW_KELOLA_REVEAL' }
   | { type: 'SHOW_LEADERBOARD' }
   | { type: 'SHOW_LEAD_CAPTURE' }
   | { type: 'FINISH' }

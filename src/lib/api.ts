@@ -12,6 +12,8 @@ export type GameEventName =
   | 'final_pick_selected'
   | 'final_score'
   | 'game_completed'
+  | 'kelola_reveal_viewed'
+  | 'demo_qr_shown'
   | 'lead_submitted'
 
 export async function logEvent(
