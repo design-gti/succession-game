@@ -5,7 +5,7 @@ import { FinalRevealScreen } from './screens/FinalRevealScreen'
 import { ResultScreen } from './screens/ResultScreen'
 import { KelolaRevealScreen } from './screens/KelolaRevealScreen'
 import { LeaderboardScreen } from './screens/LeaderboardScreen'
-import { LeadCaptureScreen } from './screens/LeadCaptureScreen'
+
 import { BrandMessageScreen } from './screens/BrandMessageScreen'
 
 function GameRouter() {
@@ -20,7 +20,6 @@ if (phase === 'finalReveal') return <FinalRevealScreen />
     if (phase === 'kelolaReveal') return <KelolaRevealScreen />
     if (phase === 'demoQR') return <BrandMessageScreen />
     if (phase === 'leaderboard') return <LeaderboardScreen />
-    if (phase === 'leadCapture') return <LeadCaptureScreen />
     if (phase === 'finished') return <BrandMessageScreen />
     return null
   }

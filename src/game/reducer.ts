@@ -108,7 +108,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'FINISH': {
-      if (p.name !== 'leadCapture' && p.name !== 'leaderboard') return state
+      if (p.name !== 'leaderboard' && p.name !== 'leadCapture') return state
       return { ...state, phase: { name: 'finished' } }
     }
 

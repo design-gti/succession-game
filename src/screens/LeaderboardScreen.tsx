@@ -80,16 +80,10 @@ export function LeaderboardScreen() {
           )}
         </div>
 
-        <div className="pt-4 flex flex-col gap-2">
-          <PrimaryButton onClick={() => actions.showLeadCapture()}>
-            Get My Full Result →
+        <div className="pt-4">
+          <PrimaryButton onClick={() => actions.finish()}>
+            Play Again →
           </PrimaryButton>
-          <button
-            onClick={() => actions.finish()}
-            className="w-full py-3 text-white/40 text-sm font-semibold active:scale-95 transition-all"
-          >
-            Skip
-          </button>
         </div>
       </motion.div>
     </div>
