@@ -1193,11 +1193,22 @@ export function ExploreScreen() {
   const [activeDragId, setActiveDragId] = useState<CandidateId | null>(null)
   const [selectedCandidateId, setSelectedCandidateId] = useState<CandidateId | null>(null)
   const [timeLeft, setTimeLeft] = useState(60)
+  const [timerStart, setTimerStart] = useState<number | null>(null)
+  const [showToast, setShowToast] = useState(false)
+  const tutorialDone = timerStart !== null
 
   const activeVacancyId = vacancyQueue[0] ?? null
   const allFilled = vacancyQueue.length === 0
   const smOccupant = assignments['sales_manager'] ?? null
-  const isUrgent = timeLeft <= 10
+  const isUrgent = tutorialDone && timeLeft <= 10
+
+  function triggerFirstDrop() {
+    if (timerStart !== null) return
+    const now = Date.now()
+    setTimerStart(now)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 2500)
+  }
 
   function isOverVacancy(point: { x: number; y: number }) {
     const rect = vacantRef.current?.getBoundingClientRect()
@@ -1279,6 +1290,7 @@ export function ExploreScreen() {
         { candidateId }
       )
     }
+    triggerFirstDrop()
     return true
   }
 
@@ -1306,6 +1318,7 @@ export function ExploreScreen() {
     )
     setAssignments(newA)
     setVacancyQueue(newQ)
+    triggerFirstDrop()
     return true
   }
 
@@ -1320,13 +1333,70 @@ export function ExploreScreen() {
       )}
 
       <TimerBar
-        timerStartedAt={state.timerStartedAt}
+        timerStartedAt={timerStart}
         onTick={setTimeLeft}
         onExpire={() => {
           const pick = smOccupant ?? null
           actions.timeUp(pick, computeOverallFit(assignments))
         }}
       />
+
+      {/* Tutorial hint — fades away after first drop */}
+      <AnimatePresence>
+        {!tutorialDone && (
+          <motion.div
+            key="tutorial-banner"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.35, delay: 0.5 }}
+            className="pointer-events-none z-30 px-4 pt-1 pb-2"
+          >
+            <div className="rounded-xl border border-brand/30 bg-brand/10 px-3 py-2 flex items-center gap-3">
+              {/* Ghost hand animation */}
+              <motion.span
+                className="text-xl flex-shrink-0 select-none"
+                animate={{ y: [0, -8, 0], rotate: [0, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
+              >
+                👆
+              </motion.span>
+              <div className="min-w-0">
+                <p className="text-brand text-[11px] font-bold leading-tight">Tarik kandidat ke slot merah</p>
+                <p className="text-white/40 text-[9px] mt-0.5">Timer mulai setelah drag pertama</p>
+              </div>
+              {/* Bouncing arrow toward canvas */}
+              <motion.span
+                className="text-brand text-sm flex-shrink-0"
+                animate={{ y: [0, 4, 0] }}
+                transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
+              >
+                ↓
+              </motion.span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* "Timer dimulai!" toast */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            key="toast"
+            initial={{ opacity: 0, scale: 0.9, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 8 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+          >
+            <div className="bg-[#1a2840] border border-amber-400/40 rounded-xl px-4 py-2 flex items-center gap-2 shadow-lg">
+              <span className="text-base">⏱</span>
+              <p className="text-amber-400 text-xs font-bold whitespace-nowrap">Timer dimulai! 60 detik</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex-1 min-h-0 flex flex-col">
           <OrgTree
