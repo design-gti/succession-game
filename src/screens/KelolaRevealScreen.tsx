@@ -299,8 +299,8 @@ export function KelolaRevealScreen() {
         )}
       </AnimatePresence>
 
-      {/* Progress dots + Skip */}
-      <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-1.5">
+      {/* Progress dots */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center">
         <div className="flex gap-1.5">
           {Array.from({ length: N_BEATS }).map((_, i) => (
             <div
@@ -309,12 +309,6 @@ export function KelolaRevealScreen() {
             />
           ))}
         </div>
-        <button
-          onClick={e => { e.stopPropagation(); setBeat(N_BEATS) }}
-          className="text-white/30 text-[10px] uppercase tracking-widest font-semibold py-1 px-3"
-        >
-          Skip →
-        </button>
       </div>
     </div>
   )
