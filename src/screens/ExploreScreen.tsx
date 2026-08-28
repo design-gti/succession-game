@@ -556,6 +556,11 @@ function OrgTree({
   const isDragging = activeDragId !== null
   const [zoom, setZoom] = useState(initialZoom)
   const zoomRef = useRef(initialZoom)
+  const [panX, setPanX] = useState(0)
+  const [panY, setPanY] = useState(0)
+  const panXRef = useRef(0)
+  const panYRef = useRef(0)
+  const [explored, setExplored] = useState(false)
   const outerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { zoomRef.current = zoom }, [zoom])
@@ -563,6 +568,38 @@ function OrgTree({
   useEffect(() => {
     const el = outerRef.current
     if (!el) return
+
+    // ── Pan ────────────────────────────────────────────────────────────────
+    let panPointerId: number | null = null
+    let panStart: { x: number; y: number; px: number; py: number } | null = null
+    let panMoved = false
+
+    function onPointerDown(e: PointerEvent) {
+      if (pinchActive) return
+      // Don't intercept card drags (cards have cursor-grab class)
+      if ((e.target as Element).closest('.cursor-grab')) return
+      panPointerId = e.pointerId
+      panStart = { x: e.clientX, y: e.clientY, px: panXRef.current, py: panYRef.current }
+      panMoved = false
+    }
+    function onPointerMove(e: PointerEvent) {
+      if (e.pointerId !== panPointerId || !panStart || pinchActive) return
+      const dx = e.clientX - panStart.x
+      const dy = e.clientY - panStart.y
+      if (!panMoved && Math.hypot(dx, dy) < 8) return
+      panMoved = true
+      panXRef.current = panStart.px + dx
+      panYRef.current = panStart.py + dy
+      setPanX(panXRef.current)
+      setPanY(panYRef.current)
+      setExplored(true)
+    }
+    function onPointerUp(e: PointerEvent) {
+      if (e.pointerId === panPointerId) { panStart = null; panPointerId = null }
+    }
+
+    // ── Pinch zoom ─────────────────────────────────────────────────────────
+    let pinchActive = false
     let startDist: number | null = null
     let startZoom = 1.0
 
@@ -574,40 +611,55 @@ function OrgTree({
     }
     function onTouchStart(e: TouchEvent) {
       if (e.touches.length === 2) {
-        e.preventDefault()
-        e.stopPropagation()
-        startDist = pinchDist(e)
-        startZoom = zoomRef.current
+        e.preventDefault(); e.stopPropagation()
+        pinchActive = true; panStart = null
+        startDist = pinchDist(e); startZoom = zoomRef.current
       }
     }
     function onTouchMove(e: TouchEvent) {
       if (e.touches.length === 2 && startDist !== null) {
-        e.preventDefault()
-        e.stopPropagation()
-        const next = Math.min(1.6, Math.max(0.4, startZoom * (pinchDist(e) / startDist)))
-        zoomRef.current = next
-        setZoom(next)
+        e.preventDefault(); e.stopPropagation()
+        const next = Math.min(1.8, Math.max(0.35, startZoom * (pinchDist(e) / startDist)))
+        zoomRef.current = next; setZoom(next)
       }
     }
     function onTouchEnd(e: TouchEvent) {
       if (e.touches.length < 2) {
         if (startDist !== null) { e.stopPropagation(); e.preventDefault() }
-        startDist = null
+        startDist = null; pinchActive = false
       }
     }
 
+    // ── Scroll-wheel zoom ──────────────────────────────────────────────────
+    function onWheel(e: WheelEvent) {
+      e.preventDefault()
+      const factor = e.deltaY > 0 ? 0.92 : 1.08
+      const next = Math.min(1.8, Math.max(0.35, zoomRef.current * factor))
+      zoomRef.current = next; setZoom(next)
+    }
+
+    el.addEventListener('pointerdown', onPointerDown)
+    el.addEventListener('pointermove', onPointerMove)
+    el.addEventListener('pointerup', onPointerUp)
+    el.addEventListener('pointercancel', onPointerUp)
     el.addEventListener('touchstart', onTouchStart, { passive: false, capture: true })
     el.addEventListener('touchmove', onTouchMove, { passive: false, capture: true })
     el.addEventListener('touchend', onTouchEnd, { capture: true })
+    el.addEventListener('wheel', onWheel, { passive: false })
     return () => {
+      el.removeEventListener('pointerdown', onPointerDown)
+      el.removeEventListener('pointermove', onPointerMove)
+      el.removeEventListener('pointerup', onPointerUp)
+      el.removeEventListener('pointercancel', onPointerUp)
       el.removeEventListener('touchstart', onTouchStart, { capture: true } as EventListenerOptions)
       el.removeEventListener('touchmove', onTouchMove, { capture: true } as EventListenerOptions)
       el.removeEventListener('touchend', onTouchEnd, { capture: true } as EventListenerOptions)
+      el.removeEventListener('wheel', onWheel)
     }
   }, [])
 
   function changeZoom(delta: number) {
-    const next = Math.min(1.6, Math.max(0.4, zoomRef.current + delta))
+    const next = Math.min(1.8, Math.max(0.35, zoomRef.current + delta))
     zoomRef.current = next
     setZoom(next)
   }
@@ -655,7 +707,7 @@ function OrgTree({
   const connSub = isDragging ? 'bg-[#016699]/55' : 'bg-[#016699]/38'
 
   return (
-    <div ref={outerRef} className="flex-1 min-h-0 overflow-hidden dot-grid relative">
+    <div ref={outerRef} className="flex-1 min-h-0 overflow-hidden dot-grid relative" style={{ cursor: isDragging ? 'default' : 'grab' }}>
     {/* Zoom controls */}
     <div className="absolute bottom-2 left-2 z-20 flex flex-col gap-1">
       <button
@@ -667,11 +719,29 @@ function OrgTree({
         className="w-7 h-7 rounded-lg bg-white/10 border border-white/15 text-white/60 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none"
       >−</button>
     </div>
+    {/* Pan/explore hint */}
+    <AnimatePresence>
+      {!explored && (
+        <motion.div
+          key="pan-hint"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 4 }}
+          transition={{ delay: 1.8, duration: 0.4 }}
+          className="absolute bottom-10 left-0 right-0 flex items-center justify-center gap-1.5 pointer-events-none z-10"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white/25">
+            <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+          <span className="text-white/25 text-[9px] uppercase tracking-[0.2em] font-semibold">drag to explore</span>
+        </motion.div>
+      )}
+    </AnimatePresence>
     {/* Centering wrapper — ensures scale pivot is always at horizontal center of container */}
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', height: '100%' }}>
     <div
       className="flex flex-col items-center py-2 min-w-max min-h-full"
-      style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', willChange: 'transform' }}
+      style={{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})`, transformOrigin: 'top center', willChange: 'transform' }}
     >
       <BossNode />
       <div className={`w-px h-2 mx-auto ${connBase} transition-colors duration-300`} />
