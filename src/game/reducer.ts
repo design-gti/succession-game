@@ -11,6 +11,8 @@ export const initialState: GameState = {
   phase: { name: 'intro' },
   sessionId: makeSessionId(),
   playerName: '',
+  playerEmail: '',
+  playerCompany: '',
   playerAvatar: 0,
   timerStartedAt: null,
   timerExpired: false,
@@ -33,6 +35,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         playerName: action.name,
+        playerEmail: action.email,
+        playerCompany: action.company,
         playerAvatar: action.avatarId,
         phase: { name: 'exploring' },
         timerStartedAt: Date.now(),

@@ -37,6 +37,8 @@ export interface GameState {
   phase: Phase
   sessionId: string
   playerName: string
+  playerEmail: string
+  playerCompany: string
   playerAvatar: number
   timerStartedAt: number | null
   timerExpired: boolean
@@ -47,7 +49,7 @@ export interface GameState {
 
 export type GameAction =
   | { type: 'START_GAME' }
-  | { type: 'SUBMIT_NAME'; name: string; avatarId: number }
+  | { type: 'SUBMIT_NAME'; name: string; avatarId: number; email: string; company: string }
   | { type: 'VIEW_ORG_CHART' }
   | { type: 'START_SEARCHING' }
   | { type: 'CONFIRM_EXPLORE'; finalPickId: CandidateId; overallFit: number; timeLeft: number }

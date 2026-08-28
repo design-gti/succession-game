@@ -136,6 +136,8 @@ function IntroBeat({ beat }: { beat: number }) {
 export function IntroScreen() {
   const { state, actions } = useGame()
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [company, setCompany] = useState('')
   const [avatarId, setAvatarId] = useState(0)
   const [beat, setBeat] = useState(0)
   const [scrolled, setScrolled] = useState(false)
@@ -292,14 +294,31 @@ export function IntroScreen() {
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && actions.submitName(name, avatarId)}
+          onKeyDown={e => e.key === 'Enter' && actions.submitName(name, avatarId, email, company)}
           placeholder="Your name or nickname"
           maxLength={24}
           autoFocus
           className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-[#f0f4f8] text-base
             placeholder:text-white/25 outline-none focus:border-brand transition-colors"
         />
-        <PrimaryButton onClick={() => actions.submitName(name, avatarId)}>
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="Work email"
+          className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-[#f0f4f8] text-base
+            placeholder:text-white/25 outline-none focus:border-brand transition-colors"
+        />
+        <input
+          type="text"
+          value={company}
+          onChange={e => setCompany(e.target.value)}
+          placeholder="Company"
+          maxLength={64}
+          className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-[#f0f4f8] text-base
+            placeholder:text-white/25 outline-none focus:border-brand transition-colors"
+        />
+        <PrimaryButton onClick={() => actions.submitName(name, avatarId, email, company)}>
           Start →
         </PrimaryButton>
       </motion.div>

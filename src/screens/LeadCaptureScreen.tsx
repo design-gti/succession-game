@@ -8,8 +8,8 @@ import { logEvent } from '../lib/api'
 export function LeadCaptureScreen() {
   const { state, actions } = useGame()
   const [name, setName] = useState(state.playerName || '')
-  const [company, setCompany] = useState('')
-  const [email, setEmail] = useState('')
+  const [company, setCompany] = useState(state.playerCompany || '')
+  const [email, setEmail] = useState(state.playerEmail || '')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')

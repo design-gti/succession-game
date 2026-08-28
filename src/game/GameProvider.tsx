@@ -8,7 +8,7 @@ interface GameContextValue {
   state: GameState
   actions: {
     startGame: () => void
-    submitName: (name: string, avatarId?: number) => void
+    submitName: (name: string, avatarId?: number, email?: string, company?: string) => void
     viewOrgChart: () => void
     startSearching: () => void
     confirmExplore: (finalPickId: CandidateId, overallFit: number, timeLeft: number) => void
@@ -77,8 +77,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const actions: GameContextValue['actions'] = {
     startGame: () => dispatch({ type: 'START_GAME' }),
 
-    submitName: (name: string, avatarId = 0) => {
-      dispatch({ type: 'SUBMIT_NAME', name: resolveName(name), avatarId })
+    submitName: (name: string, avatarId = 0, email = '', company = '') => {
+      dispatch({ type: 'SUBMIT_NAME', name: resolveName(name), avatarId, email, company })
     },
 
     viewOrgChart: () => dispatch({ type: 'VIEW_ORG_CHART' }),
