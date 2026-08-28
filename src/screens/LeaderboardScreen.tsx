@@ -80,7 +80,13 @@ export function LeaderboardScreen() {
           )}
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 flex flex-col gap-2">
+          <button
+            onClick={() => actions.showDemoQR()}
+            className="w-full py-3 text-white/40 text-sm font-semibold active:scale-95 transition-all flex items-center justify-center gap-1"
+          >
+            ← Kelola Demo
+          </button>
           <PrimaryButton onClick={() => actions.finish()}>
             Play Again →
           </PrimaryButton>
