@@ -7,7 +7,8 @@ import { PrimaryButton } from '../components/PrimaryButton'
 const DEMO_URL = 'https://talentlytica.com'
 
 export function BrandMessageScreen() {
-  const { actions } = useGame()
+  const { state, actions } = useGame()
+  const isDemoQR = state.phase.name === 'demoQR'
 
   return (
     <div className="flex flex-col h-full px-6 py-8 items-center justify-between text-center">
@@ -66,9 +67,15 @@ export function BrandMessageScreen() {
       </motion.div>
 
       <div className="w-full flex flex-col gap-2">
-        <PrimaryButton onClick={() => actions.restart()}>
-          Play Again
-        </PrimaryButton>
+        {isDemoQR ? (
+          <PrimaryButton onClick={() => actions.showLeaderboard()}>
+            View Leaderboard →
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton onClick={() => actions.restart()}>
+            Play Again
+          </PrimaryButton>
+        )}
         <p className="text-white/25 text-xs text-center mt-1">talentlytica.com</p>
       </div>
     </div>

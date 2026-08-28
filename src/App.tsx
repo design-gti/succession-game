@@ -18,6 +18,7 @@ function GameRouter() {
 if (phase === 'finalReveal') return <FinalRevealScreen />
     if (phase === 'result') return <ResultScreen />
     if (phase === 'kelolaReveal') return <KelolaRevealScreen />
+    if (phase === 'demoQR') return <BrandMessageScreen />
     if (phase === 'leaderboard') return <LeaderboardScreen />
     if (phase === 'leadCapture') return <LeadCaptureScreen />
     if (phase === 'finished') return <BrandMessageScreen />
