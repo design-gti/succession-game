@@ -139,6 +139,7 @@ export function IntroScreen() {
   const [email, setEmail] = useState('')
   const [company, setCompany] = useState('')
   const [avatarId, setAvatarId] = useState(0)
+  const [touched, setTouched] = useState(false)
   const [beat, setBeat] = useState(0)
   const [scrolled, setScrolled] = useState(false)
   const lastScrollRef = useRef(0)
@@ -262,8 +263,8 @@ export function IntroScreen() {
         className="w-full max-w-sm flex flex-col gap-6"
       >
         <div className="text-center">
-          <h2 className="text-2xl font-black text-[#f0f4f8]">What's your name?</h2>
-          <p className="text-white/50 text-sm mt-1">Used for the leaderboard</p>
+          <h2 className="text-2xl font-black text-[#f0f4f8]">Before you play</h2>
+          <p className="text-white/50 text-sm mt-1">All fields required</p>
         </div>
 
         {/* Avatar picker */}
@@ -290,37 +291,52 @@ export function IntroScreen() {
           </div>
         </div>
 
-        <input
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && actions.submitName(name, avatarId, email, company)}
-          placeholder="Your name or nickname"
-          maxLength={24}
-          autoFocus
-          className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-[#f0f4f8] text-base
-            placeholder:text-white/25 outline-none focus:border-brand transition-colors"
-        />
-        <input
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="Work email"
-          className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-[#f0f4f8] text-base
-            placeholder:text-white/25 outline-none focus:border-brand transition-colors"
-        />
-        <input
-          type="text"
-          value={company}
-          onChange={e => setCompany(e.target.value)}
-          placeholder="Company"
-          maxLength={64}
-          className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-[#f0f4f8] text-base
-            placeholder:text-white/25 outline-none focus:border-brand transition-colors"
-        />
-        <PrimaryButton onClick={() => actions.submitName(name, avatarId, email, company)}>
-          Start →
-        </PrimaryButton>
+        {(() => {
+          const err = (field: string) => touched && !field.trim()
+          const cls = (field: string) =>
+            `w-full px-4 py-4 rounded-2xl bg-white/5 border text-[#f0f4f8] text-base placeholder:text-white/25 outline-none focus:border-brand transition-colors ${err(field) ? 'border-red-500/70' : 'border-white/10'}`
+          const canStart = name.trim() && email.trim() && company.trim()
+          function handleStart() {
+            setTouched(true)
+            if (!canStart) return
+            actions.submitName(name, avatarId, email, company)
+          }
+          return (
+            <>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleStart()}
+                placeholder="Name or nickname *"
+                maxLength={24}
+                autoFocus
+                className={cls(name)}
+              />
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Work email *"
+                className={cls(email)}
+              />
+              <input
+                type="text"
+                value={company}
+                onChange={e => setCompany(e.target.value)}
+                placeholder="Company *"
+                maxLength={64}
+                className={cls(company)}
+              />
+              {touched && !canStart && (
+                <p className="text-red-400 text-xs text-center -mt-2">Please fill in all fields to continue.</p>
+              )}
+              <PrimaryButton onClick={handleStart}>
+                Start →
+              </PrimaryButton>
+            </>
+          )
+        })()}
       </motion.div>
     </div>
   )
