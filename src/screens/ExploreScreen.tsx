@@ -226,6 +226,7 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
   return (
     <div
       ref={nodeRef}
+      data-tutorial="vacant"
       className={`relative rounded-xl border-2 border-dashed flex items-center justify-center transition-all duration-200 flex-shrink-0 overflow-hidden
         ${small ? 'w-[76px] h-[48px]' : 'w-[96px] h-[56px]'}
         ${isDragOver
@@ -537,7 +538,6 @@ function ArcGauge({ value }: { value: number }) {
 function OrgTree({
   assignments, activeVacancyId, vacancyQueue, nodeRef, isDragOver, onDrop, onDragMove,
   activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect, initialZoom = 1.0,
-  tutorialHighlight = false,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -553,7 +553,6 @@ function OrgTree({
   onMovePlaced: (fromPosId: PositionId, candidateId: CandidateId, point: { x: number; y: number }) => boolean
   onSelect: (id: CandidateId) => void
   initialZoom?: number
-  tutorialHighlight?: boolean
 }) {
   const isDragging = activeDragId !== null
   const [zoom, setZoom] = useState(initialZoom)
@@ -700,17 +699,8 @@ function OrgTree({
         onSelect={() => onSelect(occupant)}
       />
     )
-    if (tutorialHighlight && posId === 'andi') {
-      return (
-        <div className="relative">
-          <motion.div
-            className="absolute inset-[-5px] rounded-[20px] border-2 border-brand/70 pointer-events-none z-10"
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-          />
-          {slotNode}
-        </div>
-      )
+    if (posId === 'andi') {
+      return <div data-tutorial="internal-card">{slotNode}</div>
     }
     return slotNode
   }
@@ -731,24 +721,6 @@ function OrgTree({
         className="w-7 h-7 rounded-lg bg-white/10 border border-white/15 text-white/60 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none"
       >−</button>
     </div>
-    {/* Tutorial: INTERNAL badge */}
-    <AnimatePresence>
-      {tutorialHighlight && (
-        <motion.div
-          key="internal-badge"
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ delay: 0.5, duration: 0.3 }}
-          className="absolute top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none whitespace-nowrap"
-        >
-          <div className="bg-brand/15 border border-brand/30 rounded-full px-3 py-1 flex items-center gap-1.5">
-            <span className="text-brand text-[9px] font-bold uppercase tracking-widest">Internal</span>
-            <span className="text-white/35 text-[9px]">· tarik dari org chart ini</span>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
     {/* Pan/explore hint */}
     <AnimatePresence>
       {!explored && (
@@ -973,7 +945,7 @@ function CandidateSheet({
 function PortraitBottomPanel({
   assignments, activeVacancyId, allFilled,
   onExternalDrop, onExternalDragMove, onConfirm,
-  activeDragId, onDragStart, onDragEnd, onSelect, tutorialHighlight = false,
+  activeDragId, onDragStart, onDragEnd, onSelect, forceExpand = false,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -985,17 +957,16 @@ function PortraitBottomPanel({
   onDragStart: (id: CandidateId) => void
   onDragEnd: () => void
   onSelect: (id: CandidateId) => void
-  tutorialHighlight?: boolean
+  forceExpand?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const overallFit = computeOverallFit(assignments)
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
   const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
 
-  // Auto-expand when dragging or during tutorial
   useEffect(() => {
-    if (activeDragId !== null || tutorialHighlight) setExpanded(true)
-  }, [activeDragId, tutorialHighlight])
+    if (activeDragId !== null || forceExpand) setExpanded(true)
+  }, [activeDragId, forceExpand])
 
   return (
     <div className="border-t border-white/10 flex-shrink-0">
@@ -1005,12 +976,12 @@ function PortraitBottomPanel({
         className="flex gap-2 px-3 pt-2 pb-1.5 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
       >
-        <div className="w-[80px] flex-shrink-0 rounded-xl border border-white/10 bg-[#1a2840] pt-1 pb-0 px-1">
+        <div data-tutorial="arc-gauge" className="w-[80px] flex-shrink-0 rounded-xl border border-white/10 bg-[#1a2840] pt-1 pb-0 px-1">
           <ArcGauge value={overallFit} />
         </div>
         <div className="flex-1 min-w-0">
           {vacantPos ? (
-            <div className="h-full rounded-xl border border-red-500/25 bg-red-500/5 px-2 py-1">
+            <div data-tutorial="needs-panel" className="h-full rounded-xl border border-red-500/25 bg-red-500/5 px-2 py-1">
               <div className="flex items-center justify-between mb-0.5">
                 <p className="text-red-400 text-[6px] font-bold uppercase tracking-widest">Needs</p>
                 <p className="text-[#f0f4f8] text-[7px] font-bold">{vacantPos.shortRole}</p>
@@ -1036,35 +1007,18 @@ function PortraitBottomPanel({
 
       {/* External pool + confirm — only when expanded */}
       <AnimatePresence initial={false}>
-        {expanded && (
+        {(expanded || forceExpand) && (
           <motion.div
             key="expanded"
-            initial={{ height: 0, opacity: 0 }}
+            initial={forceExpand ? false : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            transition={{ duration: forceExpand ? 0 : 0.22, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-2 px-3 pt-1 pb-3">
-              <div className={tutorialHighlight ? 'rounded-xl border border-amber-400/35 bg-amber-500/5 px-2 pt-1.5 pb-1' : ''}>
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <p className="text-white/40 text-[7px] uppercase tracking-widest text-center">External Pool</p>
-                  <AnimatePresence>
-                    {tutorialHighlight && (
-                      <motion.span
-                        key="ext-badge"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="bg-amber-500/20 border border-amber-400/40 rounded-full px-2 py-0.5 flex items-center gap-1 whitespace-nowrap"
-                      >
-                        <span className="text-amber-400 text-[8px] font-bold uppercase tracking-widest">External</span>
-                        <span className="text-[8px]">😈</span>
-                        <span className="text-white/35 text-[8px]">bajak dari luar</span>
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </div>
+              <div data-tutorial="external-pool">
+                <p className="text-white/40 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
                 <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
                   {EXTERNAL_CANDIDATES.map(c => (
                     <ExternalCandidateSlot
@@ -1230,6 +1184,113 @@ function RightPanel({
   )
 }
 
+// ─── Walkthrough Overlay ──────────────────────────────────────────────────────
+
+const WALK_STEPS = [
+  { target: 'canvas',        pos: 'bottom' as const, text: 'Ini org chart perusahaanmu. Drag untuk jelajahi, pinch untuk zoom.' },
+  { target: 'vacant',        pos: 'bottom' as const, text: 'Sales Manager resign. Kursi merah ini harus kamu isi sebelum waktu habis.' },
+  { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis putih = level minimum yang dibutuhkan untuk 5 aspek ini.' },
+  { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam — tarik siapa pun di org chart. Tap kartu untuk lihat profil & bandingkan aspeknya. Ingat: kursi lamanya jadi kosong.' },
+  { target: 'external-pool', pos: 'top'    as const, text: 'Atau rekrut dari luar. Tidak meninggalkan lubang di tim, tapi cek readiness-nya.' },
+  { target: 'arc-gauge',     pos: 'top'    as const, text: 'Team Fitness = seberapa cocok susunanmu dengan standar posisi. Skor akhir dihitung dari sini + sisa waktu.' },
+  { target: 'timer',         pos: 'bottom' as const, text: '60 detik. Kecocokan lebih penting dari kecepatan. Siap?' },
+]
+
+function WalkthroughOverlay({ step, onStep, onDone, containerRef }: {
+  step: number
+  onStep: (s: number) => void
+  onDone: () => void
+  containerRef: React.RefObject<HTMLDivElement>
+}) {
+  const [spot, setSpot] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  const [cH, setCH] = useState(0)
+  const PAD = 12
+  const current = WALK_STEPS[step]
+  const isLast = step === WALK_STEPS.length - 1
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const container = containerRef.current
+      if (!container) return
+      const cRect = container.getBoundingClientRect()
+      setCH(cRect.height)
+      const el = container.querySelector(`[data-tutorial="${current.target}"]`)
+      if (!el) { setSpot(null); return }
+      const r = el.getBoundingClientRect()
+      setSpot({ x: r.x - cRect.x - PAD, y: r.y - cRect.y - PAD, w: r.width + PAD * 2, h: r.height + PAD * 2 })
+    }, 120)
+    return () => clearTimeout(t)
+  }, [step])
+
+  function advance() {
+    if (isLast) { onDone(); return }
+    onStep(step + 1)
+  }
+
+  const tooltipBelow = current.pos === 'bottom'
+  const tooltipStyle: React.CSSProperties = spot
+    ? tooltipBelow
+      ? { top: Math.min(spot.y + spot.h + 10, cH - 160) }
+      : { bottom: Math.max(cH - spot.y + 10, 10) }
+    : { bottom: 120 }
+
+  return (
+    <div className="absolute inset-0 z-40" onClick={advance}>
+      {/* Dark overlay with spotlight hole */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {spot ? (
+          <motion.div
+            className="absolute"
+            style={{ borderRadius: 14, boxShadow: '0 0 0 9999px rgba(0,0,0,0.8)' }}
+            animate={{ left: spot.x, top: spot.y, width: spot.w, height: spot.h }}
+            initial={false}
+            transition={{ type: 'spring', damping: 30, stiffness: 240 }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-black/80" />
+        )}
+      </div>
+
+      {/* Tooltip card */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: tooltipBelow ? 8 : -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="absolute left-4 right-4 pointer-events-auto"
+          style={tooltipStyle}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="bg-[#1a2840] border border-white/15 rounded-2xl px-4 py-3 shadow-2xl">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <p className="text-[#f0f4f8] text-[13px] leading-snug flex-1">{current.text}</p>
+              <span className="text-white/30 text-[10px] font-mono flex-shrink-0 mt-0.5 tabular-nums">
+                {step + 1}/{WALK_STEPS.length}
+              </span>
+            </div>
+            {/* Progress dots */}
+            <div className="flex gap-1 mb-3">
+              {WALK_STEPS.map((_, i) => (
+                <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === step ? 'w-5 bg-brand' : i < step ? 'w-1.5 bg-brand/40' : 'w-1.5 bg-white/15'}`} />
+              ))}
+            </div>
+            <div className="flex items-center justify-between">
+              <button onClick={onDone} className="text-white/30 text-xs py-1 active:text-white/60">
+                Lewati
+              </button>
+              <PrimaryButton onClick={advance}>
+                {isLast ? 'Mulai! →' : 'Lanjut →'}
+              </PrimaryButton>
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}
+
 // ─── Explore Screen ───────────────────────────────────────────────────────────
 
 export function ExploreScreen() {
@@ -1242,21 +1303,14 @@ export function ExploreScreen() {
   const [selectedCandidateId, setSelectedCandidateId] = useState<CandidateId | null>(null)
   const [timeLeft, setTimeLeft] = useState(60)
   const [timerStart, setTimerStart] = useState<number | null>(null)
-  const [showToast, setShowToast] = useState(false)
+  const [walkthroughStep, setWalkthroughStep] = useState(0)
+  const walkthroughContainerRef = useRef<HTMLDivElement>(null)
   const tutorialDone = timerStart !== null
 
   const activeVacancyId = vacancyQueue[0] ?? null
   const allFilled = vacancyQueue.length === 0
   const smOccupant = assignments['sales_manager'] ?? null
   const isUrgent = tutorialDone && timeLeft <= 10
-
-  function triggerFirstDrop() {
-    if (timerStart !== null) return
-    const now = Date.now()
-    setTimerStart(now)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 2500)
-  }
 
   function isOverVacancy(point: { x: number; y: number }) {
     const rect = vacantRef.current?.getBoundingClientRect()
@@ -1338,7 +1392,6 @@ export function ExploreScreen() {
         { candidateId }
       )
     }
-    triggerFirstDrop()
     return true
   }
 
@@ -1366,12 +1419,11 @@ export function ExploreScreen() {
     )
     setAssignments(newA)
     setVacancyQueue(newQ)
-    triggerFirstDrop()
     return true
   }
 
   return (
-    <div className="relative flex flex-col h-full overflow-hidden">
+    <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden">
       {/* Urgency vignette */}
       {isUrgent && (
         <div
@@ -1380,73 +1432,19 @@ export function ExploreScreen() {
         />
       )}
 
-      <TimerBar
-        timerStartedAt={timerStart}
-        onTick={setTimeLeft}
-        onExpire={() => {
-          const pick = smOccupant ?? null
-          actions.timeUp(pick, computeOverallFit(assignments))
-        }}
-      />
-
-      {/* Tutorial hint — fades away after first drop */}
-      <AnimatePresence>
-        {!tutorialDone && (
-          <motion.div
-            key="tutorial-banner"
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.35, delay: 0.5 }}
-            className="pointer-events-none z-30 px-4 pt-1 pb-2"
-          >
-            <div className="rounded-xl border border-brand/30 bg-brand/10 px-3 py-2 flex items-center gap-3">
-              {/* Ghost hand animation */}
-              <motion.span
-                className="text-xl flex-shrink-0 select-none"
-                animate={{ y: [0, -8, 0], rotate: [0, -10, 0] }}
-                transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
-              >
-                👆
-              </motion.span>
-              <div className="min-w-0">
-                <p className="text-brand text-[11px] font-bold leading-tight">Tarik kandidat ke slot merah</p>
-                <p className="text-white/40 text-[9px] mt-0.5">Timer mulai setelah drag pertama</p>
-              </div>
-              {/* Bouncing arrow toward canvas */}
-              <motion.span
-                className="text-brand text-sm flex-shrink-0"
-                animate={{ y: [0, 4, 0] }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
-              >
-                ↓
-              </motion.span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* "Timer dimulai!" toast */}
-      <AnimatePresence>
-        {showToast && (
-          <motion.div
-            key="toast"
-            initial={{ opacity: 0, scale: 0.9, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 8 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className="absolute top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-          >
-            <div className="bg-[#1a2840] border border-amber-400/40 rounded-xl px-4 py-2 flex items-center gap-2 shadow-lg">
-              <span className="text-base">⏱</span>
-              <p className="text-amber-400 text-xs font-bold whitespace-nowrap">Timer dimulai! 60 detik</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div data-tutorial="timer">
+        <TimerBar
+          timerStartedAt={timerStart}
+          onTick={setTimeLeft}
+          onExpire={() => {
+            const pick = smOccupant ?? null
+            actions.timeUp(pick, computeOverallFit(assignments))
+          }}
+        />
+      </div>
 
       <div className="flex flex-col flex-1 min-h-0">
-        <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 flex flex-col" data-tutorial="canvas">
           <OrgTree
             assignments={assignments}
             activeVacancyId={activeVacancyId}
@@ -1462,7 +1460,6 @@ export function ExploreScreen() {
             onMovePlaced={handleMovePlaced}
             onSelect={setSelectedCandidateId}
             initialZoom={0.55}
-            tutorialHighlight={!tutorialDone}
           />
         </div>
         <PortraitBottomPanel
@@ -1480,9 +1477,19 @@ export function ExploreScreen() {
           onDragStart={(id) => setActiveDragId(id)}
           onDragEnd={() => setActiveDragId(null)}
           onSelect={setSelectedCandidateId}
-          tutorialHighlight={!tutorialDone}
+          forceExpand={!tutorialDone}
         />
       </div>
+
+      {/* 7-step walkthrough — shown until timer started */}
+      {!tutorialDone && (
+        <WalkthroughOverlay
+          step={walkthroughStep}
+          onStep={setWalkthroughStep}
+          onDone={() => setTimerStart(Date.now())}
+          containerRef={walkthroughContainerRef}
+        />
+      )}
 
       {/* Candidate detail bottom sheet */}
       <AnimatePresence>
