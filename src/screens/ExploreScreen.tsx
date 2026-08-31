@@ -954,7 +954,6 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
       <p className="text-slate-400 text-[6.5px] leading-none text-center truncate max-w-[56px]">
         {candidate.currentRole.split(' ').slice(0, 2).join(' ')}
       </p>
-      <ReadinessBadge readiness={candidate.readiness} tiny />
     </motion.div>
   )
 }
