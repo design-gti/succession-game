@@ -48,6 +48,63 @@ const ASPECT_LABELS: { key: keyof Assessment; label: string }[] = [
   { key: 'influence',  label: 'INFL' },
 ]
 
+const ASPECT_CONFIG: Record<keyof Assessment, {
+  color: string; gradFrom: string; gradTo: string
+  rowBg: string; iconBg: string; glow: string
+  icon: React.ReactNode
+}> = {
+  leadership: {
+    color: '#3B82F6',
+    gradFrom: '#93C5FD',
+    gradTo: '#3B82F6',
+    rowBg: 'rgba(59,130,246,0.05)',
+    iconBg: 'rgba(59,130,246,0.12)',
+    glow: 'rgba(59,130,246,0.35)',
+    icon: (
+      // Shield/badge leadership icon
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1L2 3.5V7.5C2 11 5 13.8 8 15C11 13.8 14 11 14 7.5V3.5L8 1Z" fill="#3B82F6" opacity="0.9"/>
+        <path d="M6 8L7.5 9.5L10.5 6.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+  },
+  drive: {
+    color: '#8B5CF6',
+    gradFrom: '#C4B5FD',
+    gradTo: '#8B5CF6',
+    rowBg: 'rgba(139,92,246,0.05)',
+    iconBg: 'rgba(139,92,246,0.12)',
+    glow: 'rgba(139,92,246,0.35)',
+    icon: (
+      // Rocket drive icon
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1C8 1 11 3 11 7L9.5 8.5L7.5 8.5L6 7C6 3 8 1 8 1Z" fill="#8B5CF6" opacity="0.9"/>
+        <path d="M6 7L5 10L7 9M10 7L11 10L9 9" stroke="#8B5CF6" strokeWidth="1" strokeLinecap="round"/>
+        <circle cx="8" cy="6.5" r="1" fill="white" opacity="0.9"/>
+        <path d="M6.5 10.5C6.5 11.5 7 12.5 8 13C9 12.5 9.5 11.5 9.5 10.5" stroke="#8B5CF6" strokeWidth="1" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  influence: {
+    color: '#06B6D4',
+    gradFrom: '#A5F3FC',
+    gradTo: '#06B6D4',
+    rowBg: 'rgba(6,182,212,0.05)',
+    iconBg: 'rgba(6,182,212,0.12)',
+    glow: 'rgba(6,182,212,0.35)',
+    icon: (
+      // People/network influence icon
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="5" r="2" fill="#06B6D4" opacity="0.9"/>
+        <circle cx="3.5" cy="8" r="1.5" fill="#06B6D4" opacity="0.7"/>
+        <circle cx="12.5" cy="8" r="1.5" fill="#06B6D4" opacity="0.7"/>
+        <path d="M5.5 6.5L3.5 8M10.5 6.5L12.5 8" stroke="#06B6D4" strokeWidth="1" strokeLinecap="round"/>
+        <path d="M4 11C4 10 5.8 9.5 8 9.5C10.2 9.5 12 10 12 11" stroke="#06B6D4" strokeWidth="1.2" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+}
+
 const INITIAL_ASSIGNMENTS: Partial<Record<PositionId, CandidateId>> = {
   maya: 'maya', dimas: 'dimas', andi: 'andi', rani: 'rani', fajar: 'fajar',
   bintang: 'bintang', rizky: 'rizky',
@@ -1086,24 +1143,46 @@ function CandidateSheet({
 
 // ─── Neutral aspect bars (no match color coding) ─────────────────────────────
 
+function AspectRow({ aspectKey, label, children }: { aspectKey: keyof Assessment; label: string; children: React.ReactNode }) {
+  const cfg = ASPECT_CONFIG[aspectKey]
+  return (
+    <div
+      className="flex items-center gap-2 rounded-lg px-1.5 py-[5px]"
+      style={{ background: cfg.rowBg }}
+    >
+      {/* Icon bubble */}
+      <div
+        className="flex-shrink-0 flex items-center justify-center rounded-md"
+        style={{ width: 20, height: 20, background: cfg.iconBg }}
+      >
+        {cfg.icon}
+      </div>
+      {/* Label */}
+      <span className="text-[9px] font-bold tracking-wide w-[24px] flex-shrink-0" style={{ color: cfg.color }}>{label}</span>
+      {children}
+    </div>
+  )
+}
+
 function NeutralBars({ standard }: { standard: Assessment }) {
   return (
-    <div className="w-full flex flex-col gap-[5px]">
+    <div className="w-full flex flex-col gap-[3px]">
       {ASPECT_LABELS.map(({ key, label }) => {
+        const cfg = ASPECT_CONFIG[key]
         const std = standard[key]
         return (
-          <div key={key} className="flex items-center gap-2">
-            <span className="text-slate-400 text-[9px] font-semibold tracking-wide w-[30px] text-right flex-shrink-0">{label}</span>
-            <div className="relative flex-1 h-[6px] rounded-full bg-slate-100 overflow-hidden">
+          <AspectRow key={key} aspectKey={key} label={label}>
+            <div className="relative flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: 'rgba(148,163,184,0.18)' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${std}%` }}
-                transition={{ duration: 0.45, ease: 'easeOut', delay: 0.05 }}
-                className="absolute inset-y-0 left-0 rounded-full bg-blue-300"
+                transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${cfg.gradFrom}, ${cfg.gradTo})` }}
               />
             </div>
-            <span className="text-blue-400 text-[9px] font-semibold w-[18px] flex-shrink-0 tabular-nums">{std}</span>
-          </div>
+            <span className="text-[9px] font-bold w-[18px] flex-shrink-0 tabular-nums" style={{ color: cfg.color }}>{std}</span>
+          </AspectRow>
         )
       })}
     </div>
@@ -1112,27 +1191,44 @@ function NeutralBars({ standard }: { standard: Assessment }) {
 
 function ComparisonBars({ standard, assessment }: { standard: Assessment; assessment: Assessment }) {
   return (
-    <div className="w-full flex flex-col gap-[5px]">
+    <div className="w-full flex flex-col gap-[3px]">
       {ASPECT_LABELS.map(({ key, label }) => {
+        const cfg = ASPECT_CONFIG[key]
         const std = standard[key]
         const val = assessment[key]
         return (
-          <div key={key} className="flex items-center gap-2">
-            <span className="text-slate-400 text-[9px] font-semibold tracking-wide w-[30px] text-right flex-shrink-0">{label}</span>
-            <div className="relative flex-1 h-[6px] rounded-full bg-slate-100">
-              {/* Target line */}
-              <div
-                className="absolute top-[-3px] bottom-[-3px] w-[2px] bg-slate-400 rounded-full z-10"
-                style={{ left: `${std}%` }}
+          <AspectRow key={key} aspectKey={key} label={label}>
+            <div className="relative flex-1 h-[6px] rounded-full" style={{ background: 'rgba(148,163,184,0.18)' }}>
+              {/* Filled track up to candidate value */}
+              <motion.div
+                className="absolute inset-y-0 left-0 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${val}%` }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                style={{ background: `linear-gradient(90deg, ${cfg.gradFrom}, ${cfg.gradTo})`, opacity: 0.5 }}
               />
-              {/* Candidate dot */}
+              {/* Standard marker — thin neutral line */}
               <div
-                className="absolute top-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full bg-slate-600 border-2 border-white shadow-sm z-20"
-                style={{ left: `calc(${val}% - 5px)` }}
+                className="absolute top-[-4px] bottom-[-4px] rounded-full z-10"
+                style={{ left: `${std}%`, width: 1.5, background: 'rgba(100,116,139,0.55)' }}
+              />
+              {/* Candidate bubble marker — glossy */}
+              <motion.div
+                className="absolute top-1/2 z-20"
+                initial={{ x: 0, y: '-50%', scale: 0.5, opacity: 0 }}
+                animate={{ x: `calc(${val}cqw - 6px)`, y: '-50%', scale: 1, opacity: 1 }}
+                style={{
+                  left: `${val}%`,
+                  transform: 'translate(-50%, -50%)',
+                  width: 12, height: 12,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle at 38% 32%, white, ${cfg.color})`,
+                  boxShadow: `0 0 0 1.5px white, 0 0 6px ${cfg.glow}`,
+                }}
               />
             </div>
-            <span className="text-slate-400 text-[9px] w-[18px] flex-shrink-0 tabular-nums">{val}</span>
-          </div>
+            <span className="text-[9px] font-bold w-[18px] flex-shrink-0 tabular-nums" style={{ color: cfg.color }}>{val}</span>
+          </AspectRow>
         )
       })}
     </div>
@@ -1188,9 +1284,29 @@ function PortraitBottomPanel({
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-2 pb-0">
-        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">Role Match Workspace</p>
+        <div className="flex items-center gap-1.5">
+          {/* Gradient icon */}
+          <div className="flex-shrink-0" style={{
+            width: 16, height: 16, borderRadius: 5,
+            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="9" height="9" viewBox="0 0 14 14" fill="none">
+              <rect x="1" y="5" width="4" height="8" rx="1" fill="white" opacity="0.9"/>
+              <rect x="5" y="3" width="4" height="10" rx="1" fill="white"/>
+              <rect x="9" y="6" width="4" height="7" rx="1" fill="white" opacity="0.75"/>
+            </svg>
+          </div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">Role Match Workspace</p>
+        </div>
         {vacantPos && (
-          <p className="text-[9px] font-bold text-[#0f172a] truncate max-w-[120px]">{vacantPos.role}</p>
+          <div style={{
+            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+            borderRadius: 8, padding: '2px 8px',
+            boxShadow: '0 2px 8px rgba(59,130,246,0.25)',
+          }}>
+            <p className="text-[9px] font-bold text-white truncate max-w-[110px]">{vacantPos.role}</p>
+          </div>
         )}
       </div>
 
@@ -1229,15 +1345,20 @@ function PortraitBottomPanel({
               className="flex flex-col gap-1.5"
             >
               <div className="flex items-center justify-between">
-                <p className="text-[8px] text-slate-400 uppercase tracking-widest">Perbandingan</p>
-                <div className="flex items-center gap-2 text-[8px] text-slate-400">
+                <p className="text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Perbandingan</p>
+                <div className="flex items-center gap-2.5 text-[8px] text-slate-400">
                   <span className="flex items-center gap-1">
-                    <span className="inline-block w-[8px] h-[8px] rounded-full bg-slate-600 flex-shrink-0" />
-                    {selectedCandidate.name.split(' ')[0]}
+                    {/* Glossy candidate dot in legend */}
+                    <span className="inline-block flex-shrink-0" style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: 'radial-gradient(circle at 38% 32%, white, #3B82F6)',
+                      boxShadow: '0 0 0 1px white, 0 0 4px rgba(59,130,246,0.5)',
+                    }} />
+                    <span className="text-slate-500 font-semibold">{selectedCandidate.name.split(' ')[0]}</span>
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="inline-block w-[2px] h-[8px] rounded-full bg-slate-400 flex-shrink-0" />
-                    Standar
+                    <span className="inline-block flex-shrink-0 rounded-full" style={{ width: 1.5, height: 8, background: 'rgba(100,116,139,0.55)' }} />
+                    <span className="text-slate-400">Standar</span>
                   </span>
                 </div>
               </div>
