@@ -1,11 +1,30 @@
+import { motion } from 'framer-motion'
 import { GameProvider, useGame } from './game/GameProvider'
 import { IntroScreen } from './screens/IntroScreen'
+import { LeadCaptureScreen } from './screens/LeadCaptureScreen'
 import { ExploreScreen } from './screens/ExploreScreen'
-import { FinalRevealScreen } from './screens/FinalRevealScreen'
 import { ResultScreen } from './screens/ResultScreen'
 import { KelolaRevealScreen } from './screens/KelolaRevealScreen'
-import { BrandMessageScreen } from './screens/BrandMessageScreen'
-import { LeadCaptureScreen } from './screens/LeadCaptureScreen'
+
+function FinishedScreen() {
+  return (
+    <div className="flex flex-col h-full items-center justify-center px-8 text-center gap-4 bg-[#f4f7fb]">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center gap-3"
+      >
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </div>
+        <p className="text-[#0f172a] font-black text-xl">Terima kasih sudah main!</p>
+        <p className="text-slate-500 text-sm">Yuk ngobrol langsung sama tim Talentlytica di booth.</p>
+      </motion.div>
+    </div>
+  )
+}
 
 function GameRouter() {
   const { state } = useGame()
@@ -13,13 +32,11 @@ function GameRouter() {
 
   function screen() {
     if (phase === 'intro') return <IntroScreen />
+    if (phase === 'leadCapture') return <LeadCaptureScreen />
     if (phase === 'exploring') return <ExploreScreen />
-    if (phase === 'finalReveal') return <FinalRevealScreen />
     if (phase === 'result') return <ResultScreen />
     if (phase === 'kelolaReveal') return <KelolaRevealScreen />
-    if (phase === 'demoQR') return <BrandMessageScreen />
-    if (phase === 'leadCapture') return <LeadCaptureScreen />
-    if (phase === 'finished') return <BrandMessageScreen />
+    if (phase === 'finished') return <FinishedScreen />
     return null
   }
 

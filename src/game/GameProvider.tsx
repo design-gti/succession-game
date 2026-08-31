@@ -7,12 +7,9 @@ interface GameContextValue {
   state: GameState
   actions: {
     startGame: () => void
-    confirmExplore: (finalPickId: CandidateId, overallFit: number) => void
-    showResult: () => void
-    showKelolaReveal: () => void
-    showDemoQR: () => void
-    showLeadCapture: () => void
     submitLeadInfo: (name: string, email: string, company: string) => void
+    confirmExplore: (finalPickId: CandidateId, overallFit: number) => void
+    showKelolaReveal: () => void
     finish: () => void
     restart: () => void
   }
@@ -58,7 +55,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         })
       }
 
-      if (currPhase === 'demoQR' && state.score && state.playerEmail) {
+      if (currPhase === 'finished' && state.score && state.playerEmail) {
         submitLead({
           session_id: sid,
           name: state.playerName,
@@ -81,27 +78,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const actions: GameContextValue['actions'] = {
     startGame: () => dispatch({ type: 'START_GAME' }),
 
+    submitLeadInfo: (name: string, email: string, company: string) => {
+      dispatch({ type: 'SUBMIT_LEAD_INFO', name, email, company })
+    },
+
     confirmExplore: (finalPickId: CandidateId, overallFit: number) => {
       dispatch({ type: 'CONFIRM_EXPLORE', finalPickId, overallFit })
       logEvent('explore_confirmed', state.sessionId, { finalPickId, overallFit })
     },
 
-    showResult: () => dispatch({ type: 'SHOW_RESULT' }),
-
     showKelolaReveal: () => {
       dispatch({ type: 'SHOW_KELOLA_REVEAL' })
       logEvent('kelola_reveal_viewed', state.sessionId)
-    },
-
-    showDemoQR: () => {
-      dispatch({ type: 'SHOW_DEMO_QR' })
-      logEvent('demo_qr_shown', state.sessionId)
-    },
-
-    showLeadCapture: () => dispatch({ type: 'SHOW_LEAD_CAPTURE' }),
-
-    submitLeadInfo: (name: string, email: string, company: string) => {
-      dispatch({ type: 'SUBMIT_LEAD_INFO', name, email, company })
     },
 
     finish: () => dispatch({ type: 'FINISH' }),

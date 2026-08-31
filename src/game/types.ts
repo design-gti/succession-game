@@ -5,12 +5,10 @@ export type CandidateId =
 
 export type Phase =
   | { name: 'intro' }
+  | { name: 'leadCapture' }
   | { name: 'exploring' }
-  | { name: 'finalReveal' }
   | { name: 'result' }
   | { name: 'kelolaReveal' }
-  | { name: 'demoQR' }
-  | { name: 'leadCapture' }
   | { name: 'finished' }
 
 export interface ScoreBreakdown {
@@ -39,10 +37,7 @@ export interface GameState {
 export type GameAction =
   | { type: 'START_GAME' }
   | { type: 'CONFIRM_EXPLORE'; finalPickId: CandidateId; overallFit: number }
-  | { type: 'SHOW_RESULT' }
   | { type: 'SHOW_KELOLA_REVEAL' }
-  | { type: 'SHOW_DEMO_QR' }
-  | { type: 'SHOW_LEAD_CAPTURE' }
   | { type: 'SUBMIT_LEAD_INFO'; name: string; email: string; company: string }
   | { type: 'FINISH' }
   | { type: 'RESTART' }

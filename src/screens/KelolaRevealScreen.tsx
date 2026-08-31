@@ -214,18 +214,48 @@ export function KelolaRevealScreen() {
 
   if (isFinal) {
     return (
-      <div className="flex flex-col h-full items-center justify-center px-6 text-center gap-8 bg-[#f4f7fb]">
+      <div className="flex flex-col h-full items-center justify-center px-6 text-center gap-6 bg-[#f4f7fb]">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-5 max-w-sm"
+          className="flex flex-col items-center gap-5 max-w-sm w-full"
         >
           <p className="text-slate-600 text-base leading-relaxed">
-            The difference? In Kelola the data is{' '}
-            <span className="text-[#0f172a] font-black">real</span> — and the decisions{' '}
-            <span className="text-brand font-black">actually matter</span>.
+            Mau lihat bagaimana Kelola bekerja di organisasimu?{' '}
+            <span className="text-[#0f172a] font-black">Tim kami ada di sini.</span>
           </p>
-          <div className="flex gap-2 pt-1 flex-wrap justify-center">
+
+          {/* Contact card placeholder */}
+          <div className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 shadow-sm flex flex-col gap-3 text-left">
+            <p className="text-brand text-[10px] font-bold uppercase tracking-widest">Hubungi Kami</p>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D6FF2" strokeWidth="2" strokeLinecap="round">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.0 2.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-[9px] uppercase tracking-wider">WhatsApp</p>
+                  <p className="text-[#0f172a] text-sm font-semibold">+62 XXX-XXXX-XXXX</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D6FF2" strokeWidth="2" strokeLinecap="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-[9px] uppercase tracking-wider">Email</p>
+                  <p className="text-[#0f172a] text-sm font-semibold">hello@talentlytica.com</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 flex-wrap justify-center">
             {REVEALS.map((r, i) => (
               <div key={i} className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-sm">
                 <div className="w-1.5 h-1.5 rounded-full bg-brand" />
@@ -234,14 +264,15 @@ export function KelolaRevealScreen() {
             ))}
           </div>
         </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="w-full max-w-sm"
         >
-          <PrimaryButton onClick={() => actions.showDemoQR()}>
-            See the Real Thing →
+          <PrimaryButton onClick={() => actions.finish()}>
+            Selesai →
           </PrimaryButton>
         </motion.div>
       </div>

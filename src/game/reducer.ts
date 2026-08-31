@@ -25,6 +25,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, phase: { name: 'leadCapture' } }
     }
 
+    case 'SUBMIT_LEAD_INFO': {
+      return {
+        ...state,
+        playerName: action.name,
+        playerEmail: action.email,
+        playerCompany: action.company,
+        phase: p.name === 'leadCapture' ? { name: 'exploring' } : state.phase,
+        startedAt: p.name === 'leadCapture' ? Date.now() : state.startedAt,
+      }
+    }
+
     case 'CONFIRM_EXPLORE': {
       if (p.name !== 'exploring') return state
       const score = computeScore(action.overallFit)
@@ -32,13 +43,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         finalPickId: action.finalPickId,
         score,
-        phase: { name: 'finalReveal' },
+        phase: { name: 'result' },
       }
-    }
-
-    case 'SHOW_RESULT': {
-      if (p.name !== 'finalReveal') return state
-      return { ...state, phase: { name: 'result' } }
     }
 
     case 'SHOW_KELOLA_REVEAL': {
@@ -46,30 +52,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, phase: { name: 'kelolaReveal' } }
     }
 
-    case 'SHOW_DEMO_QR': {
-      if (p.name !== 'kelolaReveal') return state
-      return { ...state, phase: { name: 'demoQR' } }
-    }
-
-    case 'SHOW_LEAD_CAPTURE': {
-      if (p.name !== 'demoQR' && p.name !== 'result' && p.name !== 'kelolaReveal') return state
-      return { ...state, phase: { name: 'leadCapture' } }
-    }
-
-    case 'SUBMIT_LEAD_INFO': {
-      return {
-        ...state,
-        playerName: action.name,
-        playerEmail: action.email,
-        playerCompany: action.company,
-        // if coming from leadCapture (pre-game), advance to exploring
-        phase: p.name === 'leadCapture' ? { name: 'exploring' } : state.phase,
-        startedAt: p.name === 'leadCapture' ? Date.now() : state.startedAt,
-      }
-    }
-
     case 'FINISH': {
-      if (p.name !== 'demoQR') return state
+      if (p.name !== 'kelolaReveal') return state
       return { ...state, phase: { name: 'finished' } }
     }
 
