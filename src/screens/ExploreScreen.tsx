@@ -367,7 +367,7 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, nodeSize = 'md' }: {
         style={{
           width: sz, height: sz, borderRadius: '50%',
           border: `2px dashed ${isDragOver ? '#22c55e' : 'rgba(239,68,68,0.8)'}`,
-          background: isDragOver ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.07)',
+          background: isDragOver ? '#f0fdf4' : '#fff5f5',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           gap: 2, position: 'relative', flexShrink: 0,
           transform: isDragOver ? 'scale(1.1)' : 'scale(1)',
@@ -1250,6 +1250,7 @@ function PortraitBottomPanel({
   onExternalDrop, onExternalDragMove, onConfirm,
   activeDragId, onDragStart, onDragEnd, onSelect,
   selectedCandidateId, vacancyQueue, currentDay = 1,
+  panelHeight = null, onHeightChange, onHeightCommit,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -1264,6 +1265,9 @@ function PortraitBottomPanel({
   selectedCandidateId: CandidateId | null
   vacancyQueue: PositionId[]
   currentDay?: number
+  panelHeight?: number | null
+  onHeightChange?: (h: number) => void
+  onHeightCommit?: (h: number, naturalH: number, workspaceH: number) => void
 }) {
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
   const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
@@ -1277,19 +1281,75 @@ function PortraitBottomPanel({
     : vacantPos ? 'profile'
     : 'empty'
 
+  const panelRef = useRef<HTMLDivElement>(null)
+  const workspaceEndRef = useRef<HTMLDivElement>(null)
+  const naturalHeightRef = useRef<number>(300)
+  const workspaceHeightRef = useRef<number>(200)
+  const dragRef = useRef<{ startY: number; startH: number; naturalH: number; workspaceH: number } | null>(null)
+  const [isDraggingPanel, setIsDraggingPanel] = useState(false)
+
+  // Keep natural + workspace heights up to date when panel is in auto mode
+  useEffect(() => {
+    if (panelHeight === null && panelRef.current) {
+      naturalHeightRef.current = panelRef.current.offsetHeight
+      if (workspaceEndRef.current) {
+        const panelTop = panelRef.current.getBoundingClientRect().top
+        const dividerBottom = workspaceEndRef.current.getBoundingClientRect().bottom
+        workspaceHeightRef.current = Math.round(dividerBottom - panelTop)
+      }
+    }
+  })
+
+  function onHandlePointerDown(e: React.PointerEvent) {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const naturalH = naturalHeightRef.current
+    const workspaceH = workspaceHeightRef.current
+    const startH = panelHeight ?? naturalH
+    dragRef.current = { startY: e.clientY, startH, naturalH, workspaceH }
+    setIsDraggingPanel(true)
+  }
+  function onHandlePointerMove(e: React.PointerEvent) {
+    if (!dragRef.current) return
+    const delta = dragRef.current.startY - e.clientY
+    const next = Math.max(dragRef.current.workspaceH, Math.min(dragRef.current.naturalH, dragRef.current.startH + delta))
+    onHeightChange?.(next)
+  }
+  function onHandlePointerUp(e: React.PointerEvent) {
+    if (dragRef.current) {
+      const delta = dragRef.current.startY - e.clientY
+      const finalH = Math.max(dragRef.current.workspaceH, Math.min(dragRef.current.naturalH, dragRef.current.startH + delta))
+      onHeightCommit?.(finalH, dragRef.current.naturalH, dragRef.current.workspaceH)
+    }
+    dragRef.current = null
+    setIsDraggingPanel(false)
+  }
+
+  const isCollapsed = panelHeight !== null
+
   return (
     <div
-      className="flex-shrink-0"
+      ref={panelRef}
+      className="flex-shrink-0 flex flex-col"
       style={{
+        ...(isCollapsed ? { height: panelHeight, overflow: 'hidden' } : {}),
         background: 'white',
         borderRadius: '24px 24px 0 0',
         boxShadow: '0 -4px 24px rgba(15,23,42,0.08), 0 -1px 4px rgba(15,23,42,0.04)',
+        transition: isDraggingPanel ? 'none' : 'height 220ms cubic-bezier(0.32,0,0.67,0)',
       }}
     >
       {/* Drag handle */}
-      <div className="flex justify-center pt-2.5 pb-0">
-        <div className="w-8 h-[3px] rounded-full bg-slate-200" />
+      <div
+        className="flex justify-center pt-2.5 pb-1 flex-shrink-0 cursor-ns-resize touch-none"
+        onPointerDown={onHandlePointerDown}
+        onPointerMove={onHandlePointerMove}
+        onPointerUp={onHandlePointerUp}
+        onPointerCancel={(e) => onHandlePointerUp(e)}
+      >
+        <div className="w-8 h-[3px] rounded-full bg-slate-300" />
       </div>
+
+      <div>
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-2 pb-0">
@@ -1394,8 +1454,8 @@ function PortraitBottomPanel({
         </AnimatePresence>
       </div>
 
-      {/* Divider */}
-      <div className="mx-4 h-px bg-slate-100" />
+      {/* Divider — measured to determine workspace-only snap height */}
+      <div ref={workspaceEndRef} className="mx-4 h-px bg-slate-100" />
 
       {/* External talent */}
       <div className="px-4 pt-2 pb-1" data-tutorial="external-pool">
@@ -1435,6 +1495,8 @@ function PortraitBottomPanel({
         >
           Review Organisasi →
         </button>
+      </div>
+
       </div>
     </div>
   )
@@ -1628,24 +1690,28 @@ function GestureDemo({ step, containerRef }: {
           break
         }
         case 1: {
+          // calendar step — no gesture demo, spotlight only
+          break
+        }
+        case 2: {
           if (!vacant) return
           const c = center(vacant)
           setGeo({ kind: 'tap', start: c, end: c })
           break
         }
-        case 2: {
+        case 3: {
           const r = rectOfTarget(container, 'needs-panel')
           if (!r) return
           setGeo({ kind: 'sweep', start: { x: r.x + r.w * 0.22, y: r.y + r.h * 0.5 }, end: { x: r.x + r.w * 0.72, y: r.y + r.h * 0.5 } })
           break
         }
-        case 3: {
+        case 4: {
           const r = rectOfTarget(container, 'internal-card')
           if (!r || !vacant) return
           setGeo({ kind: 'drag', ghostId: 'andi', start: center(r), end: center(vacant) })
           break
         }
-        case 4: {
+        case 5: {
           const r = rectOfTarget(container, 'external-pool')
           if (!r) return
           const s = { x: r.x + 42, y: r.y + r.h / 2 }
@@ -1747,6 +1813,7 @@ function GestureDemo({ step, containerRef }: {
 
 const WALK_STEPS = [
   { target: 'canvas',        pos: 'bottom' as const, text: 'Ini org chart perusahaanmu. Drag untuk jelajahi, pinch untuk zoom.' },
+  { target: 'calendar',      pos: 'bottom' as const, text: 'Ini jam organisasimu. Setiap harinya ada biaya "posisi kosong" — makin cepat kamu isi, makin kecil dampaknya ke bisnis.' },
   { target: 'vacant',        pos: 'bottom' as const, text: 'Sales Manager resign. Kursi merah ini harus kamu isi!' },
   { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis = level minimum yang dibutuhkan.' },
   { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam — tarik siapa pun di org chart. Tap kartu untuk lihat profil.' },
@@ -1861,22 +1928,88 @@ function WalkthroughOverlay({ step, onStep, onDone, containerRef }: {
 // ─── CalendarWidget ───────────────────────────────────────────────────────────
 
 function CalendarWidget({ currentDay, openRoles }: { currentDay: number; openRoles: number }) {
+  const prevDayRef = useRef(currentDay)
+  const [delta, setDelta] = useState<number | null>(null)
+  const [glowing, setGlowing] = useState(false)
+
+  useEffect(() => {
+    if (currentDay !== prevDayRef.current) {
+      const d = currentDay - prevDayRef.current
+      prevDayRef.current = currentDay
+      setDelta(d)
+      setGlowing(true)
+      const t1 = setTimeout(() => setDelta(null), 1400)
+      const t2 = setTimeout(() => setGlowing(false), 700)
+      return () => { clearTimeout(t1); clearTimeout(t2) }
+    }
+  }, [currentDay])
+
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.18)' }}>
-        <svg width="9" height="9" viewBox="0 0 16 16" fill="none">
-          <rect x="1" y="2" width="14" height="13" rx="2" stroke="#3B82F6" strokeWidth="1.5"/>
-          <path d="M1 6h14" stroke="#3B82F6" strokeWidth="1.5"/>
-          <path d="M5 1v2M11 1v2" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-        <span className="text-[9px] font-black text-blue-600 leading-none">H{currentDay}</span>
+      {/* Mini calendar card */}
+      <div className="relative">
+        {/* +N Day toast */}
+        <AnimatePresence>
+          {delta !== null && (
+            <motion.div
+              key={`toast-${currentDay}`}
+              initial={{ opacity: 0, y: 4, scale: 0.85 }}
+              animate={{ opacity: 1, y: -2, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.9 }}
+              transition={{ duration: 0.28, exit: { duration: 0.5 } }}
+              className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap pointer-events-none z-10"
+            >
+              <span className="text-[9px] font-black text-brand bg-white px-1.5 py-0.5 rounded-full shadow-sm border border-brand/20">
+                +{delta} Hari
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Card */}
+        <motion.div
+          animate={glowing ? {
+            boxShadow: ['0 0 0 0px rgba(29,111,242,0)', '0 0 0 4px rgba(29,111,242,0.18)', '0 0 0 0px rgba(29,111,242,0)'],
+          } : { boxShadow: '0 0 0 0px rgba(29,111,242,0)' }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col items-center rounded-lg overflow-hidden"
+          style={{
+            width: 40,
+            background: 'white',
+            border: '1.5px solid rgba(59,130,246,0.22)',
+            boxShadow: '0 1px 4px rgba(15,23,42,0.08)',
+          }}
+        >
+          {/* Calendar header strip */}
+          <div className="w-full flex items-center justify-center gap-0.5 py-[2px]"
+            style={{ background: 'linear-gradient(135deg, #1D6FF2, #06B6D4)' }}>
+            <svg width="6" height="6" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="2" width="14" height="13" rx="2" stroke="white" strokeWidth="1.5"/>
+              <path d="M1 6h14" stroke="white" strokeWidth="1.5"/>
+              <path d="M5 1v2M11 1v2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span className="text-white text-[6px] font-bold uppercase tracking-[0.12em] leading-none">Hari</span>
+          </div>
+
+          {/* Day number with flip animation */}
+          <div className="py-1 flex items-center justify-center overflow-hidden" style={{ height: 24 }}>
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={currentDay}
+                initial={{ y: 10, opacity: 0, scaleY: 0.5 }}
+                animate={{ y: 0, opacity: 1, scaleY: 1 }}
+                exit={{ y: -10, opacity: 0, scaleY: 0.5 }}
+                transition={{ duration: 0.32, ease: [0.2, 0, 0.2, 1] }}
+                className="text-[16px] font-black leading-none tabular-nums"
+                style={{ color: '#1D6FF2', display: 'block', transformOrigin: 'center' }}
+              >
+                {currentDay}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        </motion.div>
       </div>
-      {openRoles > 0 && (
-        <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(180,130,0,0.08)', border: '1px solid rgba(180,130,0,0.2)' }}>
-          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#b45309' }} />
-          <span className="text-[9px] font-bold leading-none" style={{ color: '#b45309' }}>{openRoles} kosong</span>
-        </div>
-      )}
+
     </div>
   )
 }
@@ -1900,6 +2033,7 @@ export function ExploreScreen() {
   const [currentDay, setCurrentDay] = useState(1)
   const [vacancyOpenedAt, setVacancyOpenedAt] = useState<Partial<Record<PositionId, number>>>({ sales_manager: 1 })
   const [placements, setPlacements] = useState<PlacementEntry[]>([])
+  const [panelHeight, setPanelHeight] = useState<number | null>(null)
   useEffect(() => {
     const id = setInterval(() => setCurrentDay(d => d + 1), 2 * 60 * 1000)
     return () => clearInterval(id)
@@ -2061,34 +2195,43 @@ export function ExploreScreen() {
   return (
     <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden bg-[#f4f7fb]">
 
-      {/* Header bar with drag hint + calendar + ? button */}
-      <div className="flex items-center justify-between px-3 pt-2 pb-1 flex-shrink-0">
-        <AnimatePresence>
-          {!canvasExplored && (
-            <motion.div
-              key="drag-hint"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 1.6, duration: 0.4 }}
-              className="flex items-center gap-1.5 pointer-events-none"
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" className="text-slate-400">
-                <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-              </svg>
-              <span className="text-slate-400 text-[9px] uppercase tracking-[0.18em] font-semibold">Drag to explore</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        {canvasExplored && <div />}
-        <CalendarWidget currentDay={currentDay} openRoles={vacancyQueue.length} />
-        <button
-          onClick={() => { setWalkthroughStep(0); setWalkthroughDone(false) }}
-          className="w-7 h-7 rounded-full border border-slate-200 bg-white text-slate-400 text-xs font-bold flex items-center justify-center active:scale-90 transition-all shadow-sm"
-        >?</button>
-      </div>
+      <div className="flex flex-col flex-1 min-h-0 relative">
 
-      <div className="flex flex-col flex-1 min-h-0">
+        {/* Floating header overlay — no background, sits on top of canvas */}
+        <div className="absolute top-0 left-0 right-0 z-10 grid grid-cols-3 items-center px-3 pt-2 pb-1 pointer-events-none">
+          {/* Left: calendar */}
+          <div className="pointer-events-auto" data-tutorial="calendar">
+            <CalendarWidget currentDay={currentDay} openRoles={vacancyQueue.length} />
+          </div>
+
+          {/* Center: drag hint */}
+          <AnimatePresence>
+            {!canvasExplored ? (
+              <motion.div
+                key="drag-hint"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 1.6, duration: 0.4 }}
+                className="flex items-center justify-center gap-1.5 whitespace-nowrap"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" className="text-slate-400">
+                  <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+                <span className="text-slate-400 text-[9px] uppercase tracking-[0.18em] font-semibold">Drag to explore</span>
+              </motion.div>
+            ) : <div />}
+          </AnimatePresence>
+
+          {/* Right: ? button */}
+          <div className="flex justify-end pointer-events-auto">
+            <button
+              onClick={() => { setWalkthroughStep(0); setWalkthroughDone(false) }}
+              className="w-7 h-7 rounded-full border border-slate-200 bg-white text-slate-400 text-xs font-bold flex items-center justify-center active:scale-90 transition-all shadow-sm"
+            >?</button>
+          </div>
+        </div>
+
         <div className="flex-1 min-h-0 flex flex-col" data-tutorial="canvas">
           <OrgTree
             assignments={assignments}
@@ -2129,6 +2272,13 @@ export function ExploreScreen() {
           selectedCandidateId={selectedCandidateId}
           vacancyQueue={vacancyQueue}
           currentDay={currentDay}
+          panelHeight={panelHeight}
+          onHeightChange={(h) => setPanelHeight(h)}
+          onHeightCommit={(h, naturalH, workspaceH) => {
+            // Snap to workspace-only or full based on midpoint between the two
+            const mid = (workspaceH + naturalH) / 2
+            setPanelHeight(h < mid ? workspaceH : null)
+          }}
         />
       </div>
 
