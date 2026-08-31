@@ -160,7 +160,7 @@ function OrgCircle({
   name,
   role,
   candidateId,
-  fit,
+  posId,
   nodeSize = 'md',
   className = '',
 }: {
@@ -168,13 +168,12 @@ function OrgCircle({
   name: string
   role: string
   candidateId?: CandidateId
-  fit?: number
+  posId?: PositionId
   nodeSize?: NodeSize
   className?: string
 }) {
   const firstName = name.split(' ')[0]
   const shortRole = role.split(' ').slice(0, 2).join(' ')
-  const readiness = candidateId ? getCandidateById(candidateId).readiness : null
 
   return (
     <div className={`flex flex-col items-center gap-1 flex-shrink-0 ${className}`}>
@@ -192,17 +191,17 @@ function OrgCircle({
       <p className={`text-slate-400 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
         {shortRole}
       </p>
-      {readiness && !filled && (
-        <ReadinessBadge readiness={readiness} tiny={nodeSize === 'sm'} />
-      )}
-      {fit !== undefined && (
-        <div className="flex items-center gap-0.5 mt-0.5">
-          <div className={`${NODE_FIT_W[nodeSize]} h-[3px] rounded-full bg-slate-100 overflow-hidden`}>
-            <div className="h-full rounded-full" style={{ width: `${fit}%`, backgroundColor: fitColor(fit) }} />
+      {candidateId && posId && (() => {
+        const fit = getSlotFit(posId, candidateId)
+        return (
+          <div className="flex items-center gap-0.5 mt-0.5">
+            <div className={`${NODE_FIT_W[nodeSize]} h-[3px] rounded-full bg-slate-100 overflow-hidden`}>
+              <div className="h-full rounded-full" style={{ width: `${fit}%`, backgroundColor: fitColor(fit) }} />
+            </div>
+            <p className="text-[7px] font-bold" style={{ color: fitColor(fit) }}>{fit}%</p>
           </div>
-          <p className="text-[7px] font-bold" style={{ color: fitColor(fit) }}>{fit}%</p>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
@@ -285,6 +284,63 @@ function QueuedVacancy({ posId, nodeSize = 'md' }: { posId: PositionId; nodeSize
   )
 }
 
+// ─── BubblePop — glass burst effect at drop point ────────────────────────────
+
+const BURST_PARTICLES = [
+  { angle: 0,   dist: 0.72, sz: 3.5, delay: 0.00 },
+  { angle: 60,  dist: 0.80, sz: 4.2, delay: 0.03 },
+  { angle: 120, dist: 0.70, sz: 3.0, delay: 0.01 },
+  { angle: 180, dist: 0.78, sz: 4.5, delay: 0.04 },
+  { angle: 240, dist: 0.76, sz: 3.2, delay: 0.02 },
+  { angle: 300, dist: 0.82, sz: 3.8, delay: 0.05 },
+]
+
+function BubblePop({ sizePx, onDone }: { sizePx: number; onDone: () => void }) {
+  return (
+    <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 50 }}>
+      {/* Primary expanding glass ring */}
+      <motion.div
+        className="absolute inset-0 rounded-full"
+        style={{ border: '1.5px solid rgba(130,210,255,0.75)' }}
+        initial={{ scale: 1, opacity: 0.8 }}
+        animate={{ scale: 2.6, opacity: 0 }}
+        transition={{ duration: 0.30, ease: [0.2, 0, 0.6, 1] }}
+        onAnimationComplete={onDone}
+      />
+      {/* Secondary ring — offset timing */}
+      <motion.div
+        className="absolute inset-0 rounded-full"
+        style={{ border: '1px solid rgba(200,235,255,0.5)' }}
+        initial={{ scale: 1, opacity: 0.55 }}
+        animate={{ scale: 1.9, opacity: 0 }}
+        transition={{ duration: 0.26, ease: 'easeOut', delay: 0.06 }}
+      />
+      {/* Particles radiating outward */}
+      {BURST_PARTICLES.map((p, i) => {
+        const rad = (p.angle * Math.PI) / 180
+        const tx = Math.cos(rad) * sizePx * p.dist
+        const ty = Math.sin(rad) * sizePx * p.dist
+        return (
+          <motion.div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: '50%', top: '50%',
+              width: p.sz, height: p.sz,
+              marginLeft: -p.sz / 2, marginTop: -p.sz / 2,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(180,225,255,0.95) 0%, rgba(120,195,255,0.4) 60%, transparent 100%)',
+            }}
+            initial={{ x: 0, y: 0, scale: 1, opacity: 0.9 }}
+            animate={{ x: tx, y: ty, scale: 0, opacity: 0 }}
+            transition={{ duration: 0.28 + p.delay, ease: 'easeOut', delay: p.delay + 0.03 }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── DraggableSlot ────────────────────────────────────────────────────────────
 
 function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed, floatDelay = 0, nodeSize = 'md', isTargeted = false }: {
@@ -301,12 +357,16 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
   isTargeted?: boolean
 }) {
   const [placed, setPlaced] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const dragOrigin = useRef<{ x: number; y: number } | null>(null)
   const c = getCandidateById(id)
+  const avatarPx = NODE_SZ_PX[nodeSize]
+
+  const slotFit = getSlotFit(posId, id)
 
   if (placed) {
-    return <OrgCircle name={c.name} role={c.currentRole} candidateId={id} nodeSize={nodeSize} />
+    return <OrgCircle name={c.name} role={c.currentRole} candidateId={id} posId={posId} nodeSize={nodeSize} />
   }
 
   return (
@@ -326,12 +386,11 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
         opacity: { duration: 0.25 },
         scale: { duration: 0.25 },
       }}
-      whileDrag={{ scale: 1.14, rotate: 4, zIndex: 999, opacity: 0.95, y: 0,
-        boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
       onTap={() => onSelect?.()}
       onDragStart={() => {
         const r = cardRef.current?.getBoundingClientRect()
         dragOrigin.current = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null
+        setIsDragging(true)
         onDragStart?.()
       }}
       onDrag={(_, info) => {
@@ -344,16 +403,17 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
           ? { x: dragOrigin.current.x + info.offset.x, y: dragOrigin.current.y + info.offset.y }
           : null
         dragOrigin.current = null
+        setIsDragging(false)
         onDragMove(null)
         onDragEnd?.()
         if (pt && onDrop(id, pt)) setPlaced(true)
       }}
-      className="relative cursor-grab active:cursor-grabbing select-none"
-      style={{ touchAction: 'none' }}
+      className={`relative cursor-grab active:cursor-grabbing select-none ${isDragging ? 'bubble-dragging' : ''}`}
+      style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto' }}
     >
-      <OrgCircle name={c.name} role={c.currentRole} candidateId={id} nodeSize={nodeSize} />
+      <OrgCircle name={c.name} role={c.currentRole} candidateId={id} posId={posId} nodeSize={nodeSize} />
       <AnimatePresence>
-        {isTargeted && (
+        {isTargeted && !isDragging && (
           <motion.div
             key="target"
             className="absolute -top-4 left-1/2 -translate-x-1/2 text-lg pointer-events-none select-none z-30"
@@ -386,10 +446,12 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
   const c = getCandidateById(id)
   const realFit = getSlotFit(posId, id)
   const [displayFit, setDisplayFit] = useState(0)
-  const [showBurst, setShowBurst] = useState(true)
+  const [showPop, setShowPop] = useState(true)
   const [removed, setRemoved] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const dragOrigin = useRef<{ x: number; y: number } | null>(null)
+  const avatarPx = NODE_SZ_PX[nodeSize]
 
   useEffect(() => {
     const start = Date.now()
@@ -415,16 +477,16 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
   return (
     <motion.div
       ref={cardRef}
-      className="relative animate-slot-in cursor-grab active:cursor-grabbing select-none"
-      style={{ touchAction: 'none' }}
+      className={`relative cursor-grab active:cursor-grabbing select-none ${isDragging ? 'bubble-dragging' : 'animate-bubble-reform'}`}
+      style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto' }}
       drag
       dragMomentum={false}
       dragElastic={0.3}
-      whileDrag={{ scale: 1.1, rotate: -3, zIndex: 999, opacity: 0.85, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
       onTap={() => onSelect?.()}
       onDragStart={() => {
         const r = cardRef.current?.getBoundingClientRect()
         dragOrigin.current = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null
+        setIsDragging(true)
         onDragStart?.()
       }}
       onDrag={(_, info) => {
@@ -437,22 +499,17 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
           ? { x: dragOrigin.current.x + info.offset.x, y: dragOrigin.current.y + info.offset.y }
           : null
         dragOrigin.current = null
+        setIsDragging(false)
         onDragMove(null)
         onDragEnd?.()
         const dist = Math.abs(info.offset.x) + Math.abs(info.offset.y)
-        if (dist <= 20) return  // tiny drag — snap back, stay placed
-        if (pt && onMove(pt)) { setRemoved(true); return }  // moved to active vacancy
-        setRemoved(true); onUnplace()  // dropped elsewhere — just unplace
+        if (dist <= 20) return
+        if (pt && onMove(pt)) { setRemoved(true); return }
+        setRemoved(true); onUnplace()
       }}
     >
-      {showBurst && (
-        <motion.div
-          className="absolute inset-0 rounded-full border-2 border-green-400 z-20 pointer-events-none"
-          initial={{ scale: 1, opacity: 0.9 }}
-          animate={{ scale: 2.2, opacity: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          onAnimationComplete={() => setShowBurst(false)}
-        />
+      {showPop && (
+        <BubblePop sizePx={avatarPx} onDone={() => setShowPop(false)} />
       )}
       {showEmoji && (
         <motion.div
@@ -469,7 +526,7 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
         name={c.name}
         role={c.currentRole}
         candidateId={id}
-        fit={displayFit}
+        posId={posId}
         nodeSize={nodeSize}
       />
     </motion.div>
@@ -506,15 +563,7 @@ function GhostNode({ name, role }: { name: string; role: string }) {
 function BossNode() {
   return (
     <div className="flex flex-col items-center gap-[3px] opacity-40 flex-shrink-0">
-      <div style={{
-        width: 48, height: 48, borderRadius: '50%', background: '#94a3b8',
-        boxShadow: '0 0 0 2.5px white, 0 0 0 3.5px rgba(148,163,184,0.2)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden', position: 'relative',
-      }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 35% 25%, rgba(255,255,255,0.3) 0%, transparent 55%)' }} />
-        <span style={{ color: 'white', fontWeight: 900, fontSize: 14, position: 'relative' }}>RS</span>
-      </div>
+      <Avatar id="reza" name="Reza Santoso" size="md" />
       <p className="text-[#0f172a] font-bold text-[8px] leading-none">Reza</p>
       <p className="text-slate-400 text-[6.5px] leading-none">Commercial Dir</p>
     </div>
@@ -837,6 +886,7 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
   dimmed?: boolean
 }) {
   const [placed, setPlaced] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const dragOrigin = useRef<{ x: number; y: number } | null>(null)
 
@@ -864,12 +914,11 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
       drag dragSnapToOrigin dragElastic={0.45} dragMomentum={false}
       animate={{ opacity: dimmed ? 0.3 : 1, scale: dimmed ? 0.95 : 1 }}
       transition={{ opacity: { duration: 0.2 }, scale: { duration: 0.2 } }}
-      whileDrag={{ scale: 1.14, rotate: -4, zIndex: 999, opacity: 0.95,
-        boxShadow: '0 12px 28px rgba(0,0,0,0.18)' }}
       onTap={() => onSelect?.()}
       onDragStart={() => {
         const r = cardRef.current?.getBoundingClientRect()
         dragOrigin.current = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null
+        setIsDragging(true)
         onDragStart?.()
       }}
       onDrag={(_, info) => {
@@ -882,19 +931,17 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
           ? { x: dragOrigin.current.x + info.offset.x, y: dragOrigin.current.y + info.offset.y }
           : null
         dragOrigin.current = null
+        setIsDragging(false)
         onDragMove(null)
         onDragEnd?.()
         if (pt && onDrop(candidate.id, pt)) setPlaced(true)
       }}
-      className="flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
-      style={{ touchAction: 'none' }}
+      className={`flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing select-none flex-shrink-0 ${isDragging ? 'bubble-dragging' : ''}`}
+      style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto' }}
     >
       {/* Avatar bubble with amber EXT ring */}
       <div className="relative">
-        <div style={{ boxShadow: '0 0 0 2.5px #f59e0b, 0 0 0 4.5px rgba(245,158,11,0.2)' }}
-          className="rounded-full">
-          <Avatar id={candidate.id} name={candidate.name} size="md" />
-        </div>
+        <Avatar id={candidate.id} name={candidate.name} size="md" ringColor="#f59e0b" />
         {/* EXT badge */}
         <div className="absolute -top-0.5 -right-0.5 z-10 bg-amber-500 text-white rounded-full px-[3px] py-[1px] leading-none"
           style={{ fontSize: '5px', fontWeight: 900, letterSpacing: '0.04em' }}>
@@ -959,12 +1006,68 @@ function CandidateSheet({
   )
 }
 
+// ─── Neutral aspect bars (no match color coding) ─────────────────────────────
+
+function NeutralBars({ standard }: { standard: Assessment }) {
+  return (
+    <div className="w-full flex flex-col gap-[5px]">
+      {ASPECT_LABELS.map(({ key, label }) => {
+        const std = standard[key]
+        return (
+          <div key={key} className="flex items-center gap-2">
+            <span className="text-slate-400 text-[9px] font-semibold tracking-wide w-[30px] text-right flex-shrink-0">{label}</span>
+            <div className="relative flex-1 h-[6px] rounded-full bg-slate-100 overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${std}%` }}
+                transition={{ duration: 0.45, ease: 'easeOut', delay: 0.05 }}
+                className="absolute inset-y-0 left-0 rounded-full bg-blue-300"
+              />
+            </div>
+            <span className="text-blue-400 text-[9px] font-semibold w-[18px] flex-shrink-0 tabular-nums">{std}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function ComparisonBars({ standard, assessment }: { standard: Assessment; assessment: Assessment }) {
+  return (
+    <div className="w-full flex flex-col gap-[5px]">
+      {ASPECT_LABELS.map(({ key, label }) => {
+        const std = standard[key]
+        const val = assessment[key]
+        return (
+          <div key={key} className="flex items-center gap-2">
+            <span className="text-slate-400 text-[9px] font-semibold tracking-wide w-[30px] text-right flex-shrink-0">{label}</span>
+            <div className="relative flex-1 h-[6px] rounded-full bg-slate-100">
+              {/* Target line */}
+              <div
+                className="absolute top-[-3px] bottom-[-3px] w-[2px] bg-slate-400 rounded-full z-10"
+                style={{ left: `${std}%` }}
+              />
+              {/* Candidate dot */}
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full bg-slate-600 border-2 border-white shadow-sm z-20"
+                style={{ left: `calc(${val}% - 5px)` }}
+              />
+            </div>
+            <span className="text-slate-400 text-[9px] w-[18px] flex-shrink-0 tabular-nums">{val}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Portrait bottom panel ────────────────────────────────────────────────────
 
 function PortraitBottomPanel({
   assignments, activeVacancyId, allFilled,
   onExternalDrop, onExternalDragMove, onConfirm,
-  activeDragId, onDragStart, onDragEnd, onSelect, forceExpand = false,
+  activeDragId, onDragStart, onDragEnd, onSelect,
+  selectedCandidateId, vacancyQueue,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -976,94 +1079,151 @@ function PortraitBottomPanel({
   onDragStart: (id: CandidateId) => void
   onDragEnd: () => void
   onSelect: (id: CandidateId) => void
-  forceExpand?: boolean
+  selectedCandidateId: CandidateId | null
+  vacancyQueue: PositionId[]
 }) {
-  const [expanded, setExpanded] = useState(false)
-  const overallFit = computeOverallFit(assignments)
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
   const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
+  const selectedCandidate = selectedCandidateId ? getCandidateById(selectedCandidateId) : null
+  const remaining = vacancyQueue.length
 
-  useEffect(() => {
-    if (activeDragId !== null || forceExpand) setExpanded(true)
-  }, [activeDragId, forceExpand])
+  // Determine content mode
+  const mode: 'empty' | 'profile' | 'compare' | 'filled' =
+    allFilled ? 'filled'
+    : vacantPos && selectedCandidate ? 'compare'
+    : vacantPos ? 'profile'
+    : 'empty'
 
   return (
-    <div className="border-t border-slate-200 flex-shrink-0 bg-[#f4f7fb]">
+    <div
+      className="flex-shrink-0"
+      style={{
+        background: 'white',
+        borderRadius: '24px 24px 0 0',
+        boxShadow: '0 -4px 24px rgba(15,23,42,0.08), 0 -1px 4px rgba(15,23,42,0.04)',
+      }}
+    >
+      {/* Drag handle */}
+      <div className="flex justify-center pt-2.5 pb-0">
+        <div className="w-8 h-[3px] rounded-full bg-slate-200" />
+      </div>
 
-      {/* Gauge row — always visible, tap to toggle expand */}
-      <div
-        className="flex gap-2 px-3 pt-2 pb-1.5 cursor-pointer select-none"
-        onClick={() => setExpanded(v => !v)}
-      >
-        <div data-tutorial="arc-gauge" className="w-[80px] flex-shrink-0 rounded-xl border border-slate-200 bg-white pt-1 pb-0 px-1">
-          <ArcGauge value={overallFit} />
-        </div>
-        <div className="flex-1 min-w-0">
-          {vacantPos ? (
-            <div data-tutorial="needs-panel" className="h-full rounded-xl border border-red-300 bg-red-50 px-2 py-1">
-              <div className="flex items-center justify-between mb-0.5">
-                <p className="text-red-500 text-[6px] font-bold uppercase tracking-widest">Needs</p>
-                <p className="text-[#0f172a] text-[7px] font-bold">{vacantPos.shortRole}</p>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-2 pb-0">
+        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">Role Match Workspace</p>
+        {vacantPos && (
+          <p className="text-[9px] font-bold text-[#0f172a] truncate max-w-[120px]">{vacantPos.role}</p>
+        )}
+      </div>
+
+      {/* Content area */}
+      <div className="px-4 pt-2 pb-2" data-tutorial="needs-panel">
+        <AnimatePresence mode="wait">
+          {mode === 'empty' && (
+            <motion.div key="empty"
+              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-1 py-3"
+            >
+              <div className="w-8 h-8 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-slate-300">
+                  <circle cx="12" cy="8" r="4" fill="currentColor" />
+                  <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </div>
-              <AspectBars assessment={null} standard={vacantPos.standard} />
-            </div>
-          ) : (
-            <div className="h-full rounded-xl border border-green-300 bg-green-50 px-2.5 flex items-center justify-center">
-              <p className="text-green-600 text-[7px] font-bold text-center">✓ All positions filled</p>
-            </div>
+              <p className="text-slate-400 text-[10px] text-center leading-snug">Tap posisi kosong untuk<br/>melihat profil peran</p>
+            </motion.div>
           )}
-        </div>
-        {/* Expand chevron */}
-        <div className="flex-shrink-0 flex items-center">
-          <div
-            className="text-slate-400 text-[10px] leading-none transition-transform duration-200"
-            style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-          >
-            ▼
-          </div>
+
+          {mode === 'profile' && vacantPos && (
+            <motion.div key={`profile-${activeVacancyId}`}
+              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="flex flex-col gap-1.5"
+            >
+              <p className="text-[8px] text-slate-400 uppercase tracking-widest">Standar Peran</p>
+              <NeutralBars standard={vacantPos.standard} />
+              <p className="text-[8px] text-slate-400 text-center mt-0.5">Tap kandidat untuk membandingkan</p>
+            </motion.div>
+          )}
+
+          {mode === 'compare' && vacantPos && selectedCandidate && (
+            <motion.div key={`compare-${activeVacancyId}-${selectedCandidateId}`}
+              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="flex flex-col gap-1.5"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-[8px] text-slate-400 uppercase tracking-widest">Perbandingan</p>
+                <div className="flex items-center gap-2 text-[8px] text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-[8px] h-[8px] rounded-full bg-slate-600 flex-shrink-0" />
+                    {selectedCandidate.name.split(' ')[0]}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-[2px] h-[8px] rounded-full bg-slate-400 flex-shrink-0" />
+                    Standar
+                  </span>
+                </div>
+              </div>
+              <ComparisonBars standard={vacantPos.standard} assessment={selectedCandidate.assessment} />
+            </motion.div>
+          )}
+
+          {mode === 'filled' && (
+            <motion.div key="filled"
+              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-1 py-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D6FF2" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </div>
+              <p className="text-[#0f172a] text-[10px] font-bold text-center">Semua posisi telah terisi</p>
+              <p className="text-slate-400 text-[9px] text-center">Siap untuk direview</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Divider */}
+      <div className="mx-4 h-px bg-slate-100" />
+
+      {/* External talent */}
+      <div className="px-4 pt-2 pb-1" data-tutorial="external-pool">
+        <p className="text-[8px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">Talenta Eksternal</p>
+        <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {EXTERNAL_CANDIDATES.map(c => (
+            <ExternalCandidateSlot
+              key={c.id}
+              candidate={c}
+              alreadyPlaced={usedCandidateIds.has(c.id)}
+              onDrop={onExternalDrop}
+              onDragMove={onExternalDragMove}
+              onDragStart={() => onDragStart(c.id)}
+              onDragEnd={onDragEnd}
+              onSelect={() => onSelect(c.id)}
+              dimmed={activeDragId !== null && activeDragId !== c.id}
+            />
+          ))}
         </div>
       </div>
 
-      {/* External pool + confirm — only when expanded */}
-      <AnimatePresence initial={false}>
-        {(expanded || forceExpand) && (
-          <motion.div
-            key="expanded"
-            initial={forceExpand ? false : { height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: forceExpand ? 0 : 0.22, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <div className="flex flex-col gap-2 px-3 pt-1 pb-3">
-              <div data-tutorial="external-pool">
-                <p className="text-slate-400 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
-                <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
-                  {EXTERNAL_CANDIDATES.map(c => (
-                    <ExternalCandidateSlot
-                      key={c.id}
-                      candidate={c}
-                      alreadyPlaced={usedCandidateIds.has(c.id)}
-                      onDrop={onExternalDrop}
-                      onDragMove={onExternalDragMove}
-                      onDragStart={() => onDragStart(c.id)}
-                      onDragEnd={onDragEnd}
-                      onSelect={() => onSelect(c.id)}
-                      dimmed={activeDragId !== null && activeDragId !== c.id}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <PrimaryButton onClick={onConfirm} disabled={!allFilled}>Confirm →</PrimaryButton>
-                {!allFilled && activeVacancyId && (
-                  <p className="text-slate-400 text-[7px] text-center mt-1">Fill all positions first</p>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Compact sticky footer */}
+      <div className="flex items-center gap-3 px-4 pt-1 pb-3">
+        <p className="text-[9px] text-slate-400 flex-1 leading-snug">
+          {allFilled ? 'Siap direview' : `${remaining} posisi belum terisi`}
+        </p>
+        <button
+          onClick={onConfirm}
+          disabled={!allFilled}
+          className="flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-bold transition-all"
+          style={{
+            background: allFilled ? '#1D6FF2' : '#e2e8f0',
+            color: allFilled ? 'white' : '#94a3b8',
+          }}
+        >
+          Review Organisasi →
+        </button>
+      </div>
     </div>
   )
 }
@@ -1489,7 +1649,8 @@ export function ExploreScreen() {
           onDragStart={(id) => setActiveDragId(id)}
           onDragEnd={() => setActiveDragId(null)}
           onSelect={setSelectedCandidateId}
-          forceExpand={!walkthroughDone}
+          selectedCandidateId={selectedCandidateId}
+          vacancyQueue={vacancyQueue}
         />
       </div>
 
@@ -1503,17 +1664,6 @@ export function ExploreScreen() {
         />
       )}
 
-      {/* Candidate detail bottom sheet */}
-      <AnimatePresence>
-        {selectedCandidateId && (
-          <CandidateSheet
-            key={selectedCandidateId}
-            candidateId={selectedCandidateId}
-            benchPos={POSITIONS.find(p => p.id === (activeVacancyId ?? 'sales_manager'))!}
-            onClose={() => setSelectedCandidateId(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   )
 }
