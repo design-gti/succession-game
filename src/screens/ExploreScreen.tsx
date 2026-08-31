@@ -146,63 +146,56 @@ function AspectBars({ assessment, standard, showStandard = true }: { assessment:
   )
 }
 
-// ─── OrgCard ──────────────────────────────────────────────────────────────────
+// ─── OrgCircle ────────────────────────────────────────────────────────────────
 
-function OrgCard({
-  posId,
+function OrgCircle({
   filled = false,
   name,
   role,
   candidateId,
   fit,
-  badge,
   small = false,
   className = '',
 }: {
-  posId: PositionId
   filled?: boolean
   name: string
   role: string
   candidateId?: CandidateId
   fit?: number
-  badge?: React.ReactNode
   small?: boolean
   className?: string
 }) {
-  const displayName = name.split(' ')[0]
+  const firstName = name.split(' ')[0]
   const shortRole = role.split(' ').slice(0, 2).join(' ')
   const readiness = candidateId ? getCandidateById(candidateId).readiness : null
+
   return (
-    <div className={`relative rounded-xl border overflow-hidden flex-shrink-0
-      ${small ? 'w-[76px]' : 'w-[96px]'}
-      ${filled ? 'border-green-400/50 bg-green-50' : 'border-slate-200 bg-white'}
-      ${className}`}>
-      {badge && <div className="absolute top-1 right-1 z-10">{badge}</div>}
-      <div className={`flex items-center justify-center ${filled ? 'bg-green-50' : 'bg-slate-50'} ${small ? 'h-[30px]' : 'h-[38px]'}`}>
-        {candidateId
-          ? <Avatar id={candidateId} name={name} size={small ? 'xs' : 'sm'} />
-          : <div className={`rounded-full bg-slate-100 flex items-center justify-center ${small ? 'w-6 h-6' : 'w-8 h-8'}`}>
-              <span className="text-slate-400 text-xs font-bold">{name.charAt(0)}</span>
-            </div>
-        }
-      </div>
-      <div className="px-1.5 pt-1 pb-1.5">
-        <p className={`text-[#0f172a] font-bold leading-tight truncate ${small ? 'text-[7px]' : 'text-[8px]'}`}>{displayName}</p>
-        <p className={`text-slate-400 leading-tight truncate mt-0.5 ${small ? 'text-[6px]' : 'text-[7px]'}`}>{shortRole}</p>
-        {readiness && !filled && (
-          <div className="mt-1">
-            <ReadinessBadge readiness={readiness} tiny={small} />
+    <div className={`flex flex-col items-center gap-[3px] flex-shrink-0 ${className}`}>
+      <div className="relative">
+        <Avatar id={candidateId} name={name} size={small ? 'sm' : 'md'} />
+        {filled && (
+          <div className="absolute -bottom-0.5 -right-0.5 z-10 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center border-[1.5px] border-white shadow-sm">
+            <span className="text-white text-[7px] font-black leading-none">✓</span>
           </div>
         )}
-        {fit !== undefined && (
-          <>
-            <div className="mt-1 h-[3px] rounded-full bg-slate-100 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${fit}%`, backgroundColor: fitColor(fit) }} />
-            </div>
-            <p className="text-[6px] mt-0.5 font-bold" style={{ color: fitColor(fit) }}>{fit}%</p>
-          </>
-        )}
       </div>
+      <p className={`text-[#0f172a] font-bold leading-none text-center ${small ? 'text-[7px]' : 'text-[8px]'}`}>
+        {firstName}
+      </p>
+      <p className={`text-slate-400 leading-none text-center truncate max-w-[56px] ${small ? 'text-[5.5px]' : 'text-[6.5px]'}`}>
+        {shortRole}
+      </p>
+      {readiness && !filled && (
+        <ReadinessBadge readiness={readiness} tiny />
+      )}
+      {fit !== undefined && (
+        <div className="flex items-center gap-0.5 mt-0.5">
+          <div className="w-7 h-[3px] rounded-full bg-slate-100 overflow-hidden">
+            <div className="h-full rounded-full" style={{ width: `${fit}%`, backgroundColor: fitColor(fit) }} />
+          </div>
+          <p className="text-[6px] font-bold" style={{ color: fitColor(fit) }}>{fit}%</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -216,34 +209,47 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
   small?: boolean
 }) {
   const pos = POSITIONS.find(p => p.id === posId)!
+  const sz = small ? 32 : 48
   return (
-    <div
-      ref={nodeRef}
-      data-tutorial="vacant"
-      className={`relative rounded-xl border-2 border-dashed flex items-center justify-center transition-all duration-200 flex-shrink-0 overflow-hidden
-        ${small ? 'w-[76px] h-[48px]' : 'w-[96px] h-[56px]'}
-        ${isDragOver
-          ? 'border-green-400 bg-green-500/15 scale-105'
-          : 'border-red-500/70 bg-red-500/10 animate-vacant-glow'
-        }`}
-    >
-      {/* Spinning dashed ring overlay */}
-      {!isDragOver && (
-        <div className="absolute inset-[-4px] rounded-[16px] border-2 border-dashed border-red-300/40 animate-spin-slow pointer-events-none" />
-      )}
-
-      {/* Person silhouette */}
-      <div className="flex flex-col items-center gap-0.5">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-          className={isDragOver ? 'text-green-500' : 'text-red-400'}>
+    <div className="flex flex-col items-center gap-[3px] flex-shrink-0">
+      <div
+        ref={nodeRef}
+        data-tutorial="vacant"
+        style={{
+          width: sz, height: sz, borderRadius: '50%',
+          border: `2px dashed ${isDragOver ? '#22c55e' : 'rgba(239,68,68,0.8)'}`,
+          background: isDragOver ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.07)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 2, position: 'relative', flexShrink: 0,
+          transform: isDragOver ? 'scale(1.1)' : 'scale(1)',
+          transition: 'transform 0.2s, background 0.2s, border-color 0.2s',
+          boxShadow: isDragOver ? '0 0 0 3px rgba(34,197,94,0.2)' : undefined,
+        }}
+      >
+        {!isDragOver && (
+          <div
+            style={{
+              position: 'absolute', inset: -4, borderRadius: '50%',
+              border: '1.5px dashed rgba(239,68,68,0.25)',
+            }}
+            className="animate-spin-slow pointer-events-none"
+          />
+        )}
+        <svg width={sz * 0.38} height={sz * 0.38} viewBox="0 0 24 24" fill="none"
+          style={{ color: isDragOver ? '#22c55e' : '#ef4444' }}>
           <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.5" />
           <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.4" />
         </svg>
-        <p className={`font-black text-[7px] uppercase tracking-widest leading-none ${isDragOver ? 'text-green-600' : 'text-red-500'}`}>
+        <p style={{ color: isDragOver ? '#16a34a' : '#ef4444', fontSize: 6, fontWeight: 900, letterSpacing: '0.05em', lineHeight: 1 }}>
           {isDragOver ? '✓ Drop' : 'Vacant'}
         </p>
-        <p className="text-slate-400 text-[6px]">{pos.shortRole}</p>
       </div>
+      <p className={`text-[#0f172a] font-bold leading-none text-center ${small ? 'text-[7px]' : 'text-[8px]'}`}>
+        {pos.shortRole.split(' ')[0]}
+      </p>
+      <p className={`text-slate-400 leading-none text-center truncate max-w-[56px] ${small ? 'text-[5.5px]' : 'text-[6.5px]'}`}>
+        {pos.shortRole}
+      </p>
     </div>
   )
 }
@@ -252,12 +258,23 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
 
 function QueuedVacancy({ posId, small = false }: { posId: PositionId; small?: boolean }) {
   const pos = POSITIONS.find(p => p.id === posId)!
+  const sz = small ? 32 : 48
   return (
-    <div className={`rounded-xl border border-dashed border-amber-400/40 bg-amber-50 flex items-center justify-center flex-shrink-0 opacity-50 ${small ? 'w-[76px] h-[48px]' : 'w-[96px] h-[56px]'}`}>
-      <div className="text-center px-1.5">
-        <p className="text-amber-600 text-[6px] font-bold uppercase tracking-widest">Next</p>
-        <p className="text-slate-400 text-[6px] mt-0.5">{pos.shortRole}</p>
+    <div className="flex flex-col items-center gap-[3px] flex-shrink-0 opacity-45">
+      <div style={{
+        width: sz, height: sz, borderRadius: '50%', flexShrink: 0,
+        border: '1.5px dashed rgba(180,130,0,0.45)',
+        background: 'rgba(251,191,36,0.07)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+      }}>
+        <p style={{ color: '#b45309', fontSize: 6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>Next</p>
       </div>
+      <p className={`text-[#0f172a] font-bold leading-none text-center ${small ? 'text-[7px]' : 'text-[8px]'}`}>
+        {pos.shortRole.split(' ')[0]}
+      </p>
+      <p className={`text-slate-400 leading-none text-center truncate max-w-[56px] ${small ? 'text-[5.5px]' : 'text-[6.5px]'}`}>
+        {pos.shortRole}
+      </p>
     </div>
   )
 }
@@ -283,7 +300,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
   const c = getCandidateById(id)
 
   if (placed) {
-    return <OrgCard posId={posId} name={c.name} role={c.currentRole} candidateId={id} small={small} />
+    return <OrgCircle name={c.name} role={c.currentRole} candidateId={id} small={small} />
   }
 
   return (
@@ -328,7 +345,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
       className="relative cursor-grab active:cursor-grabbing select-none"
       style={{ touchAction: 'none' }}
     >
-      <OrgCard posId={posId} name={c.name} role={c.currentRole} candidateId={id} small={small} />
+      <OrgCircle name={c.name} role={c.currentRole} candidateId={id} small={small} />
       <AnimatePresence>
         {isTargeted && (
           <motion.div
@@ -423,7 +440,7 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
     >
       {showBurst && (
         <motion.div
-          className="absolute inset-0 rounded-xl border-2 border-green-400 z-20 pointer-events-none"
+          className="absolute inset-0 rounded-full border-2 border-green-400 z-20 pointer-events-none"
           initial={{ scale: 1, opacity: 0.9 }}
           animate={{ scale: 2.2, opacity: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -440,18 +457,12 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
           {fitEmoji}
         </motion.div>
       )}
-      <OrgCard
-        posId={posId}
+      <OrgCircle
         filled
         name={c.name}
         role={c.currentRole}
         candidateId={id}
         fit={displayFit}
-        badge={
-          <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
-            <span className="text-white text-[7px] font-black leading-none">✓</span>
-          </div>
-        }
       />
     </motion.div>
   )
@@ -467,33 +478,37 @@ function VLine({ glow = false }: { glow?: boolean }) {
 }
 
 function GhostNode({ name, role }: { name: string; role: string }) {
+  const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
   return (
-    <div className="relative w-[44px] rounded-xl border border-slate-200 bg-white overflow-hidden opacity-[0.35] flex-shrink-0">
-      <div className="h-[22px] flex items-center justify-center bg-slate-50">
-        <div className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center">
-          <span className="text-slate-400 text-[6px] font-bold">{name.charAt(0)}</span>
-        </div>
+    <div className="flex flex-col items-center gap-[3px] opacity-[0.35] flex-shrink-0">
+      <div style={{
+        width: 30, height: 30, borderRadius: '50%', background: '#94a3b8',
+        boxShadow: '0 0 0 2px white',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative',
+      }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 35% 25%, rgba(255,255,255,0.3) 0%, transparent 55%)' }} />
+        <span style={{ color: 'white', fontWeight: 900, fontSize: 9, position: 'relative' }}>{initials}</span>
       </div>
-      <div className="px-1 py-1">
-        <p className="text-[#0f172a] font-bold text-[6px] leading-tight truncate">{name}</p>
-        <p className="text-slate-400 text-[5px] leading-tight truncate">{role}</p>
-      </div>
+      <p className="text-[#0f172a] font-bold text-[6px] leading-none">{name.split(' ')[0]}</p>
+      <p className="text-slate-400 text-[5px] leading-none truncate max-w-[40px]">{role.split(' ')[0]}</p>
     </div>
   )
 }
 
 function BossNode() {
   return (
-    <div className="relative w-[96px] rounded-xl border border-slate-200 bg-white overflow-hidden opacity-40 flex-shrink-0">
-      <div className="h-[38px] flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-          <span className="text-slate-400 text-xs font-bold">RS</span>
-        </div>
+    <div className="flex flex-col items-center gap-[3px] opacity-40 flex-shrink-0">
+      <div style={{
+        width: 48, height: 48, borderRadius: '50%', background: '#94a3b8',
+        boxShadow: '0 0 0 2.5px white, 0 0 0 3.5px rgba(148,163,184,0.2)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        overflow: 'hidden', position: 'relative',
+      }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 35% 25%, rgba(255,255,255,0.3) 0%, transparent 55%)' }} />
+        <span style={{ color: 'white', fontWeight: 900, fontSize: 14, position: 'relative' }}>RS</span>
       </div>
-      <div className="px-1.5 pt-1 pb-1.5">
-        <p className="text-[#0f172a] font-bold text-[8px] leading-tight truncate">Reza Santoso</p>
-        <p className="text-slate-400 text-[7px] leading-tight truncate mt-0.5">Commercial Dir</p>
-      </div>
+      <p className="text-[#0f172a] font-bold text-[8px] leading-none">Reza</p>
+      <p className="text-slate-400 text-[6.5px] leading-none">Commercial Dir</p>
     </div>
   )
 }
@@ -744,7 +759,7 @@ function OrgTree({
       {/* Horizontal 3-branch layout: maya | SM | dimas side by side */}
       <div className="relative flex gap-4 items-start flex-shrink-0">
         {/* Horizontal connector from maya to dimas at top of column connectors */}
-        <div className={`absolute top-0 h-px ${connBase} transition-colors duration-300`} style={{ left: '48px', right: '48px' }} />
+        <div className={`absolute top-0 h-px ${connBase} transition-colors duration-300`} style={{ left: '24px', right: '24px' }} />
 
         {/* Maya column */}
         <div className="flex flex-col items-center flex-shrink-0">
@@ -760,7 +775,7 @@ function OrgTree({
           {renderSlot('sales_manager')}
           <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
           <div className="relative flex gap-1.5">
-            <div className={`absolute top-0 h-px ${connSub} transition-colors duration-300`} style={{ left: '48px', right: '48px' }} />
+            <div className={`absolute top-0 h-px ${connSub} transition-colors duration-300`} style={{ left: '24px', right: '24px' }} />
             {(['andi', 'rani', 'fajar'] as PositionId[]).map(id => (
               <div key={id} className="flex flex-col items-center flex-shrink-0">
                 <div className={`w-px h-2 ${connSub}`} />
