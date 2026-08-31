@@ -102,21 +102,21 @@ function MiniIProfile() {
 
 const REVEALS = [
   {
-    inGame: 'The org chart with a vacant seat',
+    inGame: 'Org chart dengan posisi kosong',
     module: 'Visibility Map',
-    inKelola: 'Your real org structure with a succession-risk heatmap. Vulnerable positions surface themselves.',
+    inKelola: 'Struktur organisasi nyata Anda dengan peta risiko suksesi. Posisi rentan terdeteksi secara otomatis.',
     mockup: <MiniVisibilityMap />,
   },
   {
-    inGame: 'Comparing candidates by fit score',
+    inGame: 'Perbandingan kandidat berdasarkan skor',
     module: 'Talent Decision Platform',
-    inKelola: 'Side-by-side candidate comparison with real assessment data. Compare first, then decide.',
+    inKelola: 'Bandingkan kandidat secara berdampingan menggunakan data asesmen nyata. Bandingkan dulu, baru putuskan.',
     mockup: <MiniTDP />,
   },
   {
-    inGame: 'The 3 aspect bars on every card',
+    inGame: '3 aspek di setiap kartu kandidat',
     module: 'iProfile',
-    inKelola: 'A full assessment report, readable in one glance.',
+    inKelola: 'Laporan asesmen lengkap yang bisa dibaca dalam sekali pandang.',
     mockup: <MiniIProfile />,
   },
 ]
@@ -136,11 +136,11 @@ function KelolaBeat({ beat }: { beat: number }) {
         <div>
           <p className="text-brand text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Plot twist</p>
           <h1 className="text-4xl font-black text-[#0f172a] leading-tight">
-            You've already<br />used <span className="text-brand">Kelola Apps</span>.
+            Anda baru saja<br />menggunakan <span className="text-brand">Kelola Apps</span>.
           </h1>
         </div>
         <p className="text-slate-500 text-sm leading-relaxed max-w-[260px]">
-          Every mechanic you just played with is a real Kelola module.
+          Setiap mekanik dalam permainan tadi adalah fitur nyata dari Kelola.
         </p>
       </div>
     )
@@ -151,7 +151,7 @@ function KelolaBeat({ beat }: { beat: number }) {
     return (
       <div className="flex flex-col items-center gap-6 text-center max-w-sm w-full">
         <p className="text-slate-400 text-xs uppercase tracking-widest">
-          In the game: <span className="text-slate-600 normal-case tracking-normal">{r.inGame}</span>
+          Dalam game: <span className="text-slate-600 normal-case tracking-normal">{r.inGame}</span>
         </p>
 
         <motion.div
@@ -315,7 +315,7 @@ export function KelolaRevealScreen() {
             transition={{ delay: 1.2, duration: 0.4 }}
             className="absolute bottom-20 left-0 right-0 flex flex-col items-center gap-1 pointer-events-none"
           >
-            <span className="text-slate-400 text-[9px] uppercase tracking-[0.2em] font-semibold">scroll</span>
+            <span className="text-slate-400 text-[9px] uppercase tracking-[0.2em] font-semibold">geser</span>
             <motion.div
               animate={{ y: [0, 5, 0] }}
               transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
