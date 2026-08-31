@@ -846,14 +846,14 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
 
   if (placed || alreadyPlaced) {
     return (
-      <div onClick={() => onSelect?.()} className="relative w-[72px] rounded-xl border border-green-400/40 bg-green-50 overflow-hidden opacity-40 select-none flex-shrink-0 cursor-pointer">
-        <div className="h-[30px] flex items-center justify-center bg-green-50">
-          <Avatar id={candidate.id} name={candidate.name} size="xs" />
+      <div onClick={() => onSelect?.()} className="flex flex-col items-center gap-1 opacity-35 select-none flex-shrink-0 cursor-pointer">
+        <div className="relative">
+          <Avatar id={candidate.id} name={candidate.name} size="md" />
+          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center border-[1.5px] border-white shadow-sm">
+            <span className="text-white text-[7px] font-black leading-none">✓</span>
+          </div>
         </div>
-        <div className="px-1.5 pt-1 pb-1.5">
-          <p className="text-[#0f172a] font-bold text-[7px] leading-tight truncate">{candidate.name.split(' ')[0]}</p>
-          <p className="text-green-600 text-[6px] font-bold mt-0.5">placed ✓</p>
-        </div>
+        <p className="text-[#0f172a] font-bold text-[8px] leading-none">{candidate.name.split(' ')[0]}</p>
       </div>
     )
   }
@@ -865,7 +865,7 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
       animate={{ opacity: dimmed ? 0.3 : 1, scale: dimmed ? 0.95 : 1 }}
       transition={{ opacity: { duration: 0.2 }, scale: { duration: 0.2 } }}
       whileDrag={{ scale: 1.14, rotate: -4, zIndex: 999, opacity: 0.95,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
+        boxShadow: '0 12px 28px rgba(0,0,0,0.18)' }}
       onTap={() => onSelect?.()}
       onDragStart={() => {
         const r = cardRef.current?.getBoundingClientRect()
@@ -886,26 +886,28 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
         onDragEnd?.()
         if (pt && onDrop(candidate.id, pt)) setPlaced(true)
       }}
-      className="relative w-[72px] rounded-xl border border-amber-400/60 bg-white overflow-hidden cursor-grab active:cursor-grabbing select-none flex-shrink-0 shadow-sm"
+      className="flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
       style={{ touchAction: 'none' }}
     >
-      {/* EXT ribbon */}
-      <div className="absolute top-0 left-0 w-[36px] h-[36px] overflow-hidden pointer-events-none z-10">
-        <div className="absolute bg-amber-500 text-white font-black"
-          style={{ fontSize: '5px', padding: '1.5px 10px', transform: 'rotate(-45deg) translate(-4px, 6px)', letterSpacing: '0.05em' }}>
+      {/* Avatar bubble with amber EXT ring */}
+      <div className="relative">
+        <div style={{ boxShadow: '0 0 0 2.5px #f59e0b, 0 0 0 4.5px rgba(245,158,11,0.2)' }}
+          className="rounded-full">
+          <Avatar id={candidate.id} name={candidate.name} size="md" />
+        </div>
+        {/* EXT badge */}
+        <div className="absolute -top-0.5 -right-0.5 z-10 bg-amber-500 text-white rounded-full px-[3px] py-[1px] leading-none"
+          style={{ fontSize: '5px', fontWeight: 900, letterSpacing: '0.04em' }}>
           EXT
         </div>
       </div>
-      <div className="h-[30px] flex items-center justify-center bg-amber-50">
-        <Avatar id={candidate.id} name={candidate.name} size="xs" />
-      </div>
-      <div className="px-1.5 pt-1 pb-1.5">
-        <p className="text-[#0f172a] font-bold text-[7px] leading-tight truncate">{candidate.name.split(' ')[0]}</p>
-        <p className="text-slate-400 text-[6px] truncate mt-0.5">{candidate.currentRole.split(' ').slice(0, 2).join(' ')}</p>
-        <div className="mt-1">
-          <ReadinessBadge readiness={candidate.readiness} tiny />
-        </div>
-      </div>
+      <p className="text-[#0f172a] font-bold text-[8px] leading-none text-center">
+        {candidate.name.split(' ')[0]}
+      </p>
+      <p className="text-slate-400 text-[6.5px] leading-none text-center truncate max-w-[56px]">
+        {candidate.currentRole.split(' ').slice(0, 2).join(' ')}
+      </p>
+      <ReadinessBadge readiness={candidate.readiness} tiny />
     </motion.div>
   )
 }
