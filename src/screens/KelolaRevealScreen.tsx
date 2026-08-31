@@ -221,13 +221,13 @@ export function KelolaRevealScreen() {
           className="flex flex-col items-center gap-5 max-w-sm w-full"
         >
           <p className="text-slate-600 text-base leading-relaxed">
-            Mau lihat bagaimana Kelola bekerja di organisasimu?{' '}
-            <span className="text-[#0f172a] font-black">Tim kami ada di sini.</span>
+            Mau lihat bagaimana Kelola bekerja di organisasi Anda?{' '}
+            <span className="text-[#0f172a] font-black">Yuk, ngobrol langsung dengan tim kami di booth!</span>
           </p>
 
           {/* Contact card placeholder */}
           <div className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 shadow-sm flex flex-col gap-3 text-left">
-            <p className="text-brand text-[10px] font-bold uppercase tracking-widest">Hubungi Kami</p>
+            <p className="text-brand text-[10px] font-bold uppercase tracking-widest">Atau Hubungi Kami</p>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
