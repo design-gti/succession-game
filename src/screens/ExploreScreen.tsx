@@ -713,8 +713,18 @@ function OrgTree({
     return slotNode
   }
 
-  const connBase = isDragging ? 'bg-slate-400' : 'bg-slate-300'
-  const connSub = isDragging ? 'bg-slate-300' : 'bg-slate-200'
+  // Bubble field layout — organic scatter, no connectors
+  const BUBBLE_LAYOUT: Array<{ posId: PositionId; x: number; y: number }> = [
+    { posId: 'maya',          x: 68,  y: 52  },
+    { posId: 'sales_manager', x: 200, y: 88  },
+    { posId: 'dimas',         x: 332, y: 102 },
+    { posId: 'bintang',       x: 42,  y: 182 },
+    { posId: 'andi',          x: 120, y: 212 },
+    { posId: 'rani',          x: 200, y: 235 },
+    { posId: 'fajar',         x: 278, y: 212 },
+    { posId: 'rizky',         x: 358, y: 196 },
+  ]
+  const BOSS_X = 342, BOSS_Y = 14
 
   return (
     <div ref={outerRef} className="flex-1 min-h-0 overflow-hidden dot-grid relative" style={{ cursor: isDragging ? 'default' : 'grab' }}>
@@ -747,55 +757,28 @@ function OrgTree({
         </motion.div>
       )}
     </AnimatePresence>
-    {/* Centering wrapper — ensures scale pivot is always at horizontal center of container */}
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', height: '100%' }}>
-    <div
-      className="flex flex-col items-center py-2 min-w-max min-h-full"
-      style={{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})`, transformOrigin: 'top center', willChange: 'transform' }}
-    >
-      <BossNode />
-      <div className={`w-px h-3 mx-auto ${connBase} transition-colors duration-300`} />
-
-      {/* Horizontal 3-branch layout: maya | SM | dimas side by side */}
-      <div className="relative flex gap-4 items-start flex-shrink-0">
-        {/* Horizontal connector from maya to dimas at top of column connectors */}
-        <div className={`absolute top-0 h-px ${connBase} transition-colors duration-300`} style={{ left: '24px', right: '24px' }} />
-
-        {/* Maya column */}
-        <div className="flex flex-col items-center flex-shrink-0">
-          <div className={`w-px h-3 ${connSub} transition-colors duration-300`} />
-          {renderSlot('maya')}
-          <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
-          {renderSlot('bintang')}
+    {/* Bubble canvas — centered, free-floating nodes */}
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <div
+        style={{
+          position: 'relative', width: 400, height: 305, flexShrink: 0,
+          transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+          transformOrigin: 'center center',
+          willChange: 'transform',
+        }}
+      >
+        {/* Boss node — top-right, dimmed */}
+        <div style={{ position: 'absolute', left: BOSS_X, top: BOSS_Y, transform: 'translate(-50%, 0)' }}>
+          <BossNode />
         </div>
-
-        {/* Sales Manager column */}
-        <div className="flex flex-col items-center flex-shrink-0">
-          <div className={`w-px h-3 ${connBase} transition-colors duration-300`} />
-          {renderSlot('sales_manager')}
-          <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
-          <div className="relative flex gap-1.5">
-            <div className={`absolute top-0 h-px ${connSub} transition-colors duration-300`} style={{ left: '24px', right: '24px' }} />
-            {(['andi', 'rani', 'fajar'] as PositionId[]).map(id => (
-              <div key={id} className="flex flex-col items-center flex-shrink-0">
-                <div className={`w-px h-2 ${connSub}`} />
-                {renderSlot(id)}
-              </div>
-            ))}
+        {/* All position slots */}
+        {BUBBLE_LAYOUT.map(({ posId, x, y }) => (
+          <div key={posId} style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, 0)' }}>
+            {renderSlot(posId)}
           </div>
-        </div>
-
-        {/* Dimas column */}
-        <div className="flex flex-col items-center flex-shrink-0">
-          <div className={`w-px h-3 ${connSub} transition-colors duration-300`} />
-          {renderSlot('dimas')}
-          <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
-          {renderSlot('rizky')}
-        </div>
-
+        ))}
       </div>
     </div>
-    </div> {/* end centering wrapper */}
     </div>
   )
 }
