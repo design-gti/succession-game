@@ -44,10 +44,10 @@ export function LeadCaptureScreen() {
           </div>
           <p className="text-brand text-[10px] font-bold uppercase tracking-[0.3em] mb-1">Satu langkah lagi</p>
           <h2 className="text-2xl font-black text-[#0f172a] leading-snug">
-            Siapa kamu?
+            Siapa Anda?
           </h2>
           <p className="text-slate-500 text-sm mt-1.5 leading-relaxed">
-            Isi dulu ya — biar hasil game-nya bisa kami simpan buat kamu.
+            Lengkapi data berikut agar hasil permainan dapat kami simpan untuk Anda.
           </p>
         </div>
 
