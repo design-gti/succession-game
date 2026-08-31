@@ -1420,11 +1420,11 @@ function PortraitBottomPanel({
                 <p className="text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Perbandingan</p>
                 <div className="flex items-center gap-2.5 text-[8px]">
                   <span className="flex items-center gap-1">
-                    <span className="inline-block flex-shrink-0" style={{
-                      width: 8, height: 8, borderRadius: '50%',
-                      background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.9) 0%, #3B82F6 65%)',
-                      boxShadow: '0 0 0 1.5px white, 0 0 5px rgba(59,130,246,0.45)',
-                    }} />
+                    <span className="inline-block flex-shrink-0 rounded-full overflow-hidden" style={{ width: 16, height: 16 }}>
+                      <div style={{ width: 24, height: 24, transform: 'scale(0.667)', transformOrigin: '0 0' }}>
+                        <Avatar id={selectedCandidateId!} name={selectedCandidate.name} size="xs" />
+                      </div>
+                    </span>
                     <span className="text-slate-500 font-semibold">{selectedCandidate.name.split(' ')[0]}</span>
                   </span>
                   <span className="flex items-center gap-1">
@@ -1683,6 +1683,7 @@ function GestureDemo({ step, containerRef }: {
 
       switch (step) {
         case 0: {
+          // canvas — pan gesture
           const r = rectOfTarget(container, 'canvas')
           if (!r) return
           const c = center(r)
@@ -1690,33 +1691,37 @@ function GestureDemo({ step, containerRef }: {
           break
         }
         case 1: {
-          // calendar step — no gesture demo, spotlight only
-          break
-        }
-        case 2: {
+          // vacant — tap
           if (!vacant) return
           const c = center(vacant)
           setGeo({ kind: 'tap', start: c, end: c })
           break
         }
-        case 3: {
-          const r = rectOfTarget(container, 'needs-panel')
-          if (!r) return
-          setGeo({ kind: 'sweep', start: { x: r.x + r.w * 0.22, y: r.y + r.h * 0.5 }, end: { x: r.x + r.w * 0.72, y: r.y + r.h * 0.5 } })
-          break
-        }
-        case 4: {
+        case 2: {
+          // internal-card — drag to vacant
           const r = rectOfTarget(container, 'internal-card')
           if (!r || !vacant) return
           setGeo({ kind: 'drag', ghostId: 'andi', start: center(r), end: center(vacant) })
           break
         }
-        case 5: {
+        case 3: {
+          // external-pool — drag to vacant
           const r = rectOfTarget(container, 'external-pool')
           if (!r) return
           const s = { x: r.x + 42, y: r.y + r.h / 2 }
           const e = vacant ? center(vacant) : { x: s.x + 60, y: s.y - 140 }
           setGeo({ kind: 'drag', ghostId: 'dewi', start: s, end: e })
+          break
+        }
+        case 4: {
+          // needs-panel — sweep
+          const r = rectOfTarget(container, 'needs-panel')
+          if (!r) return
+          setGeo({ kind: 'sweep', start: { x: r.x + r.w * 0.22, y: r.y + r.h * 0.5 }, end: { x: r.x + r.w * 0.72, y: r.y + r.h * 0.5 } })
+          break
+        }
+        case 5: {
+          // calendar — no gesture demo, spotlight only
           break
         }
       }
@@ -1813,11 +1818,11 @@ function GestureDemo({ step, containerRef }: {
 
 const WALK_STEPS = [
   { target: 'canvas',        pos: 'bottom' as const, text: 'Ini org chart perusahaanmu. Drag untuk jelajahi, pinch untuk zoom.' },
-  { target: 'calendar',      pos: 'bottom' as const, text: 'Ini jam organisasimu. Setiap harinya ada biaya "posisi kosong" — makin cepat kamu isi, makin kecil dampaknya ke bisnis.' },
   { target: 'vacant',        pos: 'bottom' as const, text: 'Sales Manager resign. Kursi merah ini harus kamu isi!' },
-  { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis = level minimum yang dibutuhkan.' },
   { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam — tarik siapa pun di org chart. Tap kartu untuk lihat profil.' },
   { target: 'external-pool', pos: 'top'    as const, text: 'Atau rekrut dari luar. Tidak meninggalkan lubang di tim, tapi cek readiness-nya.' },
+  { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis = level minimum yang dibutuhkan.' },
+  { target: 'calendar',      pos: 'bottom' as const, text: 'Ini jam organisasimu. Setiap harinya ada biaya "posisi kosong" — makin cepat kamu isi, makin kecil dampaknya ke bisnis.' },
 ]
 
 function WalkthroughOverlay({ step, onStep, onDone, containerRef }: {
