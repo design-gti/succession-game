@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useRef, useCallback, useEffect } from 'react'
 import { gameReducer, initialState } from './reducer'
 import type { GameState, GameAction, CandidateId } from './types'
-import { logEvent, submitPlay, flushQueue } from '../lib/api'
+import { logEvent, submitPlay, submitLead, flushQueue } from '../lib/api'
 
 interface GameContextValue {
   state: GameState
