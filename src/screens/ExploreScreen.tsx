@@ -146,6 +146,81 @@ function AspectBars({ assessment, standard, showStandard = true }: { assessment:
   )
 }
 
+// ─── ActiveBubble wrapper — selected avatar state ─────────────────────────────
+
+function ActiveBubble({ isActive, children }: { isActive: boolean; children: React.ReactNode }) {
+  const [showRipple, setShowRipple] = useState(false)
+  const wasActive = useRef(false)
+
+  useEffect(() => {
+    if (isActive && !wasActive.current) setShowRipple(true)
+    wasActive.current = isActive
+  }, [isActive])
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      {/* Rotating gradient ring — persistent while active */}
+      <AnimatePresence>
+        {isActive && (
+          <motion.div
+            key="ring"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="animate-spin-slow"
+            style={{
+              position: 'absolute', inset: -3, borderRadius: '50%',
+              background: 'conic-gradient(from 0deg, rgba(29,111,242,0.7), rgba(103,232,249,0.45), rgba(147,197,253,0.3), rgba(29,111,242,0.7))',
+              WebkitMask: 'radial-gradient(circle, transparent 71%, black 75%)',
+              mask: 'radial-gradient(circle, transparent 71%, black 75%)',
+              pointerEvents: 'none', zIndex: 5,
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Single-shot ripple on selection */}
+      <AnimatePresence>
+        {showRipple && (
+          <motion.div
+            key="ripple"
+            style={{
+              position: 'absolute', inset: -1, borderRadius: '50%',
+              border: '1.5px solid rgba(29,111,242,0.55)',
+              pointerEvents: 'none', zIndex: 10,
+            }}
+            initial={{ scale: 0.98, opacity: 0.72 }}
+            animate={{ scale: 1.82, opacity: 0 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+            onAnimationComplete={() => setShowRipple(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Float up */}
+      <motion.div
+        animate={isActive ? { y: -5 } : { y: 0 }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+      >
+        {/* Inflate (spring overshoot gives 1→1.10→1.06) + breathing loop */}
+        <motion.div
+          animate={isActive
+            ? { scale: [1, 1.10, 1.06, 1.085, 1.06] }
+            : { scale: 1 }
+          }
+          transition={isActive
+            ? { duration: 3.2, times: [0, 0.07, 0.16, 0.58, 1], ease: 'easeInOut', repeat: Infinity }
+            : { duration: 0.18, ease: 'easeOut' }
+          }
+        >
+          {children}
+        </motion.div>
+      </motion.div>
+    </div>
+  )
+}
+
 // ─── OrgCircle ────────────────────────────────────────────────────────────────
 
 type NodeSize = 'sm' | 'md' | 'lg'
@@ -163,6 +238,8 @@ function OrgCircle({
   posId,
   nodeSize = 'md',
   className = '',
+  isActive = false,
+  softDimmed = false,
 }: {
   filled?: boolean
   name: string
@@ -171,14 +248,21 @@ function OrgCircle({
   posId?: PositionId
   nodeSize?: NodeSize
   className?: string
+  isActive?: boolean
+  softDimmed?: boolean
 }) {
   const firstName = name.split(' ')[0]
   const shortRole = role.split(' ').slice(0, 2).join(' ')
 
   return (
-    <div className={`flex flex-col items-center gap-1 flex-shrink-0 ${className}`}>
+    <div
+      className={`flex flex-col items-center gap-1 flex-shrink-0 ${className}`}
+      style={{ opacity: softDimmed ? 0.88 : 1, transition: 'opacity 0.2s' }}
+    >
       <div className="relative">
-        <Avatar id={candidateId} name={name} size={NODE_AVATAR_SIZE[nodeSize]} />
+        <ActiveBubble isActive={isActive}>
+          <Avatar id={candidateId} name={name} size={NODE_AVATAR_SIZE[nodeSize]} />
+        </ActiveBubble>
         {filled && (
           <div className={`absolute -bottom-0.5 -right-0.5 z-10 ${NODE_CHECK_SIZE[nodeSize]} rounded-full bg-green-500 flex items-center justify-center border-[1.5px] border-white shadow-sm`}>
             <span className="text-white text-[7px] font-black leading-none">✓</span>
@@ -343,7 +427,7 @@ function BubblePop({ sizePx, onDone }: { sizePx: number; onDone: () => void }) {
 
 // ─── DraggableSlot ────────────────────────────────────────────────────────────
 
-function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed, floatDelay = 0, nodeSize = 'md', isTargeted = false }: {
+function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed, softDimmed, isActive, floatDelay = 0, nodeSize = 'md', isTargeted = false }: {
   id: CandidateId
   posId: PositionId
   onDrop: (id: CandidateId, point: { x: number; y: number }) => boolean
@@ -352,6 +436,8 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
   onDragEnd?: () => void
   onSelect?: () => void
   dimmed?: boolean
+  softDimmed?: boolean
+  isActive?: boolean
   floatDelay?: number
   nodeSize?: NodeSize
   isTargeted?: boolean
@@ -411,7 +497,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
       className={`relative cursor-grab active:cursor-grabbing select-none ${isDragging ? 'bubble-dragging' : ''}`}
       style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto' }}
     >
-      <OrgCircle name={c.name} role={c.currentRole} candidateId={id} posId={posId} nodeSize={nodeSize} />
+      <OrgCircle name={c.name} role={c.currentRole} candidateId={id} posId={posId} nodeSize={nodeSize} isActive={isActive} softDimmed={softDimmed} />
       <AnimatePresence>
         {isTargeted && !isDragging && (
           <motion.div
@@ -432,7 +518,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
 
 // ─── PlacedSlot ───────────────────────────────────────────────────────────────
 
-function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onDragEnd, onSelect, nodeSize = 'md' }: {
+function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onDragEnd, onSelect, nodeSize = 'md', isActive, softDimmed }: {
   id: CandidateId
   posId: PositionId
   onMove: (point: { x: number; y: number }) => boolean
@@ -442,6 +528,8 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
   onDragEnd?: () => void
   onSelect?: () => void
   nodeSize?: NodeSize
+  isActive?: boolean
+  softDimmed?: boolean
 }) {
   const c = getCandidateById(id)
   const realFit = getSlotFit(posId, id)
@@ -528,6 +616,8 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
         candidateId={id}
         posId={posId}
         nodeSize={nodeSize}
+        isActive={isActive}
+        softDimmed={softDimmed}
       />
     </motion.div>
   )
@@ -602,7 +692,8 @@ function ArcGauge({ value }: { value: number }) {
 
 function OrgTree({
   assignments, activeVacancyId, vacancyQueue, nodeRef, isDragOver, onDrop, onDragMove,
-  activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect, initialZoom = 1.0,
+  activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect, onExplore,
+  selectedCandidateId, initialZoom = 1.0,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -617,6 +708,8 @@ function OrgTree({
   onUnplace: (posId: PositionId) => void
   onMovePlaced: (fromPosId: PositionId, candidateId: CandidateId, point: { x: number; y: number }) => boolean
   onSelect: (id: CandidateId) => void
+  onExplore?: () => void
+  selectedCandidateId?: CandidateId | null
   initialZoom?: number
 }) {
   const isDragging = activeDragId !== null
@@ -658,7 +751,7 @@ function OrgTree({
       panYRef.current = panStart.py + dy
       setPanX(panXRef.current)
       setPanY(panYRef.current)
-      setExplored(true)
+      if (!explored) { setExplored(true); onExplore?.() }
     }
     function onPointerUp(e: PointerEvent) {
       if (e.pointerId === panPointerId) { panStart = null; panPointerId = null }
@@ -739,6 +832,8 @@ function OrgTree({
     const occupant = assignments[posId]
     if (!occupant) return <QueuedVacancy posId={posId} nodeSize={nodeSize} />
     const isNatural = occupant === (posId as string)
+    const isActive = selectedCandidateId === occupant
+    const softDimmed = !!selectedCandidateId && !isActive
     const slotNode = isNatural ? (
       <DraggableSlot
         id={occupant} posId={posId} onDrop={onDrop} onDragMove={onDragMove}
@@ -746,6 +841,8 @@ function OrgTree({
         onDragEnd={onDragEnd}
         onSelect={() => onSelect(occupant)}
         dimmed={isDragging && activeDragId !== occupant}
+        softDimmed={softDimmed}
+        isActive={isActive}
         floatDelay={FLOAT_DELAYS[posId] ?? 0}
         nodeSize={nodeSize}
         isTargeted={isDragOver && activeDragId === occupant}
@@ -760,6 +857,8 @@ function OrgTree({
         onDragEnd={onDragEnd}
         onSelect={() => onSelect(occupant)}
         nodeSize={nodeSize}
+        isActive={isActive}
+        softDimmed={softDimmed}
       />
     )
     if (posId === 'andi') {
@@ -812,24 +911,6 @@ function OrgTree({
         className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none shadow-sm"
       >−</button>
     </div>
-    {/* Pan/explore hint */}
-    <AnimatePresence>
-      {!explored && (
-        <motion.div
-          key="pan-hint"
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 4 }}
-          transition={{ delay: 1.8, duration: 0.4 }}
-          className="absolute bottom-10 left-0 right-0 flex items-center justify-center gap-1.5 pointer-events-none z-10"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-slate-400">
-            <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-          </svg>
-          <span className="text-slate-400 text-[9px] uppercase tracking-[0.2em] font-semibold">drag to explore</span>
-        </motion.div>
-      )}
-    </AnimatePresence>
     {/* Bubble canvas */}
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
       <div
@@ -875,7 +956,7 @@ function OrgTree({
 
 // ─── ExternalCandidateSlot ────────────────────────────────────────────────────
 
-function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed }: {
+function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed, isActive, softDimmed }: {
   candidate: Candidate
   alreadyPlaced: boolean
   onDrop: (id: CandidateId, point: { x: number; y: number }) => boolean
@@ -884,6 +965,8 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
   onDragEnd?: () => void
   onSelect?: () => void
   dimmed?: boolean
+  isActive?: boolean
+  softDimmed?: boolean
 }) {
   const [placed, setPlaced] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -937,16 +1020,12 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
         if (pt && onDrop(candidate.id, pt)) setPlaced(true)
       }}
       className={`flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing select-none flex-shrink-0 ${isDragging ? 'bubble-dragging' : ''}`}
-      style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto' }}
+      style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto', opacity: softDimmed ? 0.88 : 1, transition: 'opacity 0.2s' }}
     >
-      {/* Avatar bubble with amber EXT ring */}
       <div className="relative">
-        <Avatar id={candidate.id} name={candidate.name} size="md" ringColor="#f59e0b" />
-        {/* EXT badge */}
-        <div className="absolute -top-0.5 -right-0.5 z-10 bg-amber-500 text-white rounded-full px-[3px] py-[1px] leading-none"
-          style={{ fontSize: '5px', fontWeight: 900, letterSpacing: '0.04em' }}>
-          EXT
-        </div>
+        <ActiveBubble isActive={!!isActive}>
+          <Avatar id={candidate.id} name={candidate.name} size="md" ringColor="#f59e0b" />
+        </ActiveBubble>
       </div>
       <p className="text-[#0f172a] font-bold text-[8px] leading-none text-center">
         {candidate.name.split(' ')[0]}
@@ -1201,6 +1280,8 @@ function PortraitBottomPanel({
               onDragEnd={onDragEnd}
               onSelect={() => onSelect(c.id)}
               dimmed={activeDragId !== null && activeDragId !== c.id}
+              isActive={selectedCandidateId === c.id}
+              softDimmed={!!selectedCandidateId && selectedCandidateId !== c.id}
             />
           ))}
         </div>
@@ -1480,6 +1561,7 @@ export function ExploreScreen() {
   const { state, actions } = useGame()
   const vacantRef = useRef<HTMLDivElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [canvasExplored, setCanvasExplored] = useState(false)
   const [assignments, setAssignments] = useState<Partial<Record<PositionId, CandidateId>>>(INITIAL_ASSIGNMENTS)
   const [vacancyQueue, setVacancyQueue] = useState<PositionId[]>(['sales_manager'])
   const [activeDragId, setActiveDragId] = useState<CandidateId | null>(null)
@@ -1606,8 +1688,26 @@ export function ExploreScreen() {
   return (
     <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden bg-[#f4f7fb]">
 
-      {/* Header bar with ? button */}
-      <div className="flex items-center justify-end px-3 pt-2 pb-1 flex-shrink-0">
+      {/* Header bar with drag hint + ? button */}
+      <div className="flex items-center justify-between px-3 pt-2 pb-1 flex-shrink-0">
+        <AnimatePresence>
+          {!canvasExplored && (
+            <motion.div
+              key="drag-hint"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 1.6, duration: 0.4 }}
+              className="flex items-center gap-1.5 pointer-events-none"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" className="text-slate-400">
+                <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+              <span className="text-slate-400 text-[9px] uppercase tracking-[0.18em] font-semibold">Drag to explore</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {canvasExplored && <div />}
         <button
           onClick={() => { setWalkthroughStep(0); setWalkthroughDone(false) }}
           className="w-7 h-7 rounded-full border border-slate-200 bg-white text-slate-400 text-xs font-bold flex items-center justify-center active:scale-90 transition-all shadow-sm"
@@ -1630,6 +1730,8 @@ export function ExploreScreen() {
             onUnplace={handleUnplace}
             onMovePlaced={handleMovePlaced}
             onSelect={setSelectedCandidateId}
+            onExplore={() => setCanvasExplored(true)}
+            selectedCandidateId={selectedCandidateId}
             initialZoom={0.55}
           />
         </div>
