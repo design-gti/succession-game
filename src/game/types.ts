@@ -11,17 +11,33 @@ export type Phase =
   | { name: 'kelolaReveal' }
   | { name: 'finished' }
 
+export interface PlacementEntry {
+  posId: string
+  candidateId: CandidateId
+  dayFilled: number
+  vacancyAge: number  // days position was vacant before being filled
+}
+
+export interface TimeFillData {
+  currentDay: number
+  placements: PlacementEntry[]
+  avgTTF: number       // average days to fill
+  totalDays: number    // total simulated days elapsed
+}
+
 export interface ScoreBreakdown {
   overallFit: number
-  total: number
+  hiringSpeed: number
+  total: number        // Talent Decision Score = 70% orgFit + 30% hiringSpeed
   persona: Persona
+  timeFill: TimeFillData
 }
 
 export type Persona =
-  | 'TALENT ARCHITECT'
   | 'TALENT STRATEGIST'
-  | 'TALENT SCOUT'
-  | 'GUT-FEEL MANAGER'
+  | 'QUALITY ARCHITECT'
+  | 'RAPID RECRUITER'
+  | 'TALENT EXPLORER'
 
 export interface GameState {
   phase: Phase
@@ -36,7 +52,7 @@ export interface GameState {
 
 export type GameAction =
   | { type: 'START_GAME' }
-  | { type: 'CONFIRM_EXPLORE'; finalPickId: CandidateId; overallFit: number }
+  | { type: 'CONFIRM_EXPLORE'; finalPickId: CandidateId; overallFit: number; timeFill: TimeFillData }
   | { type: 'SHOW_KELOLA_REVEAL' }
   | { type: 'SUBMIT_LEAD_INFO'; name: string; email: string; company: string }
   | { type: 'FINISH' }

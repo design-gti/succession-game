@@ -6,7 +6,7 @@ import { Avatar } from '../components/Avatar'
 import { FitRingWithLabel } from '../components/FitRing'
 import { getCandidateById, EXTERNAL_CANDIDATES, type Candidate, type Readiness, type Assessment } from '../data/scenario'
 import { fitColor } from '../game/scoring'
-import type { CandidateId } from '../game/types'
+import type { CandidateId, PlacementEntry, TimeFillData } from '../game/types'
 import { logEvent } from '../lib/api'
 
 // ─── Position definitions ─────────────────────────────────────────────────────
@@ -402,7 +402,7 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, nodeSize = 'md' }: {
 
 // ─── QueuedVacancy ────────────────────────────────────────────────────────────
 
-function QueuedVacancy({ posId, nodeSize = 'md' }: { posId: PositionId; nodeSize?: NodeSize }) {
+function QueuedVacancy({ posId, nodeSize = 'md', daysVacant = 0 }: { posId: PositionId; nodeSize?: NodeSize; daysVacant?: number }) {
   const pos = POSITIONS.find(p => p.id === posId)!
   const sz = NODE_SZ_PX[nodeSize]
   return (
@@ -414,6 +414,9 @@ function QueuedVacancy({ posId, nodeSize = 'md' }: { posId: PositionId; nodeSize
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
       }}>
         <p style={{ color: '#b45309', fontSize: nodeSize === 'lg' ? 7 : 6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>Next</p>
+        {daysVacant > 0 && (
+          <p style={{ color: '#b45309', fontSize: 5.5, fontWeight: 700, lineHeight: 1 }}>{daysVacant}h</p>
+        )}
       </div>
       <p className={`text-[#0f172a] font-bold leading-none text-center ${NODE_NAME_SIZE[nodeSize]}`}>
         {pos.shortRole.split(' ')[0]}
@@ -750,7 +753,7 @@ function ArcGauge({ value }: { value: number }) {
 function OrgTree({
   assignments, activeVacancyId, vacancyQueue, nodeRef, isDragOver, onDrop, onDragMove,
   activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect, onExplore,
-  selectedCandidateId, initialZoom = 1.0,
+  selectedCandidateId, initialZoom = 1.0, currentDay = 1, vacancyOpenedAt = {},
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -768,6 +771,8 @@ function OrgTree({
   onExplore?: () => void
   selectedCandidateId?: CandidateId | null
   initialZoom?: number
+  currentDay?: number
+  vacancyOpenedAt?: Partial<Record<PositionId, number>>
 }) {
   const isDragging = activeDragId !== null
   const [zoom, setZoom] = useState(initialZoom)
@@ -880,14 +885,15 @@ function OrgTree({
     setZoom(next)
   }
   function renderSlot(posId: PositionId, nodeSize: NodeSize = 'md') {
+    const daysVacant = vacancyOpenedAt[posId] != null ? Math.max(0, currentDay - vacancyOpenedAt[posId]!) : 0
     if (posId === activeVacancyId) {
       return <ActiveVacancy nodeRef={nodeRef} isDragOver={isDragOver} posId={posId} nodeSize={nodeSize} />
     }
     if (vacancyQueue.includes(posId) && !assignments[posId]) {
-      return <QueuedVacancy posId={posId} nodeSize={nodeSize} />
+      return <QueuedVacancy posId={posId} nodeSize={nodeSize} daysVacant={daysVacant} />
     }
     const occupant = assignments[posId]
-    if (!occupant) return <QueuedVacancy posId={posId} nodeSize={nodeSize} />
+    if (!occupant) return <QueuedVacancy posId={posId} nodeSize={nodeSize} daysVacant={daysVacant} />
     const isNatural = occupant === (posId as string)
     const isActive = selectedCandidateId === occupant
     const softDimmed = !!selectedCandidateId && !isActive
@@ -1199,31 +1205,33 @@ function ComparisonBars({ standard, assessment }: { standard: Assessment; assess
         return (
           <AspectRow key={key} aspectKey={key} label={label}>
             <div className="relative flex-1 h-[6px] rounded-full" style={{ background: 'rgba(148,163,184,0.18)' }}>
-              {/* Filled track up to candidate value */}
+              {/* Filled track — candidate achievement */}
               <motion.div
                 className="absolute inset-y-0 left-0 rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${val}%` }}
                 transition={{ duration: 0.45, ease: 'easeOut' }}
-                style={{ background: `linear-gradient(90deg, ${cfg.gradFrom}, ${cfg.gradTo})`, opacity: 0.5 }}
+                style={{ background: `linear-gradient(90deg, ${cfg.gradFrom}, ${cfg.gradTo})`, opacity: 0.75 }}
               />
-              {/* Standard marker — thin neutral line */}
+              {/* Standard marker — thin neutral vertical line */}
               <div
                 className="absolute top-[-4px] bottom-[-4px] rounded-full z-10"
                 style={{ left: `${std}%`, width: 1.5, background: 'rgba(100,116,139,0.55)' }}
               />
-              {/* Candidate bubble marker — glossy */}
+              {/* Candidate glossy bubble — positioned by % width, centered on track */}
               <motion.div
-                className="absolute top-1/2 z-20"
-                initial={{ x: 0, y: '-50%', scale: 0.5, opacity: 0 }}
-                animate={{ x: `calc(${val}cqw - 6px)`, y: '-50%', scale: 1, opacity: 1 }}
+                className="absolute z-20"
+                initial={{ scale: 0.4, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3, ease: 'backOut' }}
                 style={{
-                  left: `${val}%`,
-                  transform: 'translate(-50%, -50%)',
+                  left: `calc(${val}% - 6px)`,
+                  top: '50%',
+                  marginTop: -6,
                   width: 12, height: 12,
                   borderRadius: '50%',
-                  background: `radial-gradient(circle at 38% 32%, white, ${cfg.color})`,
-                  boxShadow: `0 0 0 1.5px white, 0 0 6px ${cfg.glow}`,
+                  background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.9) 0%, ${cfg.color} 60%)`,
+                  boxShadow: `0 0 0 1.5px white, 0 0 7px ${cfg.glow}`,
                 }}
               />
             </div>
@@ -1241,7 +1249,7 @@ function PortraitBottomPanel({
   assignments, activeVacancyId, allFilled,
   onExternalDrop, onExternalDragMove, onConfirm,
   activeDragId, onDragStart, onDragEnd, onSelect,
-  selectedCandidateId, vacancyQueue,
+  selectedCandidateId, vacancyQueue, currentDay = 1,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -1255,6 +1263,7 @@ function PortraitBottomPanel({
   onSelect: (id: CandidateId) => void
   selectedCandidateId: CandidateId | null
   vacancyQueue: PositionId[]
+  currentDay?: number
 }) {
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
   const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
@@ -1344,15 +1353,17 @@ function PortraitBottomPanel({
               initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="flex flex-col gap-1.5"
             >
+              {/* Legend row — spacers calibrated to align with bar track edges */}
+              {/* AspectRow: px-1.5(6) + icon(20) + gap(8) + label(24) + gap(8) = 66px left of track */}
+              {/* Legend gap-2 layout: spacer + gap(8) = 66 → spacer=58; right: value(18)+px-1.5(6)+gap(8)=32 → right-spacer=24 */}
               <div className="flex items-center justify-between">
                 <p className="text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Perbandingan</p>
-                <div className="flex items-center gap-2.5 text-[8px] text-slate-400">
+                <div className="flex items-center gap-2.5 text-[8px]">
                   <span className="flex items-center gap-1">
-                    {/* Glossy candidate dot in legend */}
                     <span className="inline-block flex-shrink-0" style={{
                       width: 8, height: 8, borderRadius: '50%',
-                      background: 'radial-gradient(circle at 38% 32%, white, #3B82F6)',
-                      boxShadow: '0 0 0 1px white, 0 0 4px rgba(59,130,246,0.5)',
+                      background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.9) 0%, #3B82F6 65%)',
+                      boxShadow: '0 0 0 1.5px white, 0 0 5px rgba(59,130,246,0.45)',
                     }} />
                     <span className="text-slate-500 font-semibold">{selectedCandidate.name.split(' ')[0]}</span>
                   </span>
@@ -1564,6 +1575,174 @@ function RightPanel({
   )
 }
 
+// ─── Walkthrough gesture demos ────────────────────────────────────────────────
+
+function rectOfTarget(container: HTMLElement, target: string) {
+  const el = container.querySelector(`[data-tutorial="${target}"]`)
+  if (!el) return null
+  const c = container.getBoundingClientRect()
+  const r = el.getBoundingClientRect()
+  return { x: r.x - c.x, y: r.y - c.y, w: r.width, h: r.height }
+}
+
+type DemoGeo = {
+  kind: 'pan' | 'tap' | 'sweep' | 'drag'
+  start: { x: number; y: number }
+  end: { x: number; y: number }
+  ghostId?: CandidateId
+}
+
+const DOT = 30  // touch indicator diameter
+
+function TouchIndicator() {
+  return (
+    <div style={{
+      width: DOT, height: DOT, borderRadius: '50%',
+      background: 'rgba(255,255,255,0.9)',
+      boxShadow: '0 0 0 5px rgba(255,255,255,0.25), 0 2px 12px rgba(15,23,42,0.4)',
+    }} />
+  )
+}
+
+function GestureDemo({ step, containerRef }: {
+  step: number
+  containerRef: React.RefObject<HTMLDivElement>
+}) {
+  const [geo, setGeo] = useState<DemoGeo | null>(null)
+
+  useEffect(() => {
+    setGeo(null)
+    const t = setTimeout(() => {
+      const container = containerRef.current
+      if (!container) return
+      const center = (r: { x: number; y: number; w: number; h: number }) =>
+        ({ x: r.x + r.w / 2, y: r.y + r.h / 2 })
+      const vacant = rectOfTarget(container, 'vacant')
+
+      switch (step) {
+        case 0: {
+          const r = rectOfTarget(container, 'canvas')
+          if (!r) return
+          const c = center(r)
+          setGeo({ kind: 'pan', start: { x: c.x - 55, y: c.y - 10 }, end: { x: c.x + 55, y: c.y + 10 } })
+          break
+        }
+        case 1: {
+          if (!vacant) return
+          const c = center(vacant)
+          setGeo({ kind: 'tap', start: c, end: c })
+          break
+        }
+        case 2: {
+          const r = rectOfTarget(container, 'needs-panel')
+          if (!r) return
+          setGeo({ kind: 'sweep', start: { x: r.x + r.w * 0.22, y: r.y + r.h * 0.5 }, end: { x: r.x + r.w * 0.72, y: r.y + r.h * 0.5 } })
+          break
+        }
+        case 3: {
+          const r = rectOfTarget(container, 'internal-card')
+          if (!r || !vacant) return
+          setGeo({ kind: 'drag', ghostId: 'andi', start: center(r), end: center(vacant) })
+          break
+        }
+        case 4: {
+          const r = rectOfTarget(container, 'external-pool')
+          if (!r) return
+          const s = { x: r.x + 42, y: r.y + r.h / 2 }
+          const e = vacant ? center(vacant) : { x: s.x + 60, y: s.y - 140 }
+          setGeo({ kind: 'drag', ghostId: 'dewi', start: s, end: e })
+          break
+        }
+      }
+    }, 350)
+    return () => clearTimeout(t)
+  }, [step])
+
+  if (!geo) return null
+  const { kind, start, end } = geo
+  const dotOff = DOT / 2
+
+  if (kind === 'pan' || kind === 'sweep') {
+    return (
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" key={`demo-${step}`}>
+        <motion.div
+          className="absolute left-0 top-0"
+          animate={{
+            x: [start.x - dotOff, start.x - dotOff, end.x - dotOff, start.x - dotOff, start.x - dotOff],
+            y: [start.y - dotOff, start.y - dotOff, end.y - dotOff, start.y - dotOff, start.y - dotOff],
+            opacity: [0, 1, 1, 1, 0],
+            scale: [0.6, 0.85, 0.85, 0.85, 0.6],
+          }}
+          transition={{ duration: 3, times: [0, 0.12, 0.5, 0.88, 1], repeat: Infinity, repeatDelay: 0.4, ease: 'easeInOut' }}
+        >
+          <TouchIndicator />
+        </motion.div>
+      </div>
+    )
+  }
+
+  if (kind === 'tap') {
+    return (
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" key={`demo-${step}`}>
+        {/* Ripple ring on tap */}
+        <motion.div
+          className="absolute left-0 top-0 rounded-full"
+          style={{ width: DOT, height: DOT, border: '2px solid rgba(255,255,255,0.85)', x: start.x - dotOff, y: start.y - dotOff }}
+          animate={{ scale: [1, 1, 2.4, 2.8], opacity: [0, 0, 0.9, 0] }}
+          transition={{ duration: 2, times: [0, 0.4, 0.7, 1], repeat: Infinity, repeatDelay: 0.5, ease: 'easeOut' }}
+        />
+        <motion.div
+          className="absolute left-0 top-0"
+          style={{ x: start.x - dotOff, y: start.y - dotOff }}
+          animate={{ opacity: [0, 1, 1, 1, 0], scale: [0.6, 0.9, 0.65, 0.9, 0.6] }}
+          transition={{ duration: 2, times: [0, 0.25, 0.42, 0.6, 1], repeat: Infinity, repeatDelay: 0.5, ease: 'easeInOut' }}
+        >
+          <TouchIndicator />
+        </motion.div>
+      </div>
+    )
+  }
+
+  // kind === 'drag' — ghost avatar lifted and dragged to the vacant seat
+  const ghost = geo.ghostId ? getCandidateById(geo.ghostId) : null
+  const GHOST = 44
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" key={`demo-${step}`}>
+      {/* Ghost avatar follows the finger */}
+      {ghost && (
+        <motion.div
+          className="absolute left-0 top-0"
+          animate={{
+            x: [start.x - GHOST / 2, start.x - GHOST / 2, end.x - GHOST / 2, end.x - GHOST / 2],
+            y: [start.y - GHOST / 2, start.y - GHOST / 2, end.y - GHOST / 2, end.y - GHOST / 2],
+            opacity: [0, 0.95, 0.95, 0],
+            scale: [0.7, 1.15, 1.15, 0.8],
+          }}
+          transition={{ duration: 3.2, times: [0, 0.2, 0.72, 1], repeat: Infinity, repeatDelay: 0.5, ease: 'easeInOut' }}
+          style={{ filter: 'drop-shadow(0 6px 14px rgba(15,23,42,0.45))' }}
+        >
+          <div style={{ width: GHOST, height: GHOST, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.9)' }}>
+            <Avatar id={ghost.id} name={ghost.name} size="sm" />
+          </div>
+        </motion.div>
+      )}
+      {/* Finger dot slightly offset on top of the ghost */}
+      <motion.div
+        className="absolute left-0 top-0"
+        animate={{
+          x: [start.x - dotOff + 10, start.x - dotOff + 10, end.x - dotOff + 10, end.x - dotOff + 10],
+          y: [start.y - dotOff + 12, start.y - dotOff + 12, end.y - dotOff + 12, end.y - dotOff + 12],
+          opacity: [0, 0.9, 0.9, 0],
+          scale: [0.6, 0.8, 0.8, 0.6],
+        }}
+        transition={{ duration: 3.2, times: [0, 0.2, 0.72, 1], repeat: Infinity, repeatDelay: 0.5, ease: 'easeInOut' }}
+      >
+        <TouchIndicator />
+      </motion.div>
+    </div>
+  )
+}
+
 // ─── Walkthrough Overlay ──────────────────────────────────────────────────────
 
 const WALK_STEPS = [
@@ -1629,6 +1808,9 @@ function WalkthroughOverlay({ step, onStep, onDone, containerRef }: {
         )}
       </div>
 
+      {/* Animated gesture demo */}
+      <GestureDemo step={step} containerRef={containerRef} />
+
       {/* Tooltip card */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -1676,6 +1858,29 @@ function WalkthroughOverlay({ step, onStep, onDone, containerRef }: {
   )
 }
 
+// ─── CalendarWidget ───────────────────────────────────────────────────────────
+
+function CalendarWidget({ currentDay, openRoles }: { currentDay: number; openRoles: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.18)' }}>
+        <svg width="9" height="9" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="2" width="14" height="13" rx="2" stroke="#3B82F6" strokeWidth="1.5"/>
+          <path d="M1 6h14" stroke="#3B82F6" strokeWidth="1.5"/>
+          <path d="M5 1v2M11 1v2" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <span className="text-[9px] font-black text-blue-600 leading-none">H{currentDay}</span>
+      </div>
+      {openRoles > 0 && (
+        <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(180,130,0,0.08)', border: '1px solid rgba(180,130,0,0.2)' }}>
+          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#b45309' }} />
+          <span className="text-[9px] font-bold leading-none" style={{ color: '#b45309' }}>{openRoles} kosong</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Explore Screen ───────────────────────────────────────────────────────────
 
 export function ExploreScreen() {
@@ -1691,9 +1896,24 @@ export function ExploreScreen() {
   const [walkthroughStep, setWalkthroughStep] = useState(0)
   const walkthroughContainerRef = useRef<HTMLDivElement>(null)
 
+  // Simulated calendar: 1 day passes every 2 real minutes
+  const [currentDay, setCurrentDay] = useState(1)
+  const [vacancyOpenedAt, setVacancyOpenedAt] = useState<Partial<Record<PositionId, number>>>({ sales_manager: 1 })
+  const [placements, setPlacements] = useState<PlacementEntry[]>([])
+  useEffect(() => {
+    const id = setInterval(() => setCurrentDay(d => d + 1), 2 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
+
   const activeVacancyId = vacancyQueue[0] ?? null
   const allFilled = vacancyQueue.length === 0
   const smOccupant = assignments['sales_manager'] ?? null
+
+  function computeTimeFill(): TimeFillData {
+    const totalVacancyDays = placements.reduce((s, p) => s + p.vacancyAge, 0)
+    const avgTTF = placements.length > 0 ? Math.round(totalVacancyDays / placements.length) : 0
+    return { currentDay, placements, avgTTF, totalDays: currentDay }
+  }
 
   function isOverVacancy(point: { x: number; y: number }) {
     const rect = vacantRef.current?.getBoundingClientRect()
@@ -1711,12 +1931,23 @@ export function ExploreScreen() {
     delete newAssignments[posId]
     let newQueue = [posId, ...vacancyQueue.filter(q => q !== posId)]
 
+    // Reset placement log for this position (vacancy re-opened)
+    setPlacements(prev => prev.filter(p => p.posId !== posId))
+    setVacancyOpenedAt(prev => ({ ...prev, [posId]: currentDay }))
+
     // Reverse cascade: if internal candidate's natural slot was vacated, restore it
     if (candidate.source === 'internal') {
       const naturalPosId = occupant as unknown as PositionId
       if (newQueue.includes(naturalPosId)) {
         newQueue = newQueue.filter(q => q !== naturalPosId)
         newAssignments[naturalPosId] = occupant
+        // Remove the natural slot from vacancyOpenedAt since it's filled again
+        setVacancyOpenedAt(prev => {
+          const next = { ...prev }
+          delete next[naturalPosId]
+          return next
+        })
+        setPlacements(prev => prev.filter(p => p.posId !== naturalPosId))
       }
     }
 
@@ -1757,18 +1988,42 @@ export function ExploreScreen() {
     return { assignments: newA, queue: newQ }
   }
 
-  function handleDrop(candidateId: CandidateId, point: { x: number; y: number }): boolean {
-    setIsDragOver(false)
-    if (!activeVacancyId || !isOverVacancy(point)) return false
+  function applyConfirmedDrop(
+    candidateId: CandidateId,
+    targetPosId: PositionId,
+    fromPosId: PositionId | null,
+    baseAssignments: Partial<Record<PositionId, CandidateId>>,
+    baseQueue: PositionId[],
+  ) {
+    const candidate = getCandidateById(candidateId)
+    const { assignments: newA, queue: newQ } = applyDrop(candidateId, targetPosId, fromPosId, baseAssignments, baseQueue)
+    const openedAt = vacancyOpenedAt[targetPosId] ?? currentDay
+    const vacancyAge = Math.max(0, currentDay - openedAt)
 
-    const { assignments: newA, queue: newQ } = applyDrop(
-      candidateId, activeVacancyId, null, assignments, vacancyQueue.slice(1)
-    )
+    // Record placement
+    const entry: PlacementEntry = {
+      posId: targetPosId,
+      candidateId,
+      dayFilled: currentDay,
+      vacancyAge,
+    }
+    setPlacements(prev => [...prev.filter(p => p.posId !== targetPosId), entry])
+
+    // Update vacancyOpenedAt — remove filled slot, open any new cascade vacancies
+    const newVacancyOpenedAt: Partial<Record<PositionId, number>> = { ...vacancyOpenedAt }
+    delete newVacancyOpenedAt[targetPosId]
+    for (const posId of newQ) {
+      if (!newVacancyOpenedAt[posId]) newVacancyOpenedAt[posId] = currentDay
+    }
+    if (fromPosId && fromPosId !== targetPosId && !newVacancyOpenedAt[fromPosId]) {
+      newVacancyOpenedAt[fromPosId] = currentDay
+    }
+
     setAssignments(newA)
     setVacancyQueue(newQ)
+    setVacancyOpenedAt(newVacancyOpenedAt)
 
-    const candidate = getCandidateById(candidateId)
-    if (activeVacancyId === 'sales_manager') {
+    if (targetPosId === 'sales_manager') {
       logEvent(
         candidate.source === 'external' ? 'external_profile_opened' : 'employee_profile_opened',
         state.sessionId,
@@ -1776,40 +2031,37 @@ export function ExploreScreen() {
       )
     }
     setSelectedCandidateId(candidateId)
+  }
+
+  function handleDrop(candidateId: CandidateId, point: { x: number; y: number }): boolean {
+    setIsDragOver(false)
+    if (!activeVacancyId || !isOverVacancy(point)) return false
+    applyConfirmedDrop(candidateId, activeVacancyId, null, assignments, vacancyQueue.slice(1))
     return true
   }
 
   function handleMovePlaced(fromPosId: PositionId, candidateId: CandidateId, point: { x: number; y: number }): boolean {
     setIsDragOver(false)
     if (!activeVacancyId || !isOverVacancy(point) || fromPosId === activeVacancyId) return false
-
-    // Reverse the original cascade before computing the new state
+    // Moving a placed card: reverse cascade first
     const candidate = getCandidateById(candidateId)
     let baseA = { ...assignments }
     let baseQ = [...vacancyQueue]
-
     if (candidate.source === 'internal') {
       const naturalPosId = candidateId as unknown as PositionId
-      // If natural slot was vacated due to this card's original placement, close it temporarily
       if (baseQ.includes(naturalPosId)) {
         baseQ = baseQ.filter(q => q !== naturalPosId)
         baseA[naturalPosId] = candidateId
       }
     }
-
-    // Now apply the move: fromPosId becomes vacant, candidate goes to activeVacancyId
-    const { assignments: newA, queue: newQ } = applyDrop(
-      candidateId, activeVacancyId, fromPosId, baseA, baseQ.filter(q => q !== activeVacancyId)
-    )
-    setAssignments(newA)
-    setVacancyQueue(newQ)
+    applyConfirmedDrop(candidateId, activeVacancyId, fromPosId, baseA, baseQ.filter(q => q !== activeVacancyId))
     return true
   }
 
   return (
     <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden bg-[#f4f7fb]">
 
-      {/* Header bar with drag hint + ? button */}
+      {/* Header bar with drag hint + calendar + ? button */}
       <div className="flex items-center justify-between px-3 pt-2 pb-1 flex-shrink-0">
         <AnimatePresence>
           {!canvasExplored && (
@@ -1829,6 +2081,7 @@ export function ExploreScreen() {
           )}
         </AnimatePresence>
         {canvasExplored && <div />}
+        <CalendarWidget currentDay={currentDay} openRoles={vacancyQueue.length} />
         <button
           onClick={() => { setWalkthroughStep(0); setWalkthroughDone(false) }}
           className="w-7 h-7 rounded-full border border-slate-200 bg-white text-slate-400 text-xs font-bold flex items-center justify-center active:scale-90 transition-all shadow-sm"
@@ -1853,7 +2106,9 @@ export function ExploreScreen() {
             onSelect={setSelectedCandidateId}
             onExplore={() => setCanvasExplored(true)}
             selectedCandidateId={selectedCandidateId}
-            initialZoom={0.55}
+            initialZoom={0.78}
+            currentDay={currentDay}
+            vacancyOpenedAt={vacancyOpenedAt}
           />
         </div>
         <PortraitBottomPanel
@@ -1864,7 +2119,7 @@ export function ExploreScreen() {
           onExternalDragMove={handleDragMove}
           onConfirm={() => {
             if (smOccupant) {
-              actions.confirmExplore(smOccupant, computeOverallFit(assignments))
+              actions.confirmExplore(smOccupant, computeOverallFit(assignments), computeTimeFill())
             }
           }}
           activeDragId={activeDragId}
@@ -1873,6 +2128,7 @@ export function ExploreScreen() {
           onSelect={setSelectedCandidateId}
           selectedCandidateId={selectedCandidateId}
           vacancyQueue={vacancyQueue}
+          currentDay={currentDay}
         />
       </div>
 

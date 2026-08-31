@@ -38,7 +38,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'CONFIRM_EXPLORE': {
       if (p.name !== 'exploring') return state
-      const score = computeScore(action.overallFit)
+      const score = computeScore(action.overallFit, action.timeFill)
       return {
         ...state,
         finalPickId: action.finalPickId,

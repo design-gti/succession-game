@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useRef, useCallback, useEffect } from 'react'
 import { gameReducer, initialState } from './reducer'
-import type { GameState, GameAction, CandidateId } from './types'
+import type { GameState, GameAction, CandidateId, TimeFillData } from './types'
 import { logEvent, submitPlay, submitLead, flushQueue } from '../lib/api'
 
 interface GameContextValue {
@@ -8,7 +8,7 @@ interface GameContextValue {
   actions: {
     startGame: () => void
     submitLeadInfo: (name: string, email: string, company: string) => void
-    confirmExplore: (finalPickId: CandidateId, overallFit: number) => void
+    confirmExplore: (finalPickId: CandidateId, overallFit: number, timeFill: TimeFillData) => void
     showKelolaReveal: () => void
     finish: () => void
     restart: () => void
@@ -82,9 +82,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SUBMIT_LEAD_INFO', name, email, company })
     },
 
-    confirmExplore: (finalPickId: CandidateId, overallFit: number) => {
-      dispatch({ type: 'CONFIRM_EXPLORE', finalPickId, overallFit })
-      logEvent('explore_confirmed', state.sessionId, { finalPickId, overallFit })
+    confirmExplore: (finalPickId: CandidateId, overallFit: number, timeFill: TimeFillData) => {
+      dispatch({ type: 'CONFIRM_EXPLORE', finalPickId, overallFit, timeFill })
+      logEvent('explore_confirmed', state.sessionId, { finalPickId, overallFit, avgTTF: timeFill.avgTTF })
     },
 
     showKelolaReveal: () => {
