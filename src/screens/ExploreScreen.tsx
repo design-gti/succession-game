@@ -148,13 +148,20 @@ function AspectBars({ assessment, standard, showStandard = true }: { assessment:
 
 // ─── OrgCircle ────────────────────────────────────────────────────────────────
 
+type NodeSize = 'sm' | 'md' | 'lg'
+const NODE_AVATAR_SIZE: Record<NodeSize, 'sm' | 'md' | 'lg'> = { sm: 'sm', md: 'md', lg: 'lg' }
+const NODE_NAME_SIZE: Record<NodeSize, string> = { sm: 'text-[7px]', md: 'text-[9px]', lg: 'text-[11px]' }
+const NODE_ROLE_SIZE: Record<NodeSize, string> = { sm: 'text-[5.5px]', md: 'text-[7px]', lg: 'text-[8.5px]' }
+const NODE_CHECK_SIZE: Record<NodeSize, string> = { sm: 'w-3.5 h-3.5', md: 'w-4 h-4', lg: 'w-5 h-5' }
+const NODE_FIT_W: Record<NodeSize, string> = { sm: 'w-5', md: 'w-8', lg: 'w-11' }
+
 function OrgCircle({
   filled = false,
   name,
   role,
   candidateId,
   fit,
-  small = false,
+  nodeSize = 'md',
   className = '',
 }: {
   filled?: boolean
@@ -162,7 +169,7 @@ function OrgCircle({
   role: string
   candidateId?: CandidateId
   fit?: number
-  small?: boolean
+  nodeSize?: NodeSize
   className?: string
 }) {
   const firstName = name.split(' ')[0]
@@ -170,30 +177,30 @@ function OrgCircle({
   const readiness = candidateId ? getCandidateById(candidateId).readiness : null
 
   return (
-    <div className={`flex flex-col items-center gap-[3px] flex-shrink-0 ${className}`}>
+    <div className={`flex flex-col items-center gap-1 flex-shrink-0 ${className}`}>
       <div className="relative">
-        <Avatar id={candidateId} name={name} size={small ? 'sm' : 'md'} />
+        <Avatar id={candidateId} name={name} size={NODE_AVATAR_SIZE[nodeSize]} />
         {filled && (
-          <div className="absolute -bottom-0.5 -right-0.5 z-10 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center border-[1.5px] border-white shadow-sm">
+          <div className={`absolute -bottom-0.5 -right-0.5 z-10 ${NODE_CHECK_SIZE[nodeSize]} rounded-full bg-green-500 flex items-center justify-center border-[1.5px] border-white shadow-sm`}>
             <span className="text-white text-[7px] font-black leading-none">✓</span>
           </div>
         )}
       </div>
-      <p className={`text-[#0f172a] font-bold leading-none text-center ${small ? 'text-[7px]' : 'text-[8px]'}`}>
+      <p className={`text-[#0f172a] font-bold leading-none text-center ${NODE_NAME_SIZE[nodeSize]}`}>
         {firstName}
       </p>
-      <p className={`text-slate-400 leading-none text-center truncate max-w-[56px] ${small ? 'text-[5.5px]' : 'text-[6.5px]'}`}>
+      <p className={`text-slate-400 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
         {shortRole}
       </p>
       {readiness && !filled && (
-        <ReadinessBadge readiness={readiness} tiny />
+        <ReadinessBadge readiness={readiness} tiny={nodeSize === 'sm'} />
       )}
       {fit !== undefined && (
         <div className="flex items-center gap-0.5 mt-0.5">
-          <div className="w-7 h-[3px] rounded-full bg-slate-100 overflow-hidden">
+          <div className={`${NODE_FIT_W[nodeSize]} h-[3px] rounded-full bg-slate-100 overflow-hidden`}>
             <div className="h-full rounded-full" style={{ width: `${fit}%`, backgroundColor: fitColor(fit) }} />
           </div>
-          <p className="text-[6px] font-bold" style={{ color: fitColor(fit) }}>{fit}%</p>
+          <p className="text-[7px] font-bold" style={{ color: fitColor(fit) }}>{fit}%</p>
         </div>
       )}
     </div>
@@ -202,16 +209,18 @@ function OrgCircle({
 
 // ─── ActiveVacancy ────────────────────────────────────────────────────────────
 
-function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
+const NODE_SZ_PX: Record<NodeSize, number> = { sm: 32, md: 48, lg: 64 }
+
+function ActiveVacancy({ nodeRef, isDragOver, posId, nodeSize = 'md' }: {
   nodeRef: React.RefObject<HTMLDivElement>
   isDragOver: boolean
   posId: PositionId
-  small?: boolean
+  nodeSize?: NodeSize
 }) {
   const pos = POSITIONS.find(p => p.id === posId)!
-  const sz = small ? 32 : 48
+  const sz = NODE_SZ_PX[nodeSize]
   return (
-    <div className="flex flex-col items-center gap-[3px] flex-shrink-0">
+    <div className="flex flex-col items-center gap-1 flex-shrink-0">
       <div
         ref={nodeRef}
         data-tutorial="vacant"
@@ -223,15 +232,12 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
           gap: 2, position: 'relative', flexShrink: 0,
           transform: isDragOver ? 'scale(1.1)' : 'scale(1)',
           transition: 'transform 0.2s, background 0.2s, border-color 0.2s',
-          boxShadow: isDragOver ? '0 0 0 3px rgba(34,197,94,0.2)' : undefined,
+          boxShadow: isDragOver ? '0 0 0 4px rgba(34,197,94,0.2)' : undefined,
         }}
       >
         {!isDragOver && (
           <div
-            style={{
-              position: 'absolute', inset: -4, borderRadius: '50%',
-              border: '1.5px dashed rgba(239,68,68,0.25)',
-            }}
+            style={{ position: 'absolute', inset: -5, borderRadius: '50%', border: '1.5px dashed rgba(239,68,68,0.25)' }}
             className="animate-spin-slow pointer-events-none"
           />
         )}
@@ -240,14 +246,14 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
           <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.5" />
           <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.4" />
         </svg>
-        <p style={{ color: isDragOver ? '#16a34a' : '#ef4444', fontSize: 6, fontWeight: 900, letterSpacing: '0.05em', lineHeight: 1 }}>
+        <p style={{ color: isDragOver ? '#16a34a' : '#ef4444', fontSize: nodeSize === 'lg' ? 7 : 6, fontWeight: 900, letterSpacing: '0.05em', lineHeight: 1 }}>
           {isDragOver ? '✓ Drop' : 'Vacant'}
         </p>
       </div>
-      <p className={`text-[#0f172a] font-bold leading-none text-center ${small ? 'text-[7px]' : 'text-[8px]'}`}>
+      <p className={`text-[#0f172a] font-bold leading-none text-center ${NODE_NAME_SIZE[nodeSize]}`}>
         {pos.shortRole.split(' ')[0]}
       </p>
-      <p className={`text-slate-400 leading-none text-center truncate max-w-[56px] ${small ? 'text-[5.5px]' : 'text-[6.5px]'}`}>
+      <p className={`text-slate-400 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
         {pos.shortRole}
       </p>
     </div>
@@ -256,23 +262,23 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
 
 // ─── QueuedVacancy ────────────────────────────────────────────────────────────
 
-function QueuedVacancy({ posId, small = false }: { posId: PositionId; small?: boolean }) {
+function QueuedVacancy({ posId, nodeSize = 'md' }: { posId: PositionId; nodeSize?: NodeSize }) {
   const pos = POSITIONS.find(p => p.id === posId)!
-  const sz = small ? 32 : 48
+  const sz = NODE_SZ_PX[nodeSize]
   return (
-    <div className="flex flex-col items-center gap-[3px] flex-shrink-0 opacity-45">
+    <div className="flex flex-col items-center gap-1 flex-shrink-0 opacity-45">
       <div style={{
         width: sz, height: sz, borderRadius: '50%', flexShrink: 0,
         border: '1.5px dashed rgba(180,130,0,0.45)',
         background: 'rgba(251,191,36,0.07)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
       }}>
-        <p style={{ color: '#b45309', fontSize: 6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>Next</p>
+        <p style={{ color: '#b45309', fontSize: nodeSize === 'lg' ? 7 : 6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>Next</p>
       </div>
-      <p className={`text-[#0f172a] font-bold leading-none text-center ${small ? 'text-[7px]' : 'text-[8px]'}`}>
+      <p className={`text-[#0f172a] font-bold leading-none text-center ${NODE_NAME_SIZE[nodeSize]}`}>
         {pos.shortRole.split(' ')[0]}
       </p>
-      <p className={`text-slate-400 leading-none text-center truncate max-w-[56px] ${small ? 'text-[5.5px]' : 'text-[6.5px]'}`}>
+      <p className={`text-slate-400 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
         {pos.shortRole}
       </p>
     </div>
@@ -281,7 +287,7 @@ function QueuedVacancy({ posId, small = false }: { posId: PositionId; small?: bo
 
 // ─── DraggableSlot ────────────────────────────────────────────────────────────
 
-function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed, floatDelay = 0, small = false, isTargeted = false }: {
+function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed, floatDelay = 0, nodeSize = 'md', isTargeted = false }: {
   id: CandidateId
   posId: PositionId
   onDrop: (id: CandidateId, point: { x: number; y: number }) => boolean
@@ -291,7 +297,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
   onSelect?: () => void
   dimmed?: boolean
   floatDelay?: number
-  small?: boolean
+  nodeSize?: NodeSize
   isTargeted?: boolean
 }) {
   const [placed, setPlaced] = useState(false)
@@ -300,7 +306,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
   const c = getCandidateById(id)
 
   if (placed) {
-    return <OrgCircle name={c.name} role={c.currentRole} candidateId={id} small={small} />
+    return <OrgCircle name={c.name} role={c.currentRole} candidateId={id} nodeSize={nodeSize} />
   }
 
   return (
@@ -345,7 +351,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
       className="relative cursor-grab active:cursor-grabbing select-none"
       style={{ touchAction: 'none' }}
     >
-      <OrgCircle name={c.name} role={c.currentRole} candidateId={id} small={small} />
+      <OrgCircle name={c.name} role={c.currentRole} candidateId={id} nodeSize={nodeSize} />
       <AnimatePresence>
         {isTargeted && (
           <motion.div
@@ -366,7 +372,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
 
 // ─── PlacedSlot ───────────────────────────────────────────────────────────────
 
-function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onDragEnd, onSelect }: {
+function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onDragEnd, onSelect, nodeSize = 'md' }: {
   id: CandidateId
   posId: PositionId
   onMove: (point: { x: number; y: number }) => boolean
@@ -375,6 +381,7 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
   onDragStart?: () => void
   onDragEnd?: () => void
   onSelect?: () => void
+  nodeSize?: NodeSize
 }) {
   const c = getCandidateById(id)
   const realFit = getSlotFit(posId, id)
@@ -463,6 +470,7 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
         role={c.currentRole}
         candidateId={id}
         fit={displayFit}
+        nodeSize={nodeSize}
       />
     </motion.div>
   )
@@ -672,18 +680,15 @@ function OrgTree({
     zoomRef.current = next
     setZoom(next)
   }
-  const SMALL_POSITIONS: Set<PositionId> = new Set(['bintang', 'rizky'])
-
-  function renderSlot(posId: PositionId) {
-    const small = SMALL_POSITIONS.has(posId)
+  function renderSlot(posId: PositionId, nodeSize: NodeSize = 'md') {
     if (posId === activeVacancyId) {
-      return <ActiveVacancy nodeRef={nodeRef} isDragOver={isDragOver} posId={posId} small={small} />
+      return <ActiveVacancy nodeRef={nodeRef} isDragOver={isDragOver} posId={posId} nodeSize={nodeSize} />
     }
     if (vacancyQueue.includes(posId) && !assignments[posId]) {
-      return <QueuedVacancy posId={posId} small={small} />
+      return <QueuedVacancy posId={posId} nodeSize={nodeSize} />
     }
     const occupant = assignments[posId]
-    if (!occupant) return <QueuedVacancy posId={posId} small={small} />
+    if (!occupant) return <QueuedVacancy posId={posId} nodeSize={nodeSize} />
     const isNatural = occupant === (posId as string)
     const slotNode = isNatural ? (
       <DraggableSlot
@@ -693,7 +698,7 @@ function OrgTree({
         onSelect={() => onSelect(occupant)}
         dimmed={isDragging && activeDragId !== occupant}
         floatDelay={FLOAT_DELAYS[posId] ?? 0}
-        small={small}
+        nodeSize={nodeSize}
         isTargeted={isDragOver && activeDragId === occupant}
       />
     ) : (
@@ -705,6 +710,7 @@ function OrgTree({
         onDragStart={() => onDragStart(occupant)}
         onDragEnd={onDragEnd}
         onSelect={() => onSelect(occupant)}
+        nodeSize={nodeSize}
       />
     )
     if (posId === 'andi') {
@@ -713,18 +719,36 @@ function OrgTree({
     return slotNode
   }
 
-  // Bubble field layout — organic scatter, no connectors
-  const BUBBLE_LAYOUT: Array<{ posId: PositionId; x: number; y: number }> = [
-    { posId: 'maya',          x: 68,  y: 52  },
-    { posId: 'sales_manager', x: 200, y: 88  },
-    { posId: 'dimas',         x: 332, y: 102 },
-    { posId: 'bintang',       x: 42,  y: 182 },
-    { posId: 'andi',          x: 120, y: 212 },
-    { posId: 'rani',          x: 200, y: 235 },
-    { posId: 'fajar',         x: 278, y: 212 },
-    { posId: 'rizky',         x: 358, y: 196 },
+  // Bubble field — positions, sizes, hierarchy edges
+  // x/y = center of the avatar circle; nodeSize drives avatar px
+  const BUBBLE_LAYOUT: Array<{ posId: PositionId; x: number; y: number; nodeSize: NodeSize }> = [
+    { posId: 'maya',          x: 70,  y: 85,  nodeSize: 'lg' },
+    { posId: 'sales_manager', x: 200, y: 85,  nodeSize: 'lg' },
+    { posId: 'dimas',         x: 330, y: 85,  nodeSize: 'lg' },
+    { posId: 'bintang',       x: 40,  y: 212, nodeSize: 'sm' },
+    { posId: 'andi',          x: 115, y: 218, nodeSize: 'md' },
+    { posId: 'rani',          x: 200, y: 242, nodeSize: 'md' },
+    { posId: 'fajar',         x: 285, y: 218, nodeSize: 'md' },
+    { posId: 'rizky',         x: 362, y: 212, nodeSize: 'sm' },
   ]
-  const BOSS_X = 342, BOSS_Y = 14
+  // Boss position (center-top, dimmed)
+  const BOSS_X = 200, BOSS_Y = 10, BOSS_SZ = 48
+  // Avatar sizes in px
+  const AV_SZ: Record<NodeSize, number> = { sm: 32, md: 48, lg: 64 }
+  // Hierarchy edges: [parentX, parentCY, childX, childCY]
+  // CY = y + avatarSz/2
+  const bossCY = BOSS_Y + BOSS_SZ / 2
+  const EDGES = [
+    [BOSS_X, bossCY, 70,  85  + AV_SZ.lg / 2],  // reza → maya
+    [BOSS_X, bossCY, 200, 85  + AV_SZ.lg / 2],  // reza → sales_manager
+    [BOSS_X, bossCY, 330, 85  + AV_SZ.lg / 2],  // reza → dimas
+    [70,  85  + AV_SZ.lg / 2, 40,  212 + AV_SZ.sm / 2],  // maya → bintang
+    [200, 85  + AV_SZ.lg / 2, 115, 218 + AV_SZ.md / 2],  // sm → andi
+    [200, 85  + AV_SZ.lg / 2, 200, 242 + AV_SZ.md / 2],  // sm → rani
+    [200, 85  + AV_SZ.lg / 2, 285, 218 + AV_SZ.md / 2],  // sm → fajar
+    [330, 85  + AV_SZ.lg / 2, 362, 212 + AV_SZ.sm / 2],  // dimas → rizky
+  ]
+  const CANVAS_W = 400, CANVAS_H = 330
 
   return (
     <div ref={outerRef} className="flex-1 min-h-0 overflow-hidden dot-grid relative" style={{ cursor: isDragging ? 'default' : 'grab' }}>
@@ -757,24 +781,41 @@ function OrgTree({
         </motion.div>
       )}
     </AnimatePresence>
-    {/* Bubble canvas — centered, free-floating nodes */}
+    {/* Bubble canvas */}
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
       <div
         style={{
-          position: 'relative', width: 400, height: 305, flexShrink: 0,
+          position: 'relative', width: CANVAS_W, height: CANVAS_H, flexShrink: 0,
           transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
           transformOrigin: 'center center',
           willChange: 'transform',
         }}
       >
-        {/* Boss node — top-right, dimmed */}
+        {/* SVG hierarchy lines — rendered first so bubbles sit on top */}
+        <svg
+          width={CANVAS_W} height={CANVAS_H}
+          style={{ position: 'absolute', inset: 0, overflow: 'visible', pointerEvents: 'none' }}
+        >
+          {EDGES.map(([x1, y1, x2, y2], i) => (
+            <line
+              key={i}
+              x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={isDragging ? 'rgba(148,163,184,0.55)' : 'rgba(148,163,184,0.35)'}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          ))}
+        </svg>
+
+        {/* Boss node — center top, dimmed */}
         <div style={{ position: 'absolute', left: BOSS_X, top: BOSS_Y, transform: 'translate(-50%, 0)' }}>
           <BossNode />
         </div>
+
         {/* All position slots */}
-        {BUBBLE_LAYOUT.map(({ posId, x, y }) => (
+        {BUBBLE_LAYOUT.map(({ posId, x, y, nodeSize }) => (
           <div key={posId} style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, 0)' }}>
-            {renderSlot(posId)}
+            {renderSlot(posId, nodeSize)}
           </div>
         ))}
       </div>
