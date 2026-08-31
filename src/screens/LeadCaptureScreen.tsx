@@ -42,7 +42,7 @@ export function LeadCaptureScreen() {
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#1D6FF2" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="text-brand text-[10px] font-bold uppercase tracking-[0.3em] mb-1">Sebelum mulai</p>
+          <p className="text-brand text-[10px] font-bold uppercase tracking-[0.3em] mb-1">Satu langkah lagi</p>
           <h2 className="text-2xl font-black text-[#0f172a] leading-snug">
             Siapa kamu?
           </h2>

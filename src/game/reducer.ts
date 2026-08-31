@@ -6,7 +6,7 @@ function makeSessionId(): string {
 }
 
 export const initialState: GameState = {
-  phase: { name: 'leadCapture' },
+  phase: { name: 'intro' },
   sessionId: makeSessionId(),
   playerName: '',
   playerEmail: '',
@@ -22,7 +22,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'START_GAME': {
       if (p.name !== 'intro') return state
-      return { ...state, phase: { name: 'exploring' }, startedAt: Date.now() }
+      return { ...state, phase: { name: 'leadCapture' } }
     }
 
     case 'CONFIRM_EXPLORE': {
@@ -62,8 +62,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         playerName: action.name,
         playerEmail: action.email,
         playerCompany: action.company,
-        // if coming from leadCapture (pre-game), advance to intro
-        phase: p.name === 'leadCapture' ? { name: 'intro' } : state.phase,
+        // if coming from leadCapture (pre-game), advance to exploring
+        phase: p.name === 'leadCapture' ? { name: 'exploring' } : state.phase,
+        startedAt: p.name === 'leadCapture' ? Date.now() : state.startedAt,
       }
     }
 
