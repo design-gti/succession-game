@@ -44,7 +44,7 @@ export function LeadCaptureScreen() {
           </div>
           <p className="text-brand text-[10px] font-bold uppercase tracking-[0.3em] mb-1">Satu langkah lagi</p>
           <h2 className="text-2xl font-black text-[#0f172a] leading-snug">
-            Siapa Anda?
+            Data Anda
           </h2>
           <p className="text-slate-500 text-sm mt-1.5 leading-relaxed">
             Lengkapi data berikut agar hasil permainan dapat kami simpan untuk Anda.
@@ -61,7 +61,7 @@ export function LeadCaptureScreen() {
               type="text"
               value={name}
               onChange={e => { setName(e.target.value); setError('') }}
-              placeholder="Nama atau nickname kamu"
+              placeholder="Nama atau nickname Anda"
               className={inputCls(name)}
               autoComplete="name"
             />
@@ -75,7 +75,7 @@ export function LeadCaptureScreen() {
               type="text"
               value={company}
               onChange={e => setCompany(e.target.value)}
-              placeholder="Kamu kerja di mana?"
+              placeholder="Perusahaan Anda bekerja"
               className={inputCls(company, false)}
               autoComplete="organization"
             />
@@ -89,7 +89,7 @@ export function LeadCaptureScreen() {
               type="email"
               value={email}
               onChange={e => { setEmail(e.target.value); setError('') }}
-              placeholder="kamu@perusahaan.com"
+              placeholder="nama@email.com"
               className={inputCls(email)}
               autoComplete="email"
             />
