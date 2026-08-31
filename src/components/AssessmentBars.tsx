@@ -5,8 +5,6 @@ const DIMENSIONS: { key: keyof Assessment; label: string }[] = [
   { key: 'leadership', label: 'Leadership' },
   { key: 'drive', label: 'Drive' },
   { key: 'influence', label: 'Influencing' },
-  { key: 'resilience', label: 'Resilience' },
-  { key: 'collaboration', label: 'Collaboration' },
 ]
 
 function barColor(value: number): string {

@@ -2,23 +2,17 @@ import React, { createContext, useContext, useReducer, useRef, useCallback, useE
 import { gameReducer, initialState } from './reducer'
 import type { GameState, GameAction, CandidateId } from './types'
 import { logEvent, submitPlay, flushQueue } from '../lib/api'
-import { resolveName } from '../lib/names'
 
 interface GameContextValue {
   state: GameState
   actions: {
     startGame: () => void
-    submitName: (name: string, avatarId?: number, email?: string, company?: string) => void
-    viewOrgChart: () => void
-    startSearching: () => void
-    confirmExplore: (finalPickId: CandidateId, overallFit: number, timeLeft: number) => void
-    timeUp: (finalPickId: CandidateId | null, overallFit: number) => void
-    confirmFinal: (id: CandidateId) => void
+    confirmExplore: (finalPickId: CandidateId, overallFit: number) => void
     showResult: () => void
     showKelolaReveal: () => void
     showDemoQR: () => void
-    showLeaderboard: () => void
     showLeadCapture: () => void
+    submitLeadInfo: (name: string, email: string, company: string) => void
     finish: () => void
     restart: () => void
   }
@@ -44,9 +38,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const sid = state.sessionId
 
     if (prevPhase !== currPhase) {
-      if (currPhase === 'nameEntry') logEvent('game_started', sid)
-      if (currPhase === 'orgChart') logEvent('vacancy_viewed', sid)
-      if (currPhase === 'jobNeeds') logEvent('job_needs_viewed', sid)
+      if (currPhase === 'exploring') logEvent('game_started', sid)
 
       if (currPhase === 'result' && !playSubmittedRef.current && state.score) {
         playSubmittedRef.current = true
@@ -57,13 +49,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           : undefined
         submitPlay({
           session_id: sid,
-          player_name: state.playerName,
+          player_name: state.playerName || 'Anonymous',
           score: state.score.total,
           persona: state.score.persona,
           overall_fit: state.score.overallFit,
-          time_left: state.score.timeLeft,
+          time_left: 0,
           duration_seconds: durationSeconds,
         })
+      }
+
+      if (currPhase === 'demoQR' && state.score && state.playerEmail) {
+        submitLead({
+          session_id: sid,
+          name: state.playerName,
+          company: state.playerCompany,
+          email: state.playerEmail,
+          score: state.score.total,
+          persona: state.score.persona,
+        })
+        logEvent('lead_submitted', sid, { email_domain: state.playerEmail.split('@')[1] })
       }
     }
 
@@ -77,39 +81,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const actions: GameContextValue['actions'] = {
     startGame: () => dispatch({ type: 'START_GAME' }),
 
-    submitName: (name: string, avatarId = 0, email = '', company = '') => {
-      dispatch({ type: 'SUBMIT_NAME', name: resolveName(name), avatarId, email, company })
-    },
-
-    viewOrgChart: () => dispatch({ type: 'VIEW_ORG_CHART' }),
-
-    startSearching: () => dispatch({ type: 'START_SEARCHING' }),
-
-    confirmExplore: (finalPickId: CandidateId, overallFit: number, timeLeft: number) => {
-      dispatch({ type: 'CONFIRM_EXPLORE', finalPickId, overallFit, timeLeft })
-      logEvent('explore_confirmed', state.sessionId, { finalPickId, overallFit, timeLeft })
-    },
-
-    timeUp: (finalPickId: CandidateId | null, overallFit: number) => {
-      dispatch({ type: 'TIME_UP', finalPickId, overallFit })
-    },
-
-    confirmFinal: (id: CandidateId) => {
-      dispatch({ type: 'CONFIRM_FINAL', id })
-      logEvent('final_pick_selected', state.sessionId, { candidateId: id })
+    confirmExplore: (finalPickId: CandidateId, overallFit: number) => {
+      dispatch({ type: 'CONFIRM_EXPLORE', finalPickId, overallFit })
+      logEvent('explore_confirmed', state.sessionId, { finalPickId, overallFit })
     },
 
     showResult: () => dispatch({ type: 'SHOW_RESULT' }),
+
     showKelolaReveal: () => {
       dispatch({ type: 'SHOW_KELOLA_REVEAL' })
       logEvent('kelola_reveal_viewed', state.sessionId)
     },
+
     showDemoQR: () => {
       dispatch({ type: 'SHOW_DEMO_QR' })
       logEvent('demo_qr_shown', state.sessionId)
     },
-    showLeaderboard: () => dispatch({ type: 'SHOW_LEADERBOARD' }),
+
     showLeadCapture: () => dispatch({ type: 'SHOW_LEAD_CAPTURE' }),
+
+    submitLeadInfo: (name: string, email: string, company: string) => {
+      dispatch({ type: 'SUBMIT_LEAD_INFO', name, email, company })
+    },
+
     finish: () => dispatch({ type: 'FINISH' }),
 
     restart: () => {

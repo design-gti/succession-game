@@ -2,103 +2,115 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
-import { submitLead } from '../lib/api'
-import { logEvent } from '../lib/api'
 
 export function LeadCaptureScreen() {
-  const { state, actions } = useGame()
-  const [name, setName] = useState(state.playerName || '')
-  const [company, setCompany] = useState(state.playerCompany || '')
-  const [email, setEmail] = useState(state.playerEmail || '')
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const { actions } = useGame()
+  const [name, setName] = useState('')
+  const [company, setCompany] = useState('')
+  const [email, setEmail] = useState('')
   const [error, setError] = useState('')
 
-  async function handleSubmit() {
-    if (!name || !email) { setError('Name and email are required.'); return }
-    setSubmitting(true)
-    setError('')
-    const ok = await submitLead({
-      session_id: state.sessionId,
-      name,
-      company,
-      email,
-      score: state.score?.total,
-      persona: state.score?.persona,
-    })
-    setSubmitting(false)
-    if (ok) {
-      logEvent('lead_submitted', state.sessionId, { email_domain: email.split('@')[1] })
-      setSubmitted(true)
-      setTimeout(() => actions.finish(), 2000)
-    } else {
-      setError('Could not send. Try again.')
+  function handleStart() {
+    if (!name.trim() || !email.trim()) {
+      setError('Nama dan email harus diisi.')
+      return
     }
+    if (!email.includes('@')) {
+      setError('Format email tidak valid.')
+      return
+    }
+    actions.submitLeadInfo(name.trim(), email.trim(), company.trim())
   }
 
+  const inputCls = (val: string, required = true) =>
+    `w-full px-4 py-3 rounded-xl border text-[#0f172a] text-sm placeholder:text-slate-400
+     outline-none focus:border-brand transition-colors bg-white
+     ${required && !val.trim() && error ? 'border-red-400' : 'border-slate-200'}`
+
   return (
-    <div className="flex flex-col h-full px-6 py-6">
+    <div className="flex flex-col h-full px-6 py-8 bg-[#f4f7fb]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col h-full"
       >
-        <div className="mb-6">
-          <h2 className="text-2xl font-black text-[#f0f4f8]">Get Your Result</h2>
-          <p className="text-white/50 text-sm mt-1">
-            We'll send your Talent Decision Score and a summary to your work email.
+        {/* Header */}
+        <div className="mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4" stroke="#1D6FF2" strokeWidth="1.8" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#1D6FF2" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </div>
+          <p className="text-brand text-[10px] font-bold uppercase tracking-[0.3em] mb-1">Sebelum mulai</p>
+          <h2 className="text-2xl font-black text-[#0f172a] leading-snug">
+            Siapa kamu?
+          </h2>
+          <p className="text-slate-500 text-sm mt-1.5 leading-relaxed">
+            Isi dulu ya — biar hasil game-nya bisa kami simpan buat kamu.
           </p>
         </div>
 
-        {submitted ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex-1 flex flex-col items-center justify-center text-center gap-4"
-          >
-            <div className="text-5xl">✅</div>
-            <div>
-              <p className="text-[#f0f4f8] font-bold text-lg">Sent!</p>
-              <p className="text-white/50 text-sm">Check your inbox at {email}</p>
-            </div>
-          </motion.div>
-        ) : (
-          <div className="flex flex-col gap-4 flex-1">
-            {(['Name', 'Company', 'Work Email'] as const).map((label, i) => {
-              const vals = [name, company, email]
-              const setters = [setName, setCompany, setEmail]
-              const types = ['text', 'text', 'email']
-              const placeholders = ['Your name', 'Where do you work?', 'you@company.com']
-              return (
-                <div key={label} className="flex flex-col gap-1">
-                  <label className="text-white/40 text-xs uppercase tracking-widest font-semibold">{label}</label>
-                  <input
-                    type={types[i]}
-                    value={vals[i]}
-                    onChange={e => setters[i](e.target.value)}
-                    placeholder={placeholders[i]}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#f0f4f8] text-sm
-                      placeholder:text-white/25 outline-none focus:border-brand transition-colors"
-                  />
-                </div>
-              )
-            })}
-
-            {error && <p className="text-red-400 text-sm">{error}</p>}
-
-            <div className="flex-1" />
-
-            <PrimaryButton onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Sending…' : 'Send My Result →'}
-            </PrimaryButton>
-            <button
-              onClick={() => actions.finish()}
-              className="w-full py-3 text-white/40 text-sm font-semibold active:scale-95 transition-all"
-            >
-              Skip
-            </button>
+        {/* Form */}
+        <div className="flex flex-col gap-4 flex-1">
+          <div className="flex flex-col gap-1">
+            <label className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">
+              Nama <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => { setName(e.target.value); setError('') }}
+              placeholder="Nama atau nickname kamu"
+              className={inputCls(name)}
+              autoComplete="name"
+            />
           </div>
-        )}
+
+          <div className="flex flex-col gap-1">
+            <label className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">
+              Perusahaan
+            </label>
+            <input
+              type="text"
+              value={company}
+              onChange={e => setCompany(e.target.value)}
+              placeholder="Kamu kerja di mana?"
+              className={inputCls(company, false)}
+              autoComplete="organization"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">
+              Email <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setError('') }}
+              placeholder="kamu@perusahaan.com"
+              className={inputCls(email)}
+              autoComplete="email"
+            />
+          </div>
+
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-500 text-sm"
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <div className="flex-1" />
+
+          <PrimaryButton onClick={handleStart}>
+            Mulai Game →
+          </PrimaryButton>
+        </div>
       </motion.div>
     </div>
   )

@@ -3,32 +3,32 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
 
-// ─── Mini-mockups (larger, standalone versions) ───────────────────────────────
+// ─── Mini-mockups ─────────────────────────────────────────────────────────────
 
 function MiniVisibilityMap() {
   return (
     <div className="flex flex-col items-center gap-[6px]">
-      <div className="w-16 h-9 rounded-[5px] bg-white/15 border border-white/20" />
-      <div className="w-px h-4 bg-white/20" />
+      <div className="w-16 h-9 rounded-[5px] bg-slate-100 border border-slate-200" />
+      <div className="w-px h-4 bg-slate-200" />
       <div className="relative flex gap-3">
-        <div className="absolute -top-[6px] left-6 right-6 h-px bg-white/20" />
+        <div className="absolute -top-[6px] left-6 right-6 h-px bg-slate-200" />
         <div className="flex flex-col items-center">
-          <div className="w-px h-[6px] bg-white/20" />
-          <div className="w-14 h-9 rounded-[5px] bg-green-500/25 border border-green-400/40" />
+          <div className="w-px h-[6px] bg-slate-200" />
+          <div className="w-14 h-9 rounded-[5px] bg-green-100 border border-green-300" />
         </div>
         <div className="flex flex-col items-center">
-          <div className="w-px h-[6px] bg-white/20" />
+          <div className="w-px h-[6px] bg-slate-200" />
           <motion.div
             animate={{ opacity: [1, 0.4, 1] }}
             transition={{ repeat: Infinity, duration: 1.4 }}
-            className="w-14 h-9 rounded-[5px] bg-red-500/20 border border-dashed border-red-400/70 flex items-center justify-center"
+            className="w-14 h-9 rounded-[5px] bg-red-50 border border-dashed border-red-400 flex items-center justify-center"
           >
-            <span className="text-red-400 text-xs font-black">VACANT</span>
+            <span className="text-red-500 text-[9px] font-black">VACANT</span>
           </motion.div>
         </div>
         <div className="flex flex-col items-center">
-          <div className="w-px h-[6px] bg-white/20" />
-          <div className="w-14 h-9 rounded-[5px] bg-amber-500/25 border border-amber-400/40" />
+          <div className="w-px h-[6px] bg-slate-200" />
+          <div className="w-14 h-9 rounded-[5px] bg-amber-50 border border-amber-200" />
         </div>
       </div>
     </div>
@@ -46,16 +46,16 @@ function MiniTDP() {
       {cards.map(({ score, top, name }, i) => (
         <div
           key={i}
-          className={`w-[72px] rounded-[8px] border overflow-hidden ${top ? 'border-brand bg-brand/15' : 'border-white/15 bg-white/5'}`}
+          className={`w-[72px] rounded-[8px] border overflow-hidden ${top ? 'border-brand bg-brand/10' : 'border-slate-200 bg-white'}`}
         >
-          <div className={`h-10 flex items-center justify-center ${top ? 'bg-brand/20' : 'bg-white/5'}`}>
-            <div className={`w-7 h-7 rounded-full ${top ? 'bg-brand' : 'bg-white/20'} flex items-center justify-center`}>
-              <span className={`text-[9px] font-black ${top ? 'text-white' : 'text-white/50'}`}>{name[0]}</span>
+          <div className={`h-10 flex items-center justify-center ${top ? 'bg-brand/10' : 'bg-slate-50'}`}>
+            <div className={`w-7 h-7 rounded-full ${top ? 'bg-brand' : 'bg-slate-200'} flex items-center justify-center`}>
+              <span className={`text-[9px] font-black ${top ? 'text-white' : 'text-slate-500'}`}>{name[0]}</span>
             </div>
           </div>
           <div className="px-2 py-1.5">
-            <p className={`text-xs font-bold ${top ? 'text-white' : 'text-white/50'} truncate`}>{name}</p>
-            <p className={`text-sm font-black ${top ? 'text-brand' : 'text-white/35'}`}>{score}%</p>
+            <p className={`text-xs font-bold truncate ${top ? 'text-[#0f172a]' : 'text-slate-400'}`}>{name}</p>
+            <p className={`text-sm font-black ${top ? 'text-brand' : 'text-slate-300'}`}>{score}%</p>
           </div>
         </div>
       ))}
@@ -68,24 +68,22 @@ function MiniIProfile() {
     { label: 'LEAD', val: 82 },
     { label: 'DRIVE', val: 68 },
     { label: 'INFL', val: 90 },
-    { label: 'RESIL', val: 74 },
-    { label: 'COLLAB', val: 60 },
   ]
   return (
-    <div className="w-[200px] rounded-[10px] border border-white/15 bg-white/5 px-4 py-4 flex flex-col gap-2">
+    <div className="w-[200px] rounded-[10px] border border-slate-200 bg-white px-4 py-4 flex flex-col gap-2 shadow-sm">
       <div className="flex items-center gap-2 mb-1">
-        <div className="w-8 h-8 rounded-full bg-brand/60 flex-shrink-0 flex items-center justify-center">
-          <span className="text-[10px] text-white font-black">N</span>
+        <div className="w-8 h-8 rounded-full bg-brand/15 flex-shrink-0 flex items-center justify-center">
+          <span className="text-[10px] text-brand font-black">N</span>
         </div>
         <div>
-          <p className="text-white/80 text-xs font-bold leading-none">Nadia P.</p>
-          <p className="text-white/35 text-[9px] mt-0.5">Sales Supervisor</p>
+          <p className="text-[#0f172a] text-xs font-bold leading-none">Nadia P.</p>
+          <p className="text-slate-400 text-[9px] mt-0.5">Sales Supervisor</p>
         </div>
       </div>
       {bars.map(({ label, val }, i) => (
         <div key={i} className="flex items-center gap-2">
-          <p className="text-white/35 text-[8px] w-10 text-right flex-shrink-0">{label}</p>
-          <div className="flex-1 h-[5px] rounded-full bg-white/10 overflow-hidden">
+          <p className="text-slate-400 text-[8px] w-8 text-right flex-shrink-0">{label}</p>
+          <div className="flex-1 h-[5px] rounded-full bg-slate-100 overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${val}%` }}
@@ -116,9 +114,9 @@ const REVEALS = [
     mockup: <MiniTDP />,
   },
   {
-    inGame: 'The 5 aspect bars on every card',
+    inGame: 'The 3 aspect bars on every card',
     module: 'iProfile',
-    inKelola: 'A 20-page assessment report, readable in one glance.',
+    inKelola: 'A full assessment report, readable in one glance.',
     mockup: <MiniIProfile />,
   },
 ]
@@ -129,7 +127,7 @@ function KelolaBeat({ beat }: { beat: number }) {
   if (beat === 0) {
     return (
       <div className="flex flex-col items-center gap-5 text-center max-w-sm">
-        <div className="w-16 h-16 rounded-3xl bg-brand/15 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-3xl bg-brand/10 flex items-center justify-center">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <path d="M16 4L28 10V22L16 28L4 22V10L16 4Z" stroke="#1D6FF2" strokeWidth="1.5" fill="none" opacity="0.6" />
             <circle cx="16" cy="16" r="4" fill="#1D6FF2" />
@@ -137,11 +135,11 @@ function KelolaBeat({ beat }: { beat: number }) {
         </div>
         <div>
           <p className="text-brand text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Plot twist</p>
-          <h1 className="text-4xl font-black text-[#f0f4f8] leading-tight">
+          <h1 className="text-4xl font-black text-[#0f172a] leading-tight">
             You've already<br />used <span className="text-brand">Kelola Apps</span>.
           </h1>
         </div>
-        <p className="text-white/45 text-sm leading-relaxed max-w-[260px]">
+        <p className="text-slate-500 text-sm leading-relaxed max-w-[260px]">
           Every mechanic you just played with is a real Kelola module.
         </p>
       </div>
@@ -152,8 +150,8 @@ function KelolaBeat({ beat }: { beat: number }) {
     const r = REVEALS[beat - 1]
     return (
       <div className="flex flex-col items-center gap-6 text-center max-w-sm w-full">
-        <p className="text-white/35 text-xs uppercase tracking-widest">
-          In the game: <span className="text-white/55 normal-case tracking-normal not-italic">{r.inGame}</span>
+        <p className="text-slate-400 text-xs uppercase tracking-widest">
+          In the game: <span className="text-slate-600 normal-case tracking-normal">{r.inGame}</span>
         </p>
 
         <motion.div
@@ -176,7 +174,7 @@ function KelolaBeat({ beat }: { beat: number }) {
             <p className="text-brand font-black text-2xl">{r.module}</p>
             <div className="w-4 h-px bg-brand/40" />
           </div>
-          <p className="text-white/50 text-sm leading-relaxed max-w-[260px]">{r.inKelola}</p>
+          <p className="text-slate-500 text-sm leading-relaxed max-w-[260px]">{r.inKelola}</p>
         </motion.div>
       </div>
     )
@@ -216,22 +214,22 @@ export function KelolaRevealScreen() {
 
   if (isFinal) {
     return (
-      <div className="flex flex-col h-full items-center justify-center px-6 text-center gap-8">
+      <div className="flex flex-col h-full items-center justify-center px-6 text-center gap-8 bg-[#f4f7fb]">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-4 max-w-sm"
+          className="flex flex-col items-center gap-5 max-w-sm"
         >
-          <p className="text-white/50 text-base leading-relaxed">
+          <p className="text-slate-600 text-base leading-relaxed">
             The difference? In Kelola the data is{' '}
-            <span className="text-[#f0f4f8] font-black">real</span> — and you get more than{' '}
-            <span className="text-amber-400 font-black">60 seconds</span>.
+            <span className="text-[#0f172a] font-black">real</span> — and the decisions{' '}
+            <span className="text-brand font-black">actually matter</span>.
           </p>
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-1 flex-wrap justify-center">
             {REVEALS.map((r, i) => (
-              <div key={i} className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
+              <div key={i} className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-sm">
                 <div className="w-1.5 h-1.5 rounded-full bg-brand" />
-                <p className="text-white/50 text-[9px] font-semibold">{r.module}</p>
+                <p className="text-slate-500 text-[9px] font-semibold">{r.module}</p>
               </div>
             ))}
           </div>
@@ -252,7 +250,7 @@ export function KelolaRevealScreen() {
 
   return (
     <div
-      className="relative flex flex-col h-full items-center justify-center px-6 text-center overflow-hidden"
+      className="relative flex flex-col h-full items-center justify-center px-6 text-center overflow-hidden bg-[#f4f7fb]"
       onClick={() => { if (!isFinal) advance() }}
       onWheel={handleWheel}
       onTouchStart={e => { touchStartY.current = e.touches[0].clientY }}
@@ -286,13 +284,13 @@ export function KelolaRevealScreen() {
             transition={{ delay: 1.2, duration: 0.4 }}
             className="absolute bottom-20 left-0 right-0 flex flex-col items-center gap-1 pointer-events-none"
           >
-            <span className="text-white/30 text-[9px] uppercase tracking-[0.2em] font-semibold">scroll</span>
+            <span className="text-slate-400 text-[9px] uppercase tracking-[0.2em] font-semibold">scroll</span>
             <motion.div
               animate={{ y: [0, 5, 0] }}
               transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 4l5 5 5-5" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 4l5 5 5-5" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </motion.div>
           </motion.div>
@@ -305,7 +303,7 @@ export function KelolaRevealScreen() {
           {Array.from({ length: N_BEATS }).map((_, i) => (
             <div
               key={i}
-              className={`h-1 rounded-full transition-all duration-300 ${i === beat ? 'w-5 bg-brand' : 'w-1.5 bg-white/20'}`}
+              className={`h-1 rounded-full transition-all duration-300 ${i === beat ? 'w-5 bg-brand' : 'w-1.5 bg-slate-300'}`}
             />
           ))}
         </div>

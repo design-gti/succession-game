@@ -7,12 +7,7 @@ import { Avatar } from '../components/Avatar'
 import { getCandidateById, BEST_CANDIDATE_ID, CANDIDATES } from '../data/scenario'
 import { fitColor } from '../game/scoring'
 
-const SCENARIO_MESSAGES: Record<string, string> = {
-  internal: 'The right successor was inside your organization all along.',
-  external: 'Sometimes the strongest match needs to come from outside.',
-}
-
-function FitArc({ fit, size = 90 }: { fit: number; size?: number }) {
+function FitArc({ fit, size = 88 }: { fit: number; size?: number }) {
   const r = (size - 10) / 2
   const cx = size / 2
   const cy = size / 2
@@ -21,7 +16,7 @@ function FitArc({ fit, size = 90 }: { fit: number; size?: number }) {
   const color = fitColor(fit)
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={8} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e2e8f0" strokeWidth={8} />
       <motion.circle
         cx={cx} cy={cy} r={r} fill="none"
         stroke={color} strokeWidth={8}
@@ -48,15 +43,11 @@ export function FinalRevealScreen() {
   const diff = bestAvailableFit - finalPick.roleFit
   const fitCol = fitColor(finalPick.roleFit)
 
-  const scenarioMsg = isBestMatch
-    ? (finalPick.source === 'internal' ? SCENARIO_MESSAGES.internal : SCENARIO_MESSAGES.external)
-    : ''
-
   useEffect(() => {
     if (isBestMatch && !fired.current) {
       fired.current = true
       setTimeout(() => {
-        confetti({ particleCount: 140, spread: 80, origin: { y: 0.4 }, colors: ['#1D6FF2', '#22c55e', '#f59e0b', '#a78bfa'] })
+        confetti({ particleCount: 140, spread: 80, origin: { y: 0.35 }, colors: ['#1D6FF2', '#22c55e', '#f59e0b', '#a78bfa'] })
         setTimeout(() => {
           confetti({ particleCount: 50, spread: 110, origin: { y: 0.5, x: 0.1 }, colors: ['#22c55e', '#f59e0b'] })
           confetti({ particleCount: 50, spread: 110, origin: { y: 0.5, x: 0.9 }, colors: ['#1D6FF2', '#a78bfa'] })
@@ -66,170 +57,138 @@ export function FinalRevealScreen() {
   }, [])
 
   return (
-    <div
-      className="flex h-full overflow-hidden"
-      style={{ background: 'linear-gradient(140deg, #0f1724 0%, #0e1e2e 60%, #0a1520 100%)' }}
-    >
-      {/* LEFT — winner reveal */}
-      <motion.div
-        className="flex flex-col items-center justify-center gap-2 px-6 py-4 flex-shrink-0"
-        style={{ width: '55%', position: 'relative' }}
+    <div className="flex flex-col h-full px-5 py-5 gap-4 overflow-y-auto scrollable bg-[#f4f7fb]">
+
+      {/* Header label */}
+      <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.25em] text-center"
       >
-        {/* Spotlight glow */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: `radial-gradient(ellipse 60% 80% at 50% 40%, ${fitCol}20 0%, transparent 70%)` }} />
+        The seat goes to…
+      </motion.p>
 
-        {/* Header */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.05 }}
-          className="text-white/35 text-[9px] font-bold uppercase tracking-[0.25em] z-10"
-        >
-          The seat goes to…
-        </motion.p>
-
+      {/* Winner card */}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 22 }}
+        className="bg-white border border-slate-200 rounded-2xl px-5 py-5 flex items-center gap-4 shadow-sm"
+      >
         {/* Avatar + glow */}
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.15, type: 'spring', stiffness: 280, damping: 22 }}
-          className="relative z-10"
-        >
+        <div className="relative flex-shrink-0">
           <div className="absolute inset-0 rounded-full pointer-events-none"
-            style={{ backgroundColor: fitCol, filter: 'blur(18px)', opacity: 0.45, transform: 'scale(1.4)' }} />
-          <Avatar id={state.finalPickId} name={finalPick.name} size="xl" className="relative" />
-        </motion.div>
+            style={{ backgroundColor: fitCol, filter: 'blur(14px)', opacity: 0.3, transform: 'scale(1.35)' }} />
+          <Avatar id={state.finalPickId} name={finalPick.name} size="lg" className="relative" />
+        </div>
 
         {/* Name + role */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="text-center z-10"
-        >
-          <h2 className="text-white text-xl font-black leading-tight">{finalPick.name}</h2>
-          <p className="text-white/40 text-[11px] mt-0.5">{finalPick.currentRole}</p>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-[#0f172a] text-lg font-black leading-tight truncate">{finalPick.name}</h2>
+          <p className="text-slate-400 text-xs mt-0.5 truncate">{finalPick.currentRole}</p>
           {finalPick.source === 'external' && (
-            <span className="inline-block mt-1 text-amber-400 text-[9px] font-bold uppercase tracking-widest border border-amber-400/40 rounded-full px-2 py-0.5">
+            <span className="inline-block mt-1 text-amber-600 text-[9px] font-bold uppercase tracking-widest border border-amber-400/60 bg-amber-50 rounded-full px-2 py-0.5">
               External
             </span>
           )}
-        </motion.div>
+        </div>
 
-        {/* Arc ring + % */}
-        <motion.div
-          className="relative flex items-center justify-center z-10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <FitArc fit={finalPick.roleFit} size={90} />
+        {/* Arc ring */}
+        <div className="relative flex items-center justify-center flex-shrink-0">
+          <FitArc fit={finalPick.roleFit} size={80} />
           <motion.div
             className="absolute flex flex-col items-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            <span className="text-2xl font-black leading-none" style={{ color: fitCol }}>
+            <span className="text-lg font-black leading-none" style={{ color: fitCol }}>
               {finalPick.roleFit}%
             </span>
-            <span className="text-white/30 text-[8px] uppercase tracking-wider">Role Fit</span>
+            <span className="text-slate-400 text-[7px] uppercase tracking-wider">Fit</span>
           </motion.div>
-        </motion.div>
+        </div>
       </motion.div>
 
-      {/* RIGHT — result + CTA */}
-      <div className="flex flex-col justify-center gap-3 px-4 py-5 flex-1">
-
-        {/* Best match OR VS comparison */}
-        {isBestMatch ? (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.8 }}
-          >
-            {/* Best match badge */}
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.9, type: 'spring', stiffness: 400, damping: 18 }}
-              className="inline-flex items-center gap-1.5 bg-green-400 text-green-900 text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full mb-3"
-            >
-              ⭐ Best Match
-            </motion.div>
-            <div
-              className="rounded-2xl p-4"
-              style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)' }}
-            >
-              <p className="text-green-400 font-black text-base leading-tight">You found the strongest fit!</p>
-              {scenarioMsg && <p className="text-white/40 text-xs mt-1.5 leading-relaxed">{scenarioMsg}</p>}
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.7 }}
-            className="flex flex-col gap-2"
-          >
-            {/* VS cards side by side */}
-            <div className="flex gap-2">
-              <div className="flex-1 rounded-xl p-2.5 flex flex-col items-center gap-1.5"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <p className="text-white/30 text-[8px] uppercase tracking-widest font-bold">Your Pick</p>
-                <Avatar id={state.finalPickId} name={finalPick.name} size="sm" />
-                <p className="text-white text-[11px] font-bold text-center leading-tight">{finalPick.name}</p>
-                <span className="text-base font-black" style={{ color: fitColor(finalPick.roleFit) }}>
-                  {finalPick.roleFit}%
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center justify-center shrink-0 gap-1 px-1">
-                <div className="w-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
-                <span className="text-white/20 text-[9px] font-black">VS</span>
-                <div className="w-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
-              </div>
-
-              <div className="flex-1 rounded-xl p-2.5 flex flex-col items-center gap-1.5"
-                style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)' }}>
-                <p className="text-green-400/60 text-[8px] uppercase tracking-widest font-bold">Best Available</p>
-                <Avatar id={BEST_CANDIDATE_ID} name={bestCandidate.name} size="sm" />
-                <p className="text-white text-[11px] font-bold text-center leading-tight">{bestCandidate.name}</p>
-                <span className="text-base font-black" style={{ color: fitColor(bestCandidate.roleFit) }}>
-                  {bestCandidate.roleFit}%
-                </span>
-              </div>
-            </div>
-
-            {/* Miss delta */}
-            {diff > 0 && (
-              <div className="rounded-xl px-3 py-2 text-center"
-                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
-                <span className="text-red-400 font-black text-sm">−{diff}% from the strongest fit</span>
-                <p className="text-white/25 text-[9px] mt-0.5">
-                  {bestCandidate.source === 'external'
-                    ? 'Did you check the external pool?'
-                    : 'They were already in the org chart.'}
-                </p>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* CTA */}
+      {/* Best match OR VS comparison */}
+      {isBestMatch ? (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.1 }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="bg-green-50 border border-green-300 rounded-2xl px-5 py-4 flex items-center gap-3"
         >
-          <PrimaryButton onClick={() => actions.showResult()}>
-            See My Score →
-          </PrimaryButton>
+          <span className="text-2xl">⭐</span>
+          <div>
+            <p className="text-green-700 font-black text-sm leading-tight">Kamu menemukan kandidat terkuat!</p>
+            <p className="text-green-600/70 text-xs mt-0.5 leading-relaxed">
+              {finalPick.source === 'internal'
+                ? 'The right successor was inside your org all along.'
+                : 'Sometimes the strongest match comes from outside.'}
+            </p>
+          </div>
         </motion.div>
-      </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="flex flex-col gap-3"
+        >
+          {/* VS cards */}
+          <div className="flex gap-3">
+            <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-3 flex flex-col items-center gap-2 shadow-sm">
+              <p className="text-slate-400 text-[8px] uppercase tracking-widest font-bold">Your Pick</p>
+              <Avatar id={state.finalPickId} name={finalPick.name} size="sm" />
+              <p className="text-[#0f172a] text-xs font-bold text-center leading-tight">{finalPick.name}</p>
+              <span className="text-base font-black" style={{ color: fitColor(finalPick.roleFit) }}>
+                {finalPick.roleFit}%
+              </span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center shrink-0 gap-1">
+              <div className="w-px h-6 bg-slate-200" />
+              <span className="text-slate-300 text-[9px] font-black">VS</span>
+              <div className="w-px h-6 bg-slate-200" />
+            </div>
+
+            <div className="flex-1 bg-green-50 border border-green-200 rounded-2xl p-3 flex flex-col items-center gap-2">
+              <p className="text-green-600 text-[8px] uppercase tracking-widest font-bold">Best Available</p>
+              <Avatar id={BEST_CANDIDATE_ID} name={bestCandidate.name} size="sm" />
+              <p className="text-[#0f172a] text-xs font-bold text-center leading-tight">{bestCandidate.name}</p>
+              <span className="text-base font-black" style={{ color: fitColor(bestCandidate.roleFit) }}>
+                {bestCandidate.roleFit}%
+              </span>
+            </div>
+          </div>
+
+          {/* Miss delta */}
+          {diff > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-center">
+              <span className="text-red-500 font-black text-sm">−{diff}% from the strongest fit</span>
+              <p className="text-slate-400 text-[10px] mt-0.5">
+                {bestCandidate.source === 'external'
+                  ? 'Did you check the external pool?'
+                  : 'They were already in the org chart.'}
+              </p>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      <div className="flex-1" />
+
+      {/* CTA */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.1 }}
+      >
+        <PrimaryButton onClick={() => actions.showResult()}>
+          Lihat Skor →
+        </PrimaryButton>
+      </motion.div>
+
     </div>
   )
 }

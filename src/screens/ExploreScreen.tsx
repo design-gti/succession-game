@@ -1,18 +1,17 @@
-import { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { Avatar } from '../components/Avatar'
 import { FitRingWithLabel } from '../components/FitRing'
-import { TimerBar } from '../components/TimerBar'
-import { getCandidateById, EXTERNAL_CANDIDATES, BEST_CANDIDATE_ID, type Candidate, type Readiness, type Assessment } from '../data/scenario'
+import { getCandidateById, EXTERNAL_CANDIDATES, type Candidate, type Readiness, type Assessment } from '../data/scenario'
 import { fitColor } from '../game/scoring'
 import type { CandidateId } from '../game/types'
 import { logEvent } from '../lib/api'
 
 // ─── Position definitions ─────────────────────────────────────────────────────
 
-type PositionId = 'sales_manager' | 'maya' | 'dimas' | 'andi' | 'rani' | 'fajar' | 'bintang' | 'sari' | 'rizky' | 'putri'
+type PositionId = 'sales_manager' | 'maya' | 'dimas' | 'andi' | 'rani' | 'fajar' | 'bintang' | 'rizky'
 
 interface PositionDef {
   id: PositionId
@@ -26,43 +25,37 @@ interface PositionDef {
 
 const POSITIONS: PositionDef[] = [
   { id: 'sales_manager', role: 'Sales Manager',      shortRole: 'Sales Mgr', naturalOccupant: null,      naturalFit: 0,  level: 2,
-    standard: { leadership: 85, drive: 85, influence: 80, resilience: 80, collaboration: 75 } },
+    standard: { leadership: 85, drive: 85, influence: 80 } },
   { id: 'maya',          role: 'CS Manager',          shortRole: 'CS Mgr',    naturalOccupant: 'maya',    naturalFit: 91, level: 2,
-    standard: { leadership: 80, drive: 65, influence: 75, resilience: 75, collaboration: 90 } },
+    standard: { leadership: 80, drive: 65, influence: 75 } },
   { id: 'dimas',         role: 'Marketing Manager',   shortRole: 'Mkt Mgr',   naturalOccupant: 'dimas',   naturalFit: 85, level: 2,
-    standard: { leadership: 75, drive: 75, influence: 85, resilience: 70, collaboration: 75 } },
+    standard: { leadership: 75, drive: 75, influence: 85 } },
   { id: 'andi',          role: 'Senior AE',           shortRole: 'Sr. AE',    naturalOccupant: 'andi',    naturalFit: 88, level: 3,
-    standard: { leadership: 55, drive: 90, influence: 80, resilience: 75, collaboration: 60 } },
+    standard: { leadership: 55, drive: 90, influence: 80 } },
   { id: 'rani',          role: 'Account Executive',   shortRole: 'AE',        naturalOccupant: 'rani',    naturalFit: 90, level: 3,
-    standard: { leadership: 50, drive: 85, influence: 75, resilience: 70, collaboration: 65 } },
+    standard: { leadership: 50, drive: 85, influence: 75 } },
   { id: 'fajar',         role: 'BD Executive',        shortRole: 'BD Exec',   naturalOccupant: 'fajar',   naturalFit: 82, level: 3,
-    standard: { leadership: 55, drive: 85, influence: 85, resilience: 70, collaboration: 65 } },
+    standard: { leadership: 55, drive: 85, influence: 85 } },
   { id: 'bintang',       role: 'CS Representative',   shortRole: 'CS Rep',    naturalOccupant: 'bintang', naturalFit: 80, level: 3,
-    standard: { leadership: 45, drive: 65, influence: 65, resilience: 70, collaboration: 80 } },
-  { id: 'sari',          role: 'CS Specialist',       shortRole: 'CS Spec',   naturalOccupant: 'sari',    naturalFit: 82, level: 3,
-    standard: { leadership: 50, drive: 65, influence: 70, resilience: 70, collaboration: 80 } },
+    standard: { leadership: 45, drive: 65, influence: 65 } },
   { id: 'rizky',         role: 'Mkt Specialist',      shortRole: 'Mkt Spec',  naturalOccupant: 'rizky',   naturalFit: 79, level: 3,
-    standard: { leadership: 45, drive: 70, influence: 75, resilience: 65, collaboration: 70 } },
-  { id: 'putri',         role: 'Content Creator',     shortRole: 'Content',   naturalOccupant: 'putri',   naturalFit: 77, level: 3,
-    standard: { leadership: 40, drive: 70, influence: 70, resilience: 60, collaboration: 65 } },
+    standard: { leadership: 45, drive: 70, influence: 75 } },
 ]
 
 const ASPECT_LABELS: { key: keyof Assessment; label: string }[] = [
-  { key: 'leadership',    label: 'LEAD' },
-  { key: 'drive',         label: 'DRIVE' },
-  { key: 'influence',     label: 'INFL' },
-  { key: 'resilience',    label: 'RESIL' },
-  { key: 'collaboration', label: 'COLLAB' },
+  { key: 'leadership', label: 'LEAD' },
+  { key: 'drive',      label: 'DRIVE' },
+  { key: 'influence',  label: 'INFL' },
 ]
 
 const INITIAL_ASSIGNMENTS: Partial<Record<PositionId, CandidateId>> = {
   maya: 'maya', dimas: 'dimas', andi: 'andi', rani: 'rani', fajar: 'fajar',
-  bintang: 'bintang', sari: 'sari', rizky: 'rizky', putri: 'putri',
+  bintang: 'bintang', rizky: 'rizky',
 }
 
 const FLOAT_DELAYS: Partial<Record<PositionId, number>> = {
   maya: 0, dimas: 0.7, andi: 0.3, rani: 1.0, fajar: 1.6,
-  bintang: 0.5, sari: 1.2, rizky: 0.9, putri: 1.8,
+  bintang: 0.5, rizky: 0.9,
 }
 
 function getSlotFit(posId: PositionId, occupant: CandidateId): number {
@@ -119,11 +112,11 @@ function AspectBars({ assessment, standard, showStandard = true }: { assessment:
         const std = standard[key]
         const value = assessment?.[key] ?? null
         const barColor = showStandard && value !== null ? aspectColor(value, std) : '#1D6FF2'
-        const textColor = showStandard && value !== null ? aspectColor(value, std) : 'rgba(240,244,248,0.5)'
+        const textColor = showStandard && value !== null ? aspectColor(value, std) : '#64748b'
         return (
           <div key={key} className="flex items-center gap-1">
-            <span className="text-white/35 text-[5.5px] font-bold tracking-wider w-[26px] text-right flex-shrink-0">{label}</span>
-            <div className="relative flex-1 h-[5px] rounded-full bg-white/10 overflow-visible">
+            <span className="text-slate-400 text-[5.5px] font-bold tracking-wider w-[26px] text-right flex-shrink-0">{label}</span>
+            <div className="relative flex-1 h-[5px] rounded-full bg-slate-200 overflow-visible">
               {value !== null && (
                 <motion.div
                   initial={{ width: 0 }}
@@ -134,10 +127,10 @@ function AspectBars({ assessment, standard, showStandard = true }: { assessment:
                 />
               )}
               {value === null && (
-                <div className="absolute inset-y-0 left-0 rounded-full bg-brand/60" style={{ width: `${std}%` }} />
+                <div className="absolute inset-y-0 left-0 rounded-full bg-brand/50" style={{ width: `${std}%` }} />
               )}
               {showStandard && (
-                <div className="absolute top-[-1.5px] bottom-[-1.5px] w-[1.5px] bg-white/70 rounded-full" style={{ left: `${std}%` }} />
+                <div className="absolute top-[-1.5px] bottom-[-1.5px] w-[1.5px] bg-slate-500 rounded-full" style={{ left: `${std}%` }} />
               )}
             </div>
             <span
@@ -182,20 +175,20 @@ function OrgCard({
   return (
     <div className={`relative rounded-xl border overflow-hidden flex-shrink-0
       ${small ? 'w-[76px]' : 'w-[96px]'}
-      ${filled ? 'border-green-400/40 bg-green-500/10' : 'border-white/10 bg-[#1a2840]'}
+      ${filled ? 'border-green-400/50 bg-green-50' : 'border-slate-200 bg-white'}
       ${className}`}>
       {badge && <div className="absolute top-1 right-1 z-10">{badge}</div>}
-      <div className={`flex items-center justify-center ${filled ? 'bg-green-500/10' : 'bg-white/5'} ${small ? 'h-[30px]' : 'h-[38px]'}`}>
+      <div className={`flex items-center justify-center ${filled ? 'bg-green-50' : 'bg-slate-50'} ${small ? 'h-[30px]' : 'h-[38px]'}`}>
         {candidateId
           ? <Avatar id={candidateId} name={name} size={small ? 'xs' : 'sm'} />
-          : <div className={`rounded-full bg-white/10 flex items-center justify-center ${small ? 'w-6 h-6' : 'w-8 h-8'}`}>
-              <span className="text-white/40 text-xs font-bold">{name.charAt(0)}</span>
+          : <div className={`rounded-full bg-slate-100 flex items-center justify-center ${small ? 'w-6 h-6' : 'w-8 h-8'}`}>
+              <span className="text-slate-400 text-xs font-bold">{name.charAt(0)}</span>
             </div>
         }
       </div>
       <div className="px-1.5 pt-1 pb-1.5">
-        <p className={`text-[#f0f4f8] font-bold leading-tight truncate ${small ? 'text-[7px]' : 'text-[8px]'}`}>{displayName}</p>
-        <p className={`text-white/40 leading-tight truncate mt-0.5 ${small ? 'text-[6px]' : 'text-[7px]'}`}>{shortRole}</p>
+        <p className={`text-[#0f172a] font-bold leading-tight truncate ${small ? 'text-[7px]' : 'text-[8px]'}`}>{displayName}</p>
+        <p className={`text-slate-400 leading-tight truncate mt-0.5 ${small ? 'text-[6px]' : 'text-[7px]'}`}>{shortRole}</p>
         {readiness && !filled && (
           <div className="mt-1">
             <ReadinessBadge readiness={readiness} tiny={small} />
@@ -203,7 +196,7 @@ function OrgCard({
         )}
         {fit !== undefined && (
           <>
-            <div className="mt-1 h-[3px] rounded-full bg-white/10 overflow-hidden">
+            <div className="mt-1 h-[3px] rounded-full bg-slate-100 overflow-hidden">
               <div className="h-full rounded-full" style={{ width: `${fit}%`, backgroundColor: fitColor(fit) }} />
             </div>
             <p className="text-[6px] mt-0.5 font-bold" style={{ color: fitColor(fit) }}>{fit}%</p>
@@ -249,7 +242,7 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
         <p className={`font-black text-[7px] uppercase tracking-widest leading-none ${isDragOver ? 'text-green-600' : 'text-red-500'}`}>
           {isDragOver ? '✓ Drop' : 'Vacant'}
         </p>
-        <p className="text-[#adb5bd] text-[6px]">{pos.shortRole}</p>
+        <p className="text-slate-400 text-[6px]">{pos.shortRole}</p>
       </div>
     </div>
   )
@@ -260,10 +253,10 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, small = false }: {
 function QueuedVacancy({ posId, small = false }: { posId: PositionId; small?: boolean }) {
   const pos = POSITIONS.find(p => p.id === posId)!
   return (
-    <div className={`rounded-xl border border-dashed border-amber-400/30 bg-amber-500/5 flex items-center justify-center flex-shrink-0 opacity-50 ${small ? 'w-[76px] h-[48px]' : 'w-[96px] h-[56px]'}`}>
+    <div className={`rounded-xl border border-dashed border-amber-400/40 bg-amber-50 flex items-center justify-center flex-shrink-0 opacity-50 ${small ? 'w-[76px] h-[48px]' : 'w-[96px] h-[56px]'}`}>
       <div className="text-center px-1.5">
-        <p className="text-amber-500/70 text-[6px] font-bold uppercase tracking-widest">Next</p>
-        <p className="text-[#adb5bd] text-[6px] mt-0.5">{pos.shortRole}</p>
+        <p className="text-amber-600 text-[6px] font-bold uppercase tracking-widest">Next</p>
+        <p className="text-slate-400 text-[6px] mt-0.5">{pos.shortRole}</p>
       </div>
     </div>
   )
@@ -469,21 +462,21 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
 function VLine({ glow = false }: { glow?: boolean }) {
   return (
     <div className={`w-px h-2 mx-auto flex-shrink-0 transition-all duration-300
-      ${glow ? 'bg-[#016699] shadow-sm' : 'bg-[#016699]/50'}`} />
+      ${glow ? 'bg-slate-400 shadow-sm' : 'bg-slate-300'}`} />
   )
 }
 
 function GhostNode({ name, role }: { name: string; role: string }) {
   return (
-    <div className="relative w-[44px] rounded-xl border border-white/10 bg-[#1a2840] overflow-hidden opacity-[0.22] flex-shrink-0">
-      <div className="h-[22px] flex items-center justify-center bg-white/5">
-        <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center">
-          <span className="text-white/40 text-[6px] font-bold">{name.charAt(0)}</span>
+    <div className="relative w-[44px] rounded-xl border border-slate-200 bg-white overflow-hidden opacity-[0.35] flex-shrink-0">
+      <div className="h-[22px] flex items-center justify-center bg-slate-50">
+        <div className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center">
+          <span className="text-slate-400 text-[6px] font-bold">{name.charAt(0)}</span>
         </div>
       </div>
       <div className="px-1 py-1">
-        <p className="text-[#f0f4f8] font-bold text-[6px] leading-tight truncate">{name}</p>
-        <p className="text-white/40 text-[5px] leading-tight truncate">{role}</p>
+        <p className="text-[#0f172a] font-bold text-[6px] leading-tight truncate">{name}</p>
+        <p className="text-slate-400 text-[5px] leading-tight truncate">{role}</p>
       </div>
     </div>
   )
@@ -491,15 +484,15 @@ function GhostNode({ name, role }: { name: string; role: string }) {
 
 function BossNode() {
   return (
-    <div className="relative w-[96px] rounded-xl border border-white/10 bg-[#1a2840] overflow-hidden opacity-30 flex-shrink-0">
-      <div className="h-[38px] flex items-center justify-center bg-white/5">
-        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-          <span className="text-white/50 text-xs font-bold">RS</span>
+    <div className="relative w-[96px] rounded-xl border border-slate-200 bg-white overflow-hidden opacity-40 flex-shrink-0">
+      <div className="h-[38px] flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+          <span className="text-slate-400 text-xs font-bold">RS</span>
         </div>
       </div>
       <div className="px-1.5 pt-1 pb-1.5">
-        <p className="text-[#f0f4f8] font-bold text-[8px] leading-tight truncate">Reza Santoso</p>
-        <p className="text-white/40 text-[7px] leading-tight truncate mt-0.5">Commercial Dir</p>
+        <p className="text-[#0f172a] font-bold text-[8px] leading-tight truncate">Reza Santoso</p>
+        <p className="text-slate-400 text-[7px] leading-tight truncate mt-0.5">Commercial Dir</p>
       </div>
     </div>
   )
@@ -664,7 +657,7 @@ function OrgTree({
     zoomRef.current = next
     setZoom(next)
   }
-  const SMALL_POSITIONS: Set<PositionId> = new Set(['bintang', 'sari', 'rizky', 'putri'])
+  const SMALL_POSITIONS: Set<PositionId> = new Set(['bintang', 'rizky'])
 
   function renderSlot(posId: PositionId) {
     const small = SMALL_POSITIONS.has(posId)
@@ -705,8 +698,8 @@ function OrgTree({
     return slotNode
   }
 
-  const connBase = isDragging ? 'bg-[#016699]/70' : 'bg-[#016699]/50'
-  const connSub = isDragging ? 'bg-[#016699]/55' : 'bg-[#016699]/38'
+  const connBase = isDragging ? 'bg-slate-400' : 'bg-slate-300'
+  const connSub = isDragging ? 'bg-slate-300' : 'bg-slate-200'
 
   return (
     <div ref={outerRef} className="flex-1 min-h-0 overflow-hidden dot-grid relative" style={{ cursor: isDragging ? 'default' : 'grab' }}>
@@ -714,11 +707,11 @@ function OrgTree({
     <div className="absolute bottom-2 left-2 z-20 flex flex-col gap-1">
       <button
         onClick={() => changeZoom(0.15)}
-        className="w-7 h-7 rounded-lg bg-white/10 border border-white/15 text-white/60 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none"
+        className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none shadow-sm"
       >+</button>
       <button
         onClick={() => changeZoom(-0.15)}
-        className="w-7 h-7 rounded-lg bg-white/10 border border-white/15 text-white/60 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none"
+        className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 text-base font-bold flex items-center justify-center active:scale-90 transition-all select-none shadow-sm"
       >−</button>
     </div>
     {/* Pan/explore hint */}
@@ -732,10 +725,10 @@ function OrgTree({
           transition={{ delay: 1.8, duration: 0.4 }}
           className="absolute bottom-10 left-0 right-0 flex items-center justify-center gap-1.5 pointer-events-none z-10"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white/25">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-slate-400">
             <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
-          <span className="text-white/25 text-[9px] uppercase tracking-[0.2em] font-semibold">drag to explore</span>
+          <span className="text-slate-400 text-[9px] uppercase tracking-[0.2em] font-semibold">drag to explore</span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -746,34 +739,28 @@ function OrgTree({
       style={{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})`, transformOrigin: 'top center', willChange: 'transform' }}
     >
       <BossNode />
-      <div className={`w-px h-2 mx-auto ${connBase} transition-colors duration-300`} />
+      <div className={`w-px h-3 mx-auto ${connBase} transition-colors duration-300`} />
 
-      {/* Vertical stack of all branches */}
-      <div className="flex flex-col items-center">
+      {/* Horizontal 3-branch layout: maya | SM | dimas side by side */}
+      <div className="relative flex gap-4 items-start flex-shrink-0">
+        {/* Horizontal connector from maya to dimas at top of column connectors */}
+        <div className={`absolute top-0 h-px ${connBase} transition-colors duration-300`} style={{ left: '48px', right: '48px' }} />
 
-        {/* Maya branch */}
+        {/* Maya column */}
         <div className="flex flex-col items-center flex-shrink-0">
+          <div className={`w-px h-3 ${connSub} transition-colors duration-300`} />
           {renderSlot('maya')}
           <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
-          <div className="relative flex gap-1">
-            <div className={`absolute top-0 h-px ${connSub} transition-colors duration-300`} style={{ left: '38px', right: '38px' }} />
-            {(['bintang', 'sari'] as PositionId[]).map(id => (
-              <div key={id} className="flex flex-col items-center flex-shrink-0">
-                <div className={`w-px h-2 ${connSub}`} />
-                {renderSlot(id)}
-              </div>
-            ))}
-          </div>
+          {renderSlot('bintang')}
         </div>
 
-        <div className={`w-px h-3 ${connBase} transition-colors duration-300`} />
-
-        {/* Sales Manager branch */}
+        {/* Sales Manager column */}
         <div className="flex flex-col items-center flex-shrink-0">
+          <div className={`w-px h-3 ${connBase} transition-colors duration-300`} />
           {renderSlot('sales_manager')}
-          <div className={`w-px h-2 ${connBase} transition-colors duration-300`} />
+          <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
           <div className="relative flex gap-1.5">
-            <div className={`absolute top-0 h-px ${connSub} transition-colors duration-300`} style={{ width: 'calc(100% - 96px)', left: '48px' }} />
+            <div className={`absolute top-0 h-px ${connSub} transition-colors duration-300`} style={{ left: '48px', right: '48px' }} />
             {(['andi', 'rani', 'fajar'] as PositionId[]).map(id => (
               <div key={id} className="flex flex-col items-center flex-shrink-0">
                 <div className={`w-px h-2 ${connSub}`} />
@@ -783,21 +770,12 @@ function OrgTree({
           </div>
         </div>
 
-        <div className={`w-px h-3 ${connBase} transition-colors duration-300`} />
-
-        {/* Dimas branch */}
+        {/* Dimas column */}
         <div className="flex flex-col items-center flex-shrink-0">
+          <div className={`w-px h-3 ${connSub} transition-colors duration-300`} />
           {renderSlot('dimas')}
           <div className={`w-px h-2 ${connSub} transition-colors duration-300`} />
-          <div className="relative flex gap-1">
-            <div className={`absolute top-0 h-px ${connSub} transition-colors duration-300`} style={{ left: '38px', right: '38px' }} />
-            {(['rizky', 'putri'] as PositionId[]).map(id => (
-              <div key={id} className="flex flex-col items-center flex-shrink-0">
-                <div className={`w-px h-2 ${connSub}`} />
-                {renderSlot(id)}
-              </div>
-            ))}
-          </div>
+          {renderSlot('rizky')}
         </div>
 
       </div>
@@ -829,13 +807,13 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
 
   if (placed || alreadyPlaced) {
     return (
-      <div onClick={() => onSelect?.()} className="relative w-[72px] rounded-xl border border-green-400/25 bg-green-500/8 overflow-hidden opacity-40 select-none flex-shrink-0 cursor-pointer">
-        <div className="h-[30px] flex items-center justify-center bg-green-500/10">
+      <div onClick={() => onSelect?.()} className="relative w-[72px] rounded-xl border border-green-400/40 bg-green-50 overflow-hidden opacity-40 select-none flex-shrink-0 cursor-pointer">
+        <div className="h-[30px] flex items-center justify-center bg-green-50">
           <Avatar id={candidate.id} name={candidate.name} size="xs" />
         </div>
         <div className="px-1.5 pt-1 pb-1.5">
-          <p className="text-[#f0f4f8] font-bold text-[7px] leading-tight truncate">{candidate.name.split(' ')[0]}</p>
-          <p className="text-green-400 text-[6px] font-bold mt-0.5">placed ✓</p>
+          <p className="text-[#0f172a] font-bold text-[7px] leading-tight truncate">{candidate.name.split(' ')[0]}</p>
+          <p className="text-green-600 text-[6px] font-bold mt-0.5">placed ✓</p>
         </div>
       </div>
     )
@@ -848,7 +826,7 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
       animate={{ opacity: dimmed ? 0.3 : 1, scale: dimmed ? 0.95 : 1 }}
       transition={{ opacity: { duration: 0.2 }, scale: { duration: 0.2 } }}
       whileDrag={{ scale: 1.14, rotate: -4, zIndex: 999, opacity: 0.95,
-        boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
+        boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
       onTap={() => onSelect?.()}
       onDragStart={() => {
         const r = cardRef.current?.getBoundingClientRect()
@@ -869,7 +847,7 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
         onDragEnd?.()
         if (pt && onDrop(candidate.id, pt)) setPlaced(true)
       }}
-      className="relative w-[72px] rounded-xl border border-amber-400/50 bg-[#1a2840] overflow-hidden cursor-grab active:cursor-grabbing select-none flex-shrink-0"
+      className="relative w-[72px] rounded-xl border border-amber-400/60 bg-white overflow-hidden cursor-grab active:cursor-grabbing select-none flex-shrink-0 shadow-sm"
       style={{ touchAction: 'none' }}
     >
       {/* EXT ribbon */}
@@ -879,12 +857,12 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
           EXT
         </div>
       </div>
-      <div className="h-[30px] flex items-center justify-center bg-amber-500/10">
+      <div className="h-[30px] flex items-center justify-center bg-amber-50">
         <Avatar id={candidate.id} name={candidate.name} size="xs" />
       </div>
       <div className="px-1.5 pt-1 pb-1.5">
-        <p className="text-[#f0f4f8] font-bold text-[7px] leading-tight truncate">{candidate.name.split(' ')[0]}</p>
-        <p className="text-white/40 text-[6px] truncate mt-0.5">{candidate.currentRole.split(' ').slice(0, 2).join(' ')}</p>
+        <p className="text-[#0f172a] font-bold text-[7px] leading-tight truncate">{candidate.name.split(' ')[0]}</p>
+        <p className="text-slate-400 text-[6px] truncate mt-0.5">{candidate.currentRole.split(' ').slice(0, 2).join(' ')}</p>
         <div className="mt-1">
           <ReadinessBadge readiness={candidate.readiness} tiny />
         </div>
@@ -914,22 +892,22 @@ function CandidateSheet({
       />
       {/* Sheet */}
       <motion.div
-        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t border-white/10"
-        style={{ background: '#1a2840' }}
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t border-slate-200"
+        style={{ background: 'white' }}
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 280 }}
       >
         {/* Drag handle / tap to close */}
         <div className="flex justify-center pt-3 pb-2 cursor-pointer" onClick={onClose}>
-          <div className="w-9 h-1 rounded-full bg-white/25" />
+          <div className="w-9 h-1 rounded-full bg-slate-300" />
         </div>
         <div className="px-4 pb-6 pt-1">
           {/* Header */}
           <div className="flex items-center gap-3 mb-3">
             <FitRingWithLabel fit={c.roleFit} size={44} />
             <div className="min-w-0 flex-1">
-              <p className="text-[#f0f4f8] font-bold text-sm leading-tight truncate">{c.name}</p>
-              <p className="text-white/40 text-xs mt-0.5 truncate">{c.currentRole}</p>
+              <p className="text-[#0f172a] font-bold text-sm leading-tight truncate">{c.name}</p>
+              <p className="text-slate-400 text-xs mt-0.5 truncate">{c.currentRole}</p>
             </div>
           </div>
           {/* Aspect bars — no standard marker, player decides from raw values */}
@@ -969,35 +947,35 @@ function PortraitBottomPanel({
   }, [activeDragId, forceExpand])
 
   return (
-    <div className="border-t border-white/10 flex-shrink-0">
+    <div className="border-t border-slate-200 flex-shrink-0 bg-[#f4f7fb]">
 
       {/* Gauge row — always visible, tap to toggle expand */}
       <div
         className="flex gap-2 px-3 pt-2 pb-1.5 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
       >
-        <div data-tutorial="arc-gauge" className="w-[80px] flex-shrink-0 rounded-xl border border-white/10 bg-[#1a2840] pt-1 pb-0 px-1">
+        <div data-tutorial="arc-gauge" className="w-[80px] flex-shrink-0 rounded-xl border border-slate-200 bg-white pt-1 pb-0 px-1">
           <ArcGauge value={overallFit} />
         </div>
         <div className="flex-1 min-w-0">
           {vacantPos ? (
-            <div data-tutorial="needs-panel" className="h-full rounded-xl border border-red-500/25 bg-red-500/5 px-2 py-1">
+            <div data-tutorial="needs-panel" className="h-full rounded-xl border border-red-300 bg-red-50 px-2 py-1">
               <div className="flex items-center justify-between mb-0.5">
-                <p className="text-red-400 text-[6px] font-bold uppercase tracking-widest">Needs</p>
-                <p className="text-[#f0f4f8] text-[7px] font-bold">{vacantPos.shortRole}</p>
+                <p className="text-red-500 text-[6px] font-bold uppercase tracking-widest">Needs</p>
+                <p className="text-[#0f172a] text-[7px] font-bold">{vacantPos.shortRole}</p>
               </div>
               <AspectBars assessment={null} standard={vacantPos.standard} />
             </div>
           ) : (
-            <div className="h-full rounded-xl border border-green-500/25 bg-green-500/5 px-2.5 flex items-center justify-center">
-              <p className="text-green-400 text-[7px] font-bold text-center">✓ All positions filled</p>
+            <div className="h-full rounded-xl border border-green-300 bg-green-50 px-2.5 flex items-center justify-center">
+              <p className="text-green-600 text-[7px] font-bold text-center">✓ All positions filled</p>
             </div>
           )}
         </div>
         {/* Expand chevron */}
         <div className="flex-shrink-0 flex items-center">
           <div
-            className="text-white/30 text-[10px] leading-none transition-transform duration-200"
+            className="text-slate-400 text-[10px] leading-none transition-transform duration-200"
             style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
           >
             ▼
@@ -1018,7 +996,7 @@ function PortraitBottomPanel({
           >
             <div className="flex flex-col gap-2 px-3 pt-1 pb-3">
               <div data-tutorial="external-pool">
-                <p className="text-white/40 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
+                <p className="text-slate-400 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
                 <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
                   {EXTERNAL_CANDIDATES.map(c => (
                     <ExternalCandidateSlot
@@ -1038,7 +1016,7 @@ function PortraitBottomPanel({
               <div>
                 <PrimaryButton onClick={onConfirm} disabled={!allFilled}>Confirm →</PrimaryButton>
                 {!allFilled && activeVacancyId && (
-                  <p className="text-white/30 text-[7px] text-center mt-1">Fill all positions first</p>
+                  <p className="text-slate-400 text-[7px] text-center mt-1">Fill all positions first</p>
                 )}
               </div>
             </div>
@@ -1080,7 +1058,7 @@ function RightPanel({
       <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto py-2" style={{ scrollbarWidth: 'none' }}>
 
         {/* Arc gauge — overall team fitness only */}
-        <div className="rounded-xl border border-white/10 bg-[#1a2840] pt-2 pb-1 px-2 flex-shrink-0">
+        <div className="rounded-xl border border-slate-200 bg-white pt-2 pb-1 px-2 flex-shrink-0">
           <ArcGauge value={overallFit} />
         </div>
 
@@ -1088,22 +1066,22 @@ function RightPanel({
         {(() => {
           const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
           return vacantPos ? (
-            <div className="rounded-xl border border-red-500/25 bg-red-500/5 px-2.5 py-1.5 flex-shrink-0">
+            <div className="rounded-xl border border-red-300 bg-red-50 px-2.5 py-1.5 flex-shrink-0">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-red-400 text-[6px] font-bold uppercase tracking-widest">Vacant · needs</p>
-                <p className="text-[#f0f4f8] text-[7px] font-bold">{vacantPos.shortRole}</p>
+                <p className="text-red-500 text-[6px] font-bold uppercase tracking-widest">Vacant · needs</p>
+                <p className="text-[#0f172a] text-[7px] font-bold">{vacantPos.shortRole}</p>
               </div>
               <AspectBars assessment={null} standard={vacantPos.standard} />
             </div>
           ) : (
-            <div className="rounded-xl border border-green-500/25 bg-green-500/5 px-2.5 py-1.5 flex-shrink-0">
-              <p className="text-green-400 text-[7px] font-bold text-center">✓ All positions filled</p>
+            <div className="rounded-xl border border-green-300 bg-green-50 px-2.5 py-1.5 flex-shrink-0">
+              <p className="text-green-600 text-[7px] font-bold text-center">✓ All positions filled</p>
             </div>
           )
         })()}
 
         {/* Candidate detail */}
-        <div className="rounded-xl border border-white/10 bg-[#1a2840] flex-shrink-0 flex flex-col items-center justify-center px-2.5 py-2 min-h-[90px]">
+        <div className="rounded-xl border border-slate-200 bg-white flex-shrink-0 flex flex-col items-center justify-center px-2.5 py-2 min-h-[90px]">
           {(() => {
             const benchPos = POSITIONS.find(p => p.id === (activeVacancyId ?? 'sales_manager'))!
             return (
@@ -1123,8 +1101,8 @@ function RightPanel({
                         <div className="flex items-center gap-1.5">
                           <FitRingWithLabel fit={c.roleFit} size={34} />
                           <div className="min-w-0 text-left">
-                            <p className="text-[#f0f4f8] font-bold text-[10px] leading-tight truncate">{c.name}</p>
-                            <p className="text-white/40 text-[7px] truncate">{c.currentRole}</p>
+                            <p className="text-[#0f172a] font-bold text-[10px] leading-tight truncate">{c.name}</p>
+                            <p className="text-slate-400 text-[7px] truncate">{c.currentRole}</p>
                           </div>
                         </div>
                         <AspectBars assessment={c.assessment} standard={benchPos.standard} showStandard={false} />
@@ -1133,13 +1111,13 @@ function RightPanel({
                   })()
                 ) : (
                   <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-1.5 text-center">
-                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white/25">
+                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-slate-300">
                         <circle cx="12" cy="8" r="4" fill="currentColor" />
                         <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
-                    <p className="text-white/25 text-[7px] leading-tight">Tap a card to see<br/>their profile</p>
+                    <p className="text-slate-400 text-[7px] leading-tight">Tap a card to see<br/>their profile</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1152,7 +1130,7 @@ function RightPanel({
       <div className="flex flex-col gap-2 flex-shrink-0 pb-2">
         {/* External candidates */}
         <div>
-          <p className="text-white/40 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
+          <p className="text-slate-400 text-[7px] uppercase tracking-widest text-center mb-1.5">External Pool</p>
           <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {EXTERNAL_CANDIDATES.map(c => (
               <ExternalCandidateSlot
@@ -1176,7 +1154,7 @@ function RightPanel({
             Confirm →
           </PrimaryButton>
           {!allFilled && activeVacancyId && (
-            <p className="text-white/30 text-[7px] text-center mt-1">Fill all positions first</p>
+            <p className="text-slate-400 text-[7px] text-center mt-1">Fill all positions first</p>
           )}
         </div>
       </div>
@@ -1188,12 +1166,10 @@ function RightPanel({
 
 const WALK_STEPS = [
   { target: 'canvas',        pos: 'bottom' as const, text: 'Ini org chart perusahaanmu. Drag untuk jelajahi, pinch untuk zoom.' },
-  { target: 'vacant',        pos: 'bottom' as const, text: 'Sales Manager resign. Kursi merah ini harus kamu isi sebelum waktu habis.' },
-  { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis putih = level minimum yang dibutuhkan untuk 5 aspek ini.' },
-  { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam — tarik siapa pun di org chart. Tap kartu untuk lihat profil & bandingkan aspeknya. Ingat: kursi lamanya jadi kosong.' },
+  { target: 'vacant',        pos: 'bottom' as const, text: 'Sales Manager resign. Kursi merah ini harus kamu isi!' },
+  { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis = level minimum yang dibutuhkan.' },
+  { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam — tarik siapa pun di org chart. Tap kartu untuk lihat profil.' },
   { target: 'external-pool', pos: 'top'    as const, text: 'Atau rekrut dari luar. Tidak meninggalkan lubang di tim, tapi cek readiness-nya.' },
-  { target: 'arc-gauge',     pos: 'top'    as const, text: 'Team Fitness = seberapa cocok susunanmu dengan standar posisi. Skor akhir dihitung dari sini + sisa waktu.' },
-  { target: 'timer',         pos: 'bottom' as const, text: '60 detik. Kecocokan lebih penting dari kecepatan. Siap?' },
 ]
 
 function WalkthroughOverlay({ step, onStep, onDone, containerRef }: {
@@ -1263,26 +1239,33 @@ function WalkthroughOverlay({ step, onStep, onDone, containerRef }: {
           style={tooltipStyle}
           onClick={e => e.stopPropagation()}
         >
-          <div className="bg-[#1a2840] border border-white/15 rounded-2xl px-4 py-3 shadow-2xl">
+          <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xl">
             <div className="flex items-start justify-between gap-3 mb-3">
-              <p className="text-[#f0f4f8] text-[13px] leading-snug flex-1">{current.text}</p>
-              <span className="text-white/30 text-[10px] font-mono flex-shrink-0 mt-0.5 tabular-nums">
+              <p className="text-[#0f172a] text-[13px] leading-snug flex-1">{current.text}</p>
+              <span className="text-slate-400 text-[10px] font-mono flex-shrink-0 mt-0.5 tabular-nums">
                 {step + 1}/{WALK_STEPS.length}
               </span>
             </div>
             {/* Progress dots */}
             <div className="flex gap-1 mb-3">
               {WALK_STEPS.map((_, i) => (
-                <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === step ? 'w-5 bg-brand' : i < step ? 'w-1.5 bg-brand/40' : 'w-1.5 bg-white/15'}`} />
+                <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === step ? 'w-5 bg-brand' : i < step ? 'w-1.5 bg-brand/40' : 'w-1.5 bg-slate-200'}`} />
               ))}
             </div>
-            <div className="flex items-center justify-between">
-              <button onClick={onDone} className="text-white/30 text-xs py-1 active:text-white/60">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onDone}
+                className="text-slate-400 text-sm font-medium py-3 px-4 rounded-xl active:text-slate-600 active:bg-slate-100 transition-colors flex-shrink-0"
+              >
                 Lewati
               </button>
-              <PrimaryButton onClick={advance}>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={advance}
+                className="flex-1 py-3 px-5 rounded-xl bg-brand text-white font-semibold text-sm transition-all active:scale-95"
+              >
                 {isLast ? 'Mulai! →' : 'Lanjut →'}
-              </PrimaryButton>
+              </motion.button>
             </div>
           </div>
         </motion.div>
@@ -1301,16 +1284,13 @@ export function ExploreScreen() {
   const [vacancyQueue, setVacancyQueue] = useState<PositionId[]>(['sales_manager'])
   const [activeDragId, setActiveDragId] = useState<CandidateId | null>(null)
   const [selectedCandidateId, setSelectedCandidateId] = useState<CandidateId | null>(null)
-  const [timeLeft, setTimeLeft] = useState(60)
-  const [timerStart, setTimerStart] = useState<number | null>(null)
+  const [walkthroughDone, setWalkthroughDone] = useState(false)
   const [walkthroughStep, setWalkthroughStep] = useState(0)
   const walkthroughContainerRef = useRef<HTMLDivElement>(null)
-  const tutorialDone = timerStart !== null
 
   const activeVacancyId = vacancyQueue[0] ?? null
   const allFilled = vacancyQueue.length === 0
   const smOccupant = assignments['sales_manager'] ?? null
-  const isUrgent = tutorialDone && timeLeft <= 10
 
   function isOverVacancy(point: { x: number; y: number }) {
     const rect = vacantRef.current?.getBoundingClientRect()
@@ -1392,6 +1372,7 @@ export function ExploreScreen() {
         { candidateId }
       )
     }
+    setSelectedCandidateId(candidateId)
     return true
   }
 
@@ -1423,24 +1404,14 @@ export function ExploreScreen() {
   }
 
   return (
-    <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden">
-      {/* Urgency vignette */}
-      {isUrgent && (
-        <div
-          className="absolute inset-0 pointer-events-none z-50 animate-pulse-vignette"
-          style={{ borderRadius: 'inherit' }}
-        />
-      )}
+    <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden bg-[#f4f7fb]">
 
-      <div data-tutorial="timer">
-        <TimerBar
-          timerStartedAt={timerStart}
-          onTick={setTimeLeft}
-          onExpire={() => {
-            const pick = smOccupant ?? null
-            actions.timeUp(pick, computeOverallFit(assignments))
-          }}
-        />
+      {/* Header bar with ? button */}
+      <div className="flex items-center justify-end px-3 pt-2 pb-1 flex-shrink-0">
+        <button
+          onClick={() => { setWalkthroughStep(0); setWalkthroughDone(false) }}
+          className="w-7 h-7 rounded-full border border-slate-200 bg-white text-slate-400 text-xs font-bold flex items-center justify-center active:scale-90 transition-all shadow-sm"
+        >?</button>
       </div>
 
       <div className="flex flex-col flex-1 min-h-0">
@@ -1470,23 +1441,23 @@ export function ExploreScreen() {
           onExternalDragMove={handleDragMove}
           onConfirm={() => {
             if (smOccupant) {
-              actions.confirmExplore(smOccupant, computeOverallFit(assignments), timeLeft)
+              actions.confirmExplore(smOccupant, computeOverallFit(assignments))
             }
           }}
           activeDragId={activeDragId}
           onDragStart={(id) => setActiveDragId(id)}
           onDragEnd={() => setActiveDragId(null)}
           onSelect={setSelectedCandidateId}
-          forceExpand={!tutorialDone}
+          forceExpand={!walkthroughDone}
         />
       </div>
 
-      {/* 7-step walkthrough — shown until timer started */}
-      {!tutorialDone && (
+      {/* 5-step walkthrough — shown until dismissed */}
+      {!walkthroughDone && (
         <WalkthroughOverlay
           step={walkthroughStep}
           onStep={setWalkthroughStep}
-          onDone={() => setTimerStart(Date.now())}
+          onDone={() => setWalkthroughDone(true)}
           containerRef={walkthroughContainerRef}
         />
       )}

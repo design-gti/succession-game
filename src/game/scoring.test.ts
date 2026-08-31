@@ -2,38 +2,34 @@ import { describe, it, expect } from 'vitest'
 import { computeScore } from './scoring'
 
 describe('computeScore', () => {
-  it('perfect fitness + full time = 100', () => {
-    const s = computeScore(100, 60)
-    expect(s.fitnessPoints).toBe(80)
-    expect(s.speedPoints).toBe(20)
+  it('perfect fitness = 100', () => {
+    const s = computeScore(100)
     expect(s.total).toBe(100)
+    expect(s.persona).toBe('TALENT ARCHITECT')
   })
 
-  it('perfect fitness + no time = 80', () => {
-    const s = computeScore(100, 0)
-    expect(s.fitnessPoints).toBe(80)
-    expect(s.speedPoints).toBe(0)
-    expect(s.total).toBe(80)
+  it('87+ = TALENT ARCHITECT', () => {
+    expect(computeScore(87).persona).toBe('TALENT ARCHITECT')
   })
 
-  it('zero fitness + full time = 20', () => {
-    const s = computeScore(0, 60)
-    expect(s.fitnessPoints).toBe(0)
-    expect(s.speedPoints).toBe(20)
-    expect(s.total).toBe(20)
+  it('75–86 = TALENT STRATEGIST', () => {
+    expect(computeScore(75).persona).toBe('TALENT STRATEGIST')
+    expect(computeScore(86).persona).toBe('TALENT STRATEGIST')
   })
 
-  it('75% fitness + 30s remaining = 60 + 10 = 70', () => {
-    const s = computeScore(75, 30)
-    expect(s.fitnessPoints).toBe(60)
-    expect(s.speedPoints).toBe(10)
-    expect(s.total).toBe(70)
+  it('60–74 = TALENT SCOUT', () => {
+    expect(computeScore(60).persona).toBe('TALENT SCOUT')
+    expect(computeScore(74).persona).toBe('TALENT SCOUT')
   })
 
-  it('persona thresholds', () => {
-    expect(computeScore(100, 60).persona).toBe('TALENT ARCHITECT')
-    expect(computeScore(90, 5).persona).toBe('TALENT STRATEGIST')
-    expect(computeScore(60, 20).persona).toBe('TALENT SCOUT')
-    expect(computeScore(40, 0).persona).toBe('GUT-FEEL MANAGER')
+  it('below 60 = GUT-FEEL MANAGER', () => {
+    expect(computeScore(59).persona).toBe('GUT-FEEL MANAGER')
+    expect(computeScore(0).persona).toBe('GUT-FEEL MANAGER')
+  })
+
+  it('total = overallFit', () => {
+    const s = computeScore(72)
+    expect(s.total).toBe(72)
+    expect(s.overallFit).toBe(72)
   })
 })
