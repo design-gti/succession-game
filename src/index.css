@@ -35,7 +35,7 @@ body {
 
 #root {
   width: 100%;
-  max-width: 430px;
+  max-width: 100%;
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
@@ -43,10 +43,10 @@ body {
   flex-shrink: 0;
 }
 
-/* Tablet: full-width, same as mobile */
-@media (min-width: 768px) {
+/* Desktop: fixed phone-width, centered */
+@media (min-width: 1024px) {
   #root {
-    max-width: 100%;
+    max-width: 430px;
   }
 }
 
