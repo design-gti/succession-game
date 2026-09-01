@@ -25,6 +25,7 @@ export interface Candidate {
   naturalFit?: number   // fit in their own natural role (internal only)
   fitMessage: string
   readiness: Readiness  // readiness to take the Sales Manager vacancy now
+  quote: string         // one-line peer/manager impression — may contrast with data
 }
 
 // ─── Name pools ───────────────────────────────────────────────────────────────
@@ -124,6 +125,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 88,
     fitMessage: 'Strong individual performance, but the role requires stronger people leadership and collaboration.',
     readiness: '6mo',
+    quote: 'Orangnya rajin dan sudah hafal semua klien besar, sales terbaik di tim.',
   },
   {
     id: 'rani',
@@ -144,6 +146,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 90,
     fitMessage: 'Strong fit profile. High leadership, resilience, and collaboration — but experience is still building.',
     readiness: '6mo',
+    quote: 'Masih junior, tapi anehnya tim sering dengerin dia duluan kalau ada masalah.',
   },
   {
     id: 'maya',
@@ -164,6 +167,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 91,
     fitMessage: 'Strong manager profile, but the Sales Manager role requires higher drive and new-business orientation.',
     readiness: 'now',
+    quote: 'Kalau ada konflik di tim, dia yang paling diandalkan. Semua orang nyaman kerja sama dia.',
   },
   {
     id: 'fajar',
@@ -184,6 +188,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 82,
     fitMessage: 'High drive and initiative, but leadership and collaboration need development for a management role.',
     readiness: '1yr',
+    quote: 'Selalu yang paling duluan kalau ada peluang baru, energinya nular ke semua orang.',
   },
   {
     id: 'dimas',
@@ -204,6 +209,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 85,
     fitMessage: 'Different functional background limits direct relevance. Drive and influence for a sales role are below threshold.',
     readiness: '1yr',
+    quote: 'Presentasinya selalu meyakinkan — klien dan internal sama-sama respek sama dia.',
   },
   {
     id: 'bintang',
@@ -224,6 +230,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 80,
     fitMessage: 'Good team player, but lacks leadership depth and sales orientation for a manager role.',
     readiness: '2yr',
+    quote: 'Customer paling suka dihubungi dia, komunikasinya enak dan sabar banget.',
   },
   {
     id: 'sari',
@@ -244,6 +251,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 82,
     fitMessage: 'Strong in collaboration but leadership and drive fall below the Sales Manager threshold.',
     readiness: '2yr',
+    quote: 'Prosesnya paling rapi di tim — SOP dan dokumen dia yang bikin, semua bergantung padanya.',
   },
   {
     id: 'rizky',
@@ -264,6 +272,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 79,
     fitMessage: 'Marketing background limits commercial fit. Leadership and sales drive need significant development.',
     readiness: '2yr',
+    quote: 'Campaign terakhirnya viral — orang-orang di luar perusahaan pun notice.',
   },
   {
     id: 'putri',
@@ -284,6 +293,7 @@ export const CANDIDATES: Candidate[] = [
     naturalFit: 77,
     fitMessage: 'Creative strength but limited sales orientation. Too early in career for a management role.',
     readiness: '2yr',
+    quote: 'Kontennya sering jadi benchmark tim — kreatif, relatable, dan selalu on-brand.',
   },
   {
     id: 'dewi',
@@ -303,6 +313,7 @@ export const CANDIDATES: Candidate[] = [
     roleFit: 87,
     fitMessage: 'Strong sales leadership profile. People development skills are a standout for a manager role.',
     readiness: 'now',
+    quote: 'Mantan atasannya bilang: "Kalau dia pergi, target regional ikut turun."',
   },
   {
     id: 'aryo',
@@ -322,6 +333,7 @@ export const CANDIDATES: Candidate[] = [
     roleFit: 79,
     fitMessage: 'Good sales pedigree and drive, but lower influence and collaboration scores than ideal for this role.',
     readiness: 'now',
+    quote: 'Pipeline-nya selalu rapi dan terukur, tipe yang jarang minta tolong tapi hasilnya ada.',
   },
   {
     id: 'liana',
@@ -341,6 +353,7 @@ export const CANDIDATES: Candidate[] = [
     roleFit: 76,
     fitMessage: 'Exceptional relationship skills but limited direct people management experience for this role.',
     readiness: '6mo',
+    quote: 'Klien enterprise-nya loyal banget — katanya bukan karena produknya, tapi karena dia.',
   },
   {
     id: 'nadia',
@@ -360,6 +373,7 @@ export const CANDIDATES: Candidate[] = [
     roleFit: 92,
     fitMessage: 'Strongest overall match. High across all critical dimensions for this Sales Manager role.',
     readiness: 'now',
+    quote: 'Tim lamanya kompak banget — bahkan yang sudah resign pun masih minta advice ke dia.',
   },
   {
     id: 'kevin',
@@ -379,6 +393,7 @@ export const CANDIDATES: Candidate[] = [
     roleFit: 82,
     fitMessage: 'Strong commercial capability and influence, but collaboration score below threshold for a people-manager role.',
     readiness: 'now',
+    quote: 'Networknya luas banget — kayaknya dia kenal semua orang penting di industri ini.',
   },
 ]
 

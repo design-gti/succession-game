@@ -63,14 +63,6 @@ function ScoreBubble({ value, label, color, delay }: { value: number; label: str
   )
 }
 
-function TTFChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl" style={{ background: 'rgba(15,23,42,0.04)' }}>
-      <span className="text-[9px] font-black text-[#0f172a]">{value}</span>
-      <span className="text-[7px] text-slate-400 font-semibold uppercase tracking-wide">{label}</span>
-    </div>
-  )
-}
 
 export function ResultScreen() {
   const { state, actions } = useGame()
@@ -103,7 +95,6 @@ export function ResultScreen() {
       .catch(err => console.error('[save-session] fetch failed:', err))
   }, [])
   const persona = PERSONA_CONFIG[score.persona] ?? PERSONA_CONFIG['TALENT EXPLORER']
-  const ttf = score.timeFill ?? null
 
   return (
     <div className="flex flex-col h-full px-5 py-5 overflow-y-auto scrollable bg-[#f4f7fb]">
@@ -144,19 +135,6 @@ export function ResultScreen() {
           <ScoreBubble value={score.hiringSpeed} label="Hiring Speed" color="#8B5CF6" delay={0.32} />
         </motion.div>
 
-        {/* TTF stats row */}
-        {ttf && ttf.placements.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-2 justify-center"
-          >
-            <TTFChip label="Hari Total" value={`H${ttf.currentDay}`} />
-            <TTFChip label="Avg TTF" value={`${ttf.avgTTF} hr`} />
-            <TTFChip label="Posisi Diisi" value={`${ttf.placements.length}/${8}`} />
-          </motion.div>
-        )}
 
         {/* Persona stamp */}
         <motion.div

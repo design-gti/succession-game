@@ -28,25 +28,34 @@ interface PositionDef {
   naturalFit: number
   level: 2 | 3
   standard: Assessment  // required benchmark per aspect for this position
+  brief: string         // one-line position context shown in the workspace panel
 }
 
 const POSITIONS: PositionDef[] = [
   { id: 'sales_manager', role: 'Sales Manager',      shortRole: 'Sales Mgr', naturalOccupant: null,      naturalFit: 0,  level: 2,
-    standard: { leadership: 85, drive: 85, influence: 80 } },
+    standard: { leadership: 85, drive: 85, influence: 80 },
+    brief: 'Pimpin tim, jaga pipeline, dan pastikan angka tercapai setiap kuartal.' },
   { id: 'maya',          role: 'CS Manager',          shortRole: 'CS Mgr',    naturalOccupant: 'maya',    naturalFit: 91, level: 2,
-    standard: { leadership: 80, drive: 65, influence: 75 } },
+    standard: { leadership: 80, drive: 65, influence: 75 },
+    brief: 'Jaga pelanggan tetap puas dan hubungan jangka panjang tetap terjaga.' },
   { id: 'dimas',         role: 'Marketing Manager',   shortRole: 'Mkt Mgr',   naturalOccupant: 'dimas',   naturalFit: 85, level: 2,
-    standard: { leadership: 75, drive: 75, influence: 85 } },
+    standard: { leadership: 75, drive: 75, influence: 85 },
+    brief: 'Bangun awareness brand dan pastikan setiap kampanye bisa diukur hasilnya.' },
   { id: 'andi',          role: 'Senior AE',           shortRole: 'Sr. AE',    naturalOccupant: 'andi',    naturalFit: 88, level: 3,
-    standard: { leadership: 55, drive: 90, influence: 80 } },
+    standard: { leadership: 55, drive: 90, influence: 80 },
+    brief: 'Kelola akun senior dan bantu tim junior berkembang.' },
   { id: 'rani',          role: 'Account Executive',   shortRole: 'AE',        naturalOccupant: 'rani',    naturalFit: 90, level: 3,
-    standard: { leadership: 50, drive: 85, influence: 75 } },
+    standard: { leadership: 50, drive: 85, influence: 75 },
+    brief: 'Rawat klien existing dan cari peluang upsell dari hubungan yang sudah ada.' },
   { id: 'fajar',         role: 'BD Executive',        shortRole: 'BD Exec',   naturalOccupant: 'fajar',   naturalFit: 82, level: 3,
-    standard: { leadership: 55, drive: 85, influence: 85 } },
+    standard: { leadership: 55, drive: 85, influence: 85 },
+    brief: 'Buka peluang bisnis baru dan masuk ke territory yang belum tersentuh.' },
   { id: 'bintang',       role: 'CS Representative',   shortRole: 'CS Rep',    naturalOccupant: 'bintang', naturalFit: 80, level: 3,
-    standard: { leadership: 45, drive: 65, influence: 65 } },
+    standard: { leadership: 45, drive: 65, influence: 65 },
+    brief: 'Jadi titik kontak pertama pelanggan, responsif dan tenang saat ada eskalasi.' },
   { id: 'rizky',         role: 'Mkt Specialist',      shortRole: 'Mkt Spec',  naturalOccupant: 'rizky',   naturalFit: 79, level: 3,
-    standard: { leadership: 45, drive: 70, influence: 75 } },
+    standard: { leadership: 45, drive: 70, influence: 75 },
+    brief: 'Eksekusi kampanye digital dan pastikan setiap channel terukur performanya.' },
 ]
 
 const ASPECT_LABELS: { key: keyof Assessment; label: string }[] = [
@@ -126,6 +135,13 @@ function getSlotFit(posId: PositionId, occupant: CandidateId): number {
   if (posId === 'sales_manager') return getCandidateById(occupant).roleFit
   const pos = POSITIONS.find(p => p.id === posId)!
   if (occupant === pos.naturalOccupant) return pos.naturalFit
+  // Non-natural placement: calculate dynamically from assessment vs position standard
+  const c = getCandidateById(occupant)
+  if (c.assessment) {
+    const keys: (keyof Assessment)[] = ['leadership', 'drive', 'influence']
+    const avg = keys.reduce((sum, k) => sum + Math.min(c.assessment![k] / pos.standard[k], 1), 0) / keys.length
+    return Math.round(avg * 100)
+  }
   return getCandidateById(occupant).naturalFit ?? 78
 }
 
@@ -336,7 +352,7 @@ function OrgCircle({
       <p className={`text-[#0f172a] font-bold leading-none text-center ${NODE_NAME_SIZE[nodeSize]}`}>
         {firstName}
       </p>
-      <p className={`text-slate-400 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
+      <p className={`text-slate-500 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
         {shortRole}
       </p>
       {candidateId && posId && (() => {
@@ -400,7 +416,7 @@ function ActiveVacancy({ nodeRef, isDragOver, posId, nodeSize = 'md' }: {
       <p className={`text-[#0f172a] font-bold leading-none text-center ${NODE_NAME_SIZE[nodeSize]}`}>
         {pos.shortRole.split(' ')[0]}
       </p>
-      <p className={`text-slate-400 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
+      <p className={`text-slate-500 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
         {pos.shortRole}
       </p>
     </div>
@@ -428,7 +444,7 @@ function QueuedVacancy({ posId, nodeSize = 'md', daysVacant = 0 }: { posId: Posi
       <p className={`text-[#0f172a] font-bold leading-none text-center ${NODE_NAME_SIZE[nodeSize]}`}>
         {pos.shortRole.split(' ')[0]}
       </p>
-      <p className={`text-slate-400 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
+      <p className={`text-slate-500 leading-none text-center truncate max-w-[72px] ${NODE_ROLE_SIZE[nodeSize]}`}>
         {pos.shortRole}
       </p>
     </div>
@@ -494,7 +510,7 @@ function BubblePop({ sizePx, onDone }: { sizePx: number; onDone: () => void }) {
 
 // ─── DraggableSlot ────────────────────────────────────────────────────────────
 
-function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, dimmed, softDimmed, isActive, floatDelay = 0, nodeSize = 'md', isTargeted = false }: {
+function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, onSelect, onUnplace, dimmed, softDimmed, isActive, floatDelay = 0, nodeSize = 'md', isTargeted = false }: {
   id: CandidateId
   posId: PositionId
   onDrop: (id: CandidateId, point: { x: number; y: number }) => boolean
@@ -502,6 +518,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
   onDragStart?: () => void
   onDragEnd?: () => void
   onSelect?: () => void
+  onUnplace?: () => void
   dimmed?: boolean
   softDimmed?: boolean
   isActive?: boolean
@@ -560,7 +577,11 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
         setIsDragging(false)
         onDragMove(null)
         onDragEnd?.()
-        if (pt && onDrop(id, pt)) setPlaced(true)
+        const dropped = pt && onDrop(id, pt)
+        if (dropped) { setPlaced(true); return }
+        // If drag was far enough and no vacancy accepted it, unplace so user can rearrange
+        const dist = Math.abs(info.offset.x) + Math.abs(info.offset.y)
+        if (dist > 30 && onUnplace) onUnplace()
       }}
       className={`relative cursor-grab active:cursor-grabbing select-none ${isDragging ? 'bubble-dragging' : ''}`}
       style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto' }}
@@ -725,7 +746,7 @@ function BossNode() {
     <div className="flex flex-col items-center gap-[3px] opacity-40 flex-shrink-0">
       <Avatar id="reza" name={name} size="md" />
       <p className="text-[#0f172a] font-bold text-[8px] leading-none">{name}</p>
-      <p className="text-slate-400 text-[6.5px] leading-none">Commercial Dir</p>
+      <p className="text-slate-500 text-[6.5px] leading-none">Commercial Dir</p>
     </div>
   )
 }
@@ -762,7 +783,7 @@ function ArcGauge({ value }: { value: number }) {
 
 function OrgTree({
   assignments, activeVacancyId, vacancyQueue, nodeRef, isDragOver, onDrop, onDragMove,
-  activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect, onExplore,
+  activeDragId, onDragStart, onDragEnd, onUnplace, onMovePlaced, onSelect, onSelectVacant, onExplore,
   selectedCandidateId, initialZoom = 1.0, currentDay = 1, vacancyOpenedAt = {},
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
@@ -777,7 +798,8 @@ function OrgTree({
   onDragEnd: () => void
   onUnplace: (posId: PositionId) => void
   onMovePlaced: (fromPosId: PositionId, candidateId: CandidateId, point: { x: number; y: number }) => boolean
-  onSelect: (id: CandidateId) => void
+  onSelect: (id: CandidateId, posId?: PositionId) => void
+  onSelectVacant: (posId: PositionId) => void
   onExplore?: () => void
   selectedCandidateId?: CandidateId | null
   initialZoom?: number
@@ -897,22 +919,24 @@ function OrgTree({
   function renderSlot(posId: PositionId, nodeSize: NodeSize = 'md') {
     const daysVacant = vacancyOpenedAt[posId] != null ? Math.max(0, currentDay - vacancyOpenedAt[posId]!) : 0
     if (posId === activeVacancyId) {
-      return <ActiveVacancy nodeRef={nodeRef} isDragOver={isDragOver} posId={posId} nodeSize={nodeSize} />
+      return <div onClick={() => onSelectVacant(posId)} className="cursor-pointer"><ActiveVacancy nodeRef={nodeRef} isDragOver={isDragOver} posId={posId} nodeSize={nodeSize} /></div>
     }
     if (vacancyQueue.includes(posId) && !assignments[posId]) {
-      return <QueuedVacancy posId={posId} nodeSize={nodeSize} daysVacant={daysVacant} />
+      return <div onClick={() => onSelectVacant(posId)} className="cursor-pointer"><QueuedVacancy posId={posId} nodeSize={nodeSize} daysVacant={daysVacant} /></div>
     }
     const occupant = assignments[posId]
-    if (!occupant) return <QueuedVacancy posId={posId} nodeSize={nodeSize} daysVacant={daysVacant} />
+    if (!occupant) return <div onClick={() => onSelectVacant(posId)} className="cursor-pointer"><QueuedVacancy posId={posId} nodeSize={nodeSize} daysVacant={daysVacant} /></div>
     const isNatural = occupant === (posId as string)
     const isActive = selectedCandidateId === occupant
     const softDimmed = !!selectedCandidateId && !isActive
     const slotNode = isNatural ? (
       <DraggableSlot
+        key={occupant}
         id={occupant} posId={posId} onDrop={onDrop} onDragMove={onDragMove}
         onDragStart={() => onDragStart(occupant)}
         onDragEnd={onDragEnd}
-        onSelect={() => onSelect(occupant)}
+        onSelect={() => onSelect(occupant, posId)}
+        onUnplace={() => onUnplace(posId)}
         dimmed={isDragging && activeDragId !== occupant}
         softDimmed={softDimmed}
         isActive={isActive}
@@ -922,13 +946,14 @@ function OrgTree({
       />
     ) : (
       <PlacedSlot
+        key={occupant}
         id={occupant} posId={posId}
         onMove={(pt) => onMovePlaced(posId, occupant, pt)}
         onUnplace={() => onUnplace(posId)}
         onDragMove={onDragMove}
         onDragStart={() => onDragStart(occupant)}
         onDragEnd={onDragEnd}
-        onSelect={() => onSelect(occupant)}
+        onSelect={() => onSelect(occupant, posId)}
         nodeSize={nodeSize}
         isActive={isActive}
         softDimmed={softDimmed}
@@ -1017,7 +1042,7 @@ function OrgTree({
 
         {/* All position slots */}
         {BUBBLE_LAYOUT.map(({ posId, x, y, nodeSize }) => (
-          <div key={posId} style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, 0)' }}>
+          <div key={posId} data-posid={posId} style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, 0)' }}>
             {renderSlot(posId, nodeSize)}
           </div>
         ))}
@@ -1261,7 +1286,7 @@ function PortraitBottomPanel({
   assignments, activeVacancyId, allFilled,
   onExternalDrop, onExternalDragMove, onConfirm,
   activeDragId, onDragStart, onDragEnd, onSelect,
-  selectedCandidateId, vacancyQueue, currentDay = 1,
+  selectedCandidateId, inspectedPosId = null, vacancyQueue, currentDay = 1,
   panelHeight = null, onHeightChange, onHeightCommit,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
@@ -1273,8 +1298,9 @@ function PortraitBottomPanel({
   activeDragId: CandidateId | null
   onDragStart: (id: CandidateId) => void
   onDragEnd: () => void
-  onSelect: (id: CandidateId) => void
+  onSelect: (id: CandidateId, posId?: PositionId) => void
   selectedCandidateId: CandidateId | null
+  inspectedPosId?: PositionId | null
   vacancyQueue: PositionId[]
   currentDay?: number
   panelHeight?: number | null
@@ -1282,15 +1308,17 @@ function PortraitBottomPanel({
   onHeightCommit?: (h: number, naturalH: number, workspaceH: number) => void
 }) {
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
-  const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
+  // Benchmark position: active vacancy while filling; inspected position after all filled
+  const benchPosId = activeVacancyId ?? (allFilled ? inspectedPosId : null)
+  const vacantPos = benchPosId ? POSITIONS.find(p => p.id === benchPosId)! : null
   const selectedCandidate = selectedCandidateId ? getCandidateById(selectedCandidateId) : null
   const selectedDisplayName = useDisplayName(selectedCandidateId ?? '', selectedCandidate?.name ?? '')
   const remaining = vacancyQueue.length
 
-  // Determine content mode
+  // Determine content mode — after allFilled, compare mode still available via inspected position
   const mode: 'empty' | 'profile' | 'compare' | 'filled' =
-    allFilled ? 'filled'
-    : vacantPos && selectedCandidate ? 'compare'
+    vacantPos && selectedCandidate ? 'compare'
+    : allFilled ? 'filled'
     : vacantPos ? 'profile'
     : 'empty'
 
@@ -1416,16 +1444,22 @@ function PortraitBottomPanel({
               className="flex flex-col gap-1.5"
             >
               <p className="text-[8px] text-slate-400 uppercase tracking-widest">Standar Peran</p>
+              <p className="text-[8.5px] text-slate-600 italic leading-snug">{vacantPos.brief}</p>
               <NeutralBars standard={vacantPos.standard} />
               <p className="text-[8px] text-slate-400 text-center mt-0.5">Tap kandidat untuk membandingkan</p>
             </motion.div>
           )}
 
           {mode === 'compare' && vacantPos && selectedCandidate && (
-            <motion.div key={`compare-${activeVacancyId}-${selectedCandidateId}`}
+            <motion.div key={`compare-${vacantPos.id}-${selectedCandidateId}`}
               initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="flex flex-col gap-1.5"
             >
+              {selectedCandidate.quote && (
+                <p className="text-[8.5px] text-slate-600 italic leading-snug">
+                  💬 "{selectedCandidate.quote}"
+                </p>
+              )}
               {/* Legend row — spacers calibrated to align with bar track edges */}
               {/* AspectRow: px-1.5(6) + icon(20) + gap(8) + label(24) + gap(8) = 66px left of track */}
               {/* Legend gap-2 layout: spacer + gap(8) = 66 → spacer=58; right: value(18)+px-1.5(6)+gap(8)=32 → right-spacer=24 */}
@@ -1461,7 +1495,7 @@ function PortraitBottomPanel({
                 </svg>
               </div>
               <p className="text-[#0f172a] text-[10px] font-bold text-center">Semua posisi telah terisi</p>
-              <p className="text-slate-400 text-[9px] text-center">Siap untuk direview</p>
+              <p className="text-slate-400 text-[9px] text-center">Tap karyawan untuk cek kecocokan posisinya,<br/>atau geser untuk atur ulang</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1832,10 +1866,10 @@ function GestureDemo({ step, containerRef }: {
 const WALK_STEPS = [
   { target: 'canvas',        pos: 'bottom' as const, text: 'Ini org chart perusahaanmu. Drag untuk jelajahi, pinch untuk zoom.' },
   { target: 'vacant',        pos: 'bottom' as const, text: 'Sales Manager resign. Kursi merah ini harus kamu isi!' },
-  { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam — tarik siapa pun di org chart. Tap kartu untuk lihat profil.' },
+  { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam. Tarik siapa pun di org chart, tap kartu untuk lihat profil.' },
   { target: 'external-pool', pos: 'top'    as const, text: 'Atau rekrut dari luar. Tidak meninggalkan lubang di tim, tapi cek readiness-nya.' },
   { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis = level minimum yang dibutuhkan.' },
-  { target: 'calendar',      pos: 'bottom' as const, text: 'Ini jam organisasimu. Setiap harinya ada biaya "posisi kosong" — makin cepat kamu isi, makin kecil dampaknya ke bisnis.' },
+  { target: 'calendar',      pos: 'bottom' as const, text: 'Ini jam organisasimu. Setiap hari ada biaya posisi kosong, makin cepat diisi makin kecil dampaknya ke bisnis.' },
 ]
 
 function WalkthroughOverlay({ step, onStep, onDone, containerRef }: {
@@ -2043,6 +2077,8 @@ export function ExploreScreen() {
   const [vacancyQueue, setVacancyQueue] = useState<PositionId[]>(['sales_manager'])
   const [activeDragId, setActiveDragId] = useState<CandidateId | null>(null)
   const [selectedCandidateId, setSelectedCandidateId] = useState<CandidateId | null>(null)
+  const [inspectedPosId, setInspectedPosId] = useState<PositionId | null>(null)
+  const [selectedVacantPosId, setSelectedVacantPosId] = useState<PositionId | null>(null)
   const [walkthroughDone, setWalkthroughDone] = useState(false)
   const [walkthroughStep, setWalkthroughStep] = useState(0)
   const walkthroughContainerRef = useRef<HTMLDivElement>(null)
@@ -2052,14 +2088,36 @@ export function ExploreScreen() {
   const [vacancyOpenedAt, setVacancyOpenedAt] = useState<Partial<Record<PositionId, number>>>({ sales_manager: 1 })
   const [placements, setPlacements] = useState<PlacementEntry[]>([])
   const [panelHeight, setPanelHeight] = useState<number | null>(null)
+  const [showFirstDropHint, setShowFirstDropHint] = useState(false)
+  const firstDropDoneRef = useRef(false)
+  const [showAllFilledHint, setShowAllFilledHint] = useState(false)
+  const prevAllFilledRef = useRef(false)
   useEffect(() => {
-    const id = setInterval(() => setCurrentDay(d => d + 1), 2 * 60 * 1000)
+    const id = setInterval(() => setCurrentDay(d => d + 1), 30 * 1000)
     return () => clearInterval(id)
   }, [])
 
   const activeVacancyId = vacancyQueue[0] ?? null
   const allFilled = vacancyQueue.length === 0
+
+  // Show hint when allFilled first becomes true
+  useEffect(() => {
+    if (allFilled && !prevAllFilledRef.current) {
+      setShowAllFilledHint(true)
+      const t = setTimeout(() => setShowAllFilledHint(false), 5000)
+      prevAllFilledRef.current = true
+      return () => clearTimeout(t)
+    }
+    if (!allFilled) prevAllFilledRef.current = false
+  }, [allFilled])
   const smOccupant = assignments['sales_manager'] ?? null
+
+  function handleSelect(candidateId: CandidateId, posId?: PositionId) {
+    setSelectedCandidateId(candidateId)
+    setSelectedVacantPosId(null)
+    if (allFilled && posId) setInspectedPosId(posId)
+    else setInspectedPosId(null)
+  }
 
   function computeTimeFill(): TimeFillData {
     const totalVacancyDays = placements.reduce((s, p) => s + p.vacancyAge, 0)
@@ -2105,6 +2163,23 @@ export function ExploreScreen() {
 
     setAssignments(newAssignments)
     setVacancyQueue(newQueue)
+  }
+
+  function getPosIdAtPoint(point: { x: number; y: number }): PositionId | null {
+    const el = document.elementFromPoint(point.x, point.y)
+    if (!el) return null
+    const slotEl = el.closest('[data-posid]')
+    if (!slotEl) return null
+    return slotEl.getAttribute('data-posid') as PositionId
+  }
+
+  function handleSwapPositions(fromPosId: PositionId, toPosId: PositionId) {
+    const fromOccupant = assignments[fromPosId]
+    const toOccupant = assignments[toPosId]
+    if (!fromOccupant || !toOccupant || fromPosId === toPosId) return
+    setAssignments(prev => ({ ...prev, [fromPosId]: toOccupant, [toPosId]: fromOccupant }))
+    setSelectedCandidateId(fromOccupant)
+    setInspectedPosId(toPosId)
   }
 
   function handleDragMove(point: { x: number; y: number } | null) {
@@ -2175,6 +2250,12 @@ export function ExploreScreen() {
     setVacancyQueue(newQ)
     setVacancyOpenedAt(newVacancyOpenedAt)
 
+    if (!firstDropDoneRef.current) {
+      firstDropDoneRef.current = true
+      setShowFirstDropHint(true)
+      setTimeout(() => setShowFirstDropHint(false), 5000)
+    }
+
     if (targetPosId === 'sales_manager') {
       logEvent(
         candidate.source === 'external' ? 'external_profile_opened' : 'employee_profile_opened',
@@ -2187,32 +2268,54 @@ export function ExploreScreen() {
 
   function handleDrop(candidateId: CandidateId, point: { x: number; y: number }): boolean {
     setIsDragOver(false)
-    if (!activeVacancyId || !isOverVacancy(point)) return false
-    applyConfirmedDrop(candidateId, activeVacancyId, null, assignments, vacancyQueue.slice(1))
-    return true
+    if (activeVacancyId && isOverVacancy(point)) {
+      setSelectedVacantPosId(null)
+      applyConfirmedDrop(candidateId, activeVacancyId, null, assignments, vacancyQueue.slice(1))
+      return true
+    }
+    // When allFilled: drag onto another slot = swap
+    if (allFilled) {
+      const fromPosId = candidateId as unknown as PositionId
+      const targetPosId = getPosIdAtPoint(point)
+      if (targetPosId && targetPosId !== fromPosId && assignments[targetPosId]) {
+        handleSwapPositions(fromPosId, targetPosId)
+        return true
+      }
+    }
+    return false
   }
 
   function handleMovePlaced(fromPosId: PositionId, candidateId: CandidateId, point: { x: number; y: number }): boolean {
     setIsDragOver(false)
-    if (!activeVacancyId || !isOverVacancy(point) || fromPosId === activeVacancyId) return false
-    // Moving a placed card: reverse cascade first
-    const candidate = getCandidateById(candidateId)
-    let baseA = { ...assignments }
-    let baseQ = [...vacancyQueue]
-    if (candidate.source === 'internal') {
-      const naturalPosId = candidateId as unknown as PositionId
-      if (baseQ.includes(naturalPosId)) {
-        baseQ = baseQ.filter(q => q !== naturalPosId)
-        baseA[naturalPosId] = candidateId
+    if (activeVacancyId && isOverVacancy(point) && fromPosId !== activeVacancyId) {
+      // Moving a placed card: reverse cascade first
+      const candidate = getCandidateById(candidateId)
+      let baseA = { ...assignments }
+      let baseQ = [...vacancyQueue]
+      if (candidate.source === 'internal') {
+        const naturalPosId = candidateId as unknown as PositionId
+        if (baseQ.includes(naturalPosId)) {
+          baseQ = baseQ.filter(q => q !== naturalPosId)
+          baseA[naturalPosId] = candidateId
+        }
+      }
+      applyConfirmedDrop(candidateId, activeVacancyId, fromPosId, baseA, baseQ.filter(q => q !== activeVacancyId))
+      return true
+    }
+    // When allFilled: drag onto another slot = swap
+    if (allFilled) {
+      const targetPosId = getPosIdAtPoint(point)
+      if (targetPosId && targetPosId !== fromPosId && assignments[targetPosId]) {
+        handleSwapPositions(fromPosId, targetPosId)
+        return true
       }
     }
-    applyConfirmedDrop(candidateId, activeVacancyId, fromPosId, baseA, baseQ.filter(q => q !== activeVacancyId))
-    return true
+    return false
   }
 
   return (
     <NameMapCtx.Provider value={state.nameMap}>
-    <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden bg-[#f4f7fb]">
+    <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden bg-[#e8edf5]">
 
       <div className="flex flex-col flex-1 min-h-0 relative">
 
@@ -2265,17 +2368,89 @@ export function ExploreScreen() {
             onDragEnd={() => setActiveDragId(null)}
             onUnplace={handleUnplace}
             onMovePlaced={handleMovePlaced}
-            onSelect={setSelectedCandidateId}
+            onSelect={handleSelect}
+            onSelectVacant={(posId) => { setSelectedVacantPosId(posId); setSelectedCandidateId(null) }}
             onExplore={() => setCanvasExplored(true)}
             selectedCandidateId={selectedCandidateId}
-            initialZoom={0.78}
+            initialZoom={0.95}
             currentDay={currentDay}
             vacancyOpenedAt={vacancyOpenedAt}
           />
         </div>
+        {/* First drop hint callout */}
+        <AnimatePresence>
+          {showFirstDropHint && (
+            <motion.div
+              key="first-drop-hint"
+              initial={{ opacity: 0, y: -10, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ type: 'spring', damping: 24, stiffness: 280 }}
+              className="absolute top-12 left-3 right-3 z-20 pointer-events-none overflow-hidden rounded-2xl"
+              style={{
+                background: 'rgba(15,23,42,0.84)',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              }}
+            >
+              <div className="flex items-start gap-2.5 px-3.5 pt-2.5 pb-2">
+                <span className="text-base leading-none flex-shrink-0 mt-0.5">⏱️</span>
+                <p className="text-white text-[11px] leading-snug font-medium">
+                  Posisi terisi! Keputusan dan kecepatan kamu mengisi posisi sama-sama dihitung di akhir.
+                </p>
+              </div>
+              <div className="h-[3px] w-full" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: 'rgba(255,255,255,0.55)', transformOrigin: 'left' }}
+                  initial={{ scaleX: 1 }}
+                  animate={{ scaleX: 0 }}
+                  transition={{ duration: 5, ease: 'linear' }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* All-filled hint callout — top */}
+        <AnimatePresence>
+          {showAllFilledHint && (
+            <motion.div
+              key="all-filled-hint"
+              initial={{ opacity: 0, y: -10, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ type: 'spring', damping: 24, stiffness: 280 }}
+              className="absolute top-12 left-3 right-3 z-20 pointer-events-none overflow-hidden rounded-2xl"
+              style={{
+                background: 'rgba(15,23,42,0.84)',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              }}
+            >
+              <div className="flex items-start gap-2.5 px-3.5 pt-2.5 pb-2">
+                <span className="text-base leading-none flex-shrink-0 mt-0.5">🎉</span>
+                <p className="text-white text-[11px] leading-snug font-medium">
+                  Seluruh posisi sudah terisi! Tap karyawan untuk cek kecocokan posisinya, atau geser untuk atur ulang.
+                </p>
+              </div>
+              {/* Progress bar */}
+              <div className="h-[3px] w-full" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: 'rgba(255,255,255,0.55)', transformOrigin: 'left' }}
+                  initial={{ scaleX: 1 }}
+                  animate={{ scaleX: 0 }}
+                  transition={{ duration: 5, ease: 'linear' }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <PortraitBottomPanel
           assignments={assignments}
-          activeVacancyId={activeVacancyId}
+          activeVacancyId={selectedVacantPosId ?? activeVacancyId}
           allFilled={allFilled}
           onExternalDrop={handleDrop}
           onExternalDragMove={handleDragMove}
@@ -2287,8 +2462,9 @@ export function ExploreScreen() {
           activeDragId={activeDragId}
           onDragStart={(id) => setActiveDragId(id)}
           onDragEnd={() => setActiveDragId(null)}
-          onSelect={setSelectedCandidateId}
+          onSelect={handleSelect}
           selectedCandidateId={selectedCandidateId}
+          inspectedPosId={inspectedPosId}
           vacancyQueue={vacancyQueue}
           currentDay={currentDay}
           panelHeight={panelHeight}

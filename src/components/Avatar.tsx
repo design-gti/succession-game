@@ -48,8 +48,8 @@ export function Avatar({ id, name, size = 'md', className = '', ringColor }: Pro
         borderRadius: '50%',
         position: 'relative',
         flexShrink: 0,
-        // Soft floating shadow
-        boxShadow: `0 6px 20px ${glowColor}, 0 2px 6px ${glow2}`,
+        // Soft floating shadow — strengthened for contrast on darker canvas
+        boxShadow: `0 8px 24px ${glowColor}, 0 3px 10px ${glow2}, 0 1px 3px rgba(0,0,0,0.10)`,
       }}
     >
       {/* ── Inner bubble: clips photo + all glass layers ── */}
