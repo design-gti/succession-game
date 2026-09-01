@@ -7,10 +7,13 @@ export interface Assessment {
 }
 
 export type Readiness = 'now' | '6mo' | '1yr' | '2yr'
+export type Gender = 'male' | 'female'
+export type NameMap = Record<string, string>
 
 export interface Candidate {
   id: CandidateId
-  name: string
+  name: string          // canonical fallback; use nameMap for display
+  gender: Gender
   currentRole: string
   source: 'internal' | 'external'
   tenureInCompany: string
@@ -22,6 +25,47 @@ export interface Candidate {
   naturalFit?: number   // fit in their own natural role (internal only)
   fitMessage: string
   readiness: Readiness  // readiness to take the Sales Manager vacancy now
+}
+
+// ─── Name pools ───────────────────────────────────────────────────────────────
+
+const MALE_NAMES = [
+  'Andi', 'Bagas', 'Doni', 'Eko', 'Fariz',
+  'Galih', 'Hendra', 'Ilham', 'Joko', 'Kevin',
+  'Lukman', 'Miko', 'Nando', 'Omar', 'Prasetyo',
+  'Rizal', 'Sigit', 'Taufik', 'Wahyu', 'Yudi',
+]
+
+const FEMALE_NAMES = [
+  'Ayu', 'Citra', 'Desi', 'Fitri', 'Indah',
+  'Kirana', 'Lestari', 'Melisa', 'Nita', 'Putri',
+  'Ratna', 'Rina', 'Sari', 'Tiara', 'Wulan',
+]
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// reza = org-only node (commercial director), not a CandidateId but needs a name
+const REZA_ID = 'reza'
+
+export function generateNameMap(): NameMap {
+  const maleIds = [REZA_ID, ...CANDIDATES.filter(c => c.gender === 'male').map(c => c.id)]
+  const femaleIds = CANDIDATES.filter(c => c.gender === 'female').map(c => c.id)
+
+  const malePool = shuffle(MALE_NAMES)
+  const femalePool = shuffle(FEMALE_NAMES)
+
+  const map: NameMap = {}
+  maleIds.forEach((id, i) => { map[id] = malePool[i % malePool.length] })
+  femaleIds.forEach((id, i) => { map[id] = femalePool[i % femalePool.length] })
+
+  return map
 }
 
 export interface OrgNode {
@@ -64,6 +108,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'andi',
     name: 'Andi Pratama',
+    gender: 'male' as Gender,
     currentRole: 'Senior Account Executive',
     source: 'internal',
     tenureInCompany: '3 years in company',
@@ -83,6 +128,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'rani',
     name: 'Rani',
+    gender: 'female' as Gender,
     currentRole: 'Account Executive',
     source: 'internal',
     tenureInCompany: '2 years in company',
@@ -102,6 +148,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'maya',
     name: 'Maya',
+    gender: 'female' as Gender,
     currentRole: 'Customer Success Manager',
     source: 'internal',
     tenureInCompany: '4 years in company',
@@ -121,6 +168,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'fajar',
     name: 'Fajar',
+    gender: 'male' as Gender,
     currentRole: 'Business Development Executive',
     source: 'internal',
     tenureInCompany: '2 years in company',
@@ -140,6 +188,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'dimas',
     name: 'Dimas',
+    gender: 'male' as Gender,
     currentRole: 'Marketing Manager',
     source: 'internal',
     tenureInCompany: '4 years in company',
@@ -159,6 +208,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'bintang',
     name: 'Bintang',
+    gender: 'male' as Gender,
     currentRole: 'CS Representative',
     source: 'internal',
     tenureInCompany: '1.5 years in company',
@@ -178,6 +228,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'sari',
     name: 'Sari',
+    gender: 'female' as Gender,
     currentRole: 'CS Specialist',
     source: 'internal',
     tenureInCompany: '2 years in company',
@@ -197,6 +248,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'rizky',
     name: 'Rizky',
+    gender: 'male' as Gender,
     currentRole: 'Marketing Specialist',
     source: 'internal',
     tenureInCompany: '2 years in company',
@@ -216,6 +268,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'putri',
     name: 'Putri',
+    gender: 'female' as Gender,
     currentRole: 'Content Creator',
     source: 'internal',
     tenureInCompany: '1 year in company',
@@ -235,6 +288,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'dewi',
     name: 'Dewi Santika',
+    gender: 'female' as Gender,
     currentRole: 'Regional Sales Lead',
     source: 'external',
     tenureInCompany: '',
@@ -253,6 +307,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'aryo',
     name: 'Aryo Baskara',
+    gender: 'male' as Gender,
     currentRole: 'Senior Sales Manager',
     source: 'external',
     tenureInCompany: '',
@@ -271,6 +326,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'liana',
     name: 'Liana Mochtar',
+    gender: 'female' as Gender,
     currentRole: 'Account Director',
     source: 'external',
     tenureInCompany: '',
@@ -289,6 +345,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'nadia',
     name: 'Nadia Putri',
+    gender: 'female' as Gender,
     currentRole: 'Sales Supervisor',
     source: 'external',
     tenureInCompany: '',
@@ -307,6 +364,7 @@ export const CANDIDATES: Candidate[] = [
   {
     id: 'kevin',
     name: 'Kevin Tan',
+    gender: 'male' as Gender,
     currentRole: 'Business Development Manager',
     source: 'external',
     tenureInCompany: '',

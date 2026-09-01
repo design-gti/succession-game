@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useContext, createContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
@@ -8,6 +8,13 @@ import { getCandidateById, EXTERNAL_CANDIDATES, type Candidate, type Readiness, 
 import { fitColor } from '../game/scoring'
 import type { CandidateId, PlacementEntry, TimeFillData } from '../game/types'
 import { logEvent } from '../lib/api'
+
+// ─── Name map context ─────────────────────────────────────────────────────────
+const NameMapCtx = createContext<Record<string, string>>({})
+function useDisplayName(id: string, fallback: string): string {
+  const map = useContext(NameMapCtx)
+  return map[id] || fallback
+}
 
 // ─── Position definitions ─────────────────────────────────────────────────────
 
@@ -507,12 +514,13 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
   const cardRef = useRef<HTMLDivElement>(null)
   const dragOrigin = useRef<{ x: number; y: number } | null>(null)
   const c = getCandidateById(id)
+  const displayName = useDisplayName(id, c.name)
   const avatarPx = NODE_SZ_PX[nodeSize]
 
   const slotFit = getSlotFit(posId, id)
 
   if (placed) {
-    return <OrgCircle name={c.name} role={c.currentRole} candidateId={id} posId={posId} nodeSize={nodeSize} />
+    return <OrgCircle name={displayName} role={c.currentRole} candidateId={id} posId={posId} nodeSize={nodeSize} />
   }
 
   return (
@@ -557,7 +565,7 @@ function DraggableSlot({ id, posId, onDrop, onDragMove, onDragStart, onDragEnd, 
       className={`relative cursor-grab active:cursor-grabbing select-none ${isDragging ? 'bubble-dragging' : ''}`}
       style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto' }}
     >
-      <OrgCircle name={c.name} role={c.currentRole} candidateId={id} posId={posId} nodeSize={nodeSize} isActive={isActive} softDimmed={softDimmed} />
+      <OrgCircle name={displayName} role={c.currentRole} candidateId={id} posId={posId} nodeSize={nodeSize} isActive={isActive} softDimmed={softDimmed} />
       <AnimatePresence>
         {isTargeted && !isDragging && (
           <motion.div
@@ -592,6 +600,7 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
   softDimmed?: boolean
 }) {
   const c = getCandidateById(id)
+  const displayName = useDisplayName(id, c.name)
   const realFit = getSlotFit(posId, id)
   const [displayFit, setDisplayFit] = useState(0)
   const [showPop, setShowPop] = useState(true)
@@ -671,7 +680,7 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
       )}
       <OrgCircle
         filled
-        name={c.name}
+        name={displayName}
         role={c.currentRole}
         candidateId={id}
         posId={posId}
@@ -711,10 +720,11 @@ function GhostNode({ name, role }: { name: string; role: string }) {
 }
 
 function BossNode() {
+  const name = useDisplayName('reza', 'Reza')
   return (
     <div className="flex flex-col items-center gap-[3px] opacity-40 flex-shrink-0">
-      <Avatar id="reza" name="Reza Santoso" size="md" />
-      <p className="text-[#0f172a] font-bold text-[8px] leading-none">Reza</p>
+      <Avatar id="reza" name={name} size="md" />
+      <p className="text-[#0f172a] font-bold text-[8px] leading-none">{name}</p>
       <p className="text-slate-400 text-[6.5px] leading-none">Commercial Dir</p>
     </div>
   )
@@ -1035,6 +1045,7 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
   const [isDragging, setIsDragging] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const dragOrigin = useRef<{ x: number; y: number } | null>(null)
+  const displayName = useDisplayName(candidate.id, candidate.name)
 
   useEffect(() => {
     if (!alreadyPlaced) setPlaced(false)
@@ -1044,12 +1055,12 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
     return (
       <div onClick={() => onSelect?.()} className="flex flex-col items-center gap-1 opacity-35 select-none flex-shrink-0 cursor-pointer">
         <div className="relative">
-          <Avatar id={candidate.id} name={candidate.name} size="md" />
+          <Avatar id={candidate.id} name={displayName} size="md" />
           <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center border-[1.5px] border-white shadow-sm">
             <span className="text-white text-[7px] font-black leading-none">✓</span>
           </div>
         </div>
-        <p className="text-[#0f172a] font-bold text-[8px] leading-none">{candidate.name.split(' ')[0]}</p>
+        <p className="text-[#0f172a] font-bold text-[8px] leading-none">{displayName.split(' ')[0]}</p>
       </div>
     )
   }
@@ -1087,11 +1098,11 @@ function ExternalCandidateSlot({ candidate, alreadyPlaced, onDrop, onDragMove, o
     >
       <div className="relative">
         <ActiveBubble isActive={!!isActive}>
-          <Avatar id={candidate.id} name={candidate.name} size="md" ringColor="#f59e0b" />
+          <Avatar id={candidate.id} name={displayName} size="md" ringColor="#f59e0b" />
         </ActiveBubble>
       </div>
       <p className="text-[#0f172a] font-bold text-[8px] leading-none text-center">
-        {candidate.name.split(' ')[0]}
+        {displayName.split(' ')[0]}
       </p>
       <p className="text-slate-400 text-[6.5px] leading-none text-center truncate max-w-[56px]">
         {candidate.currentRole.split(' ').slice(0, 2).join(' ')}
@@ -1110,6 +1121,7 @@ function CandidateSheet({
   onClose: () => void
 }) {
   const c = getCandidateById(candidateId)
+  const displayName = useDisplayName(candidateId, c.name)
   return (
     <>
       {/* Backdrop */}
@@ -1135,7 +1147,7 @@ function CandidateSheet({
           <div className="flex items-center gap-3 mb-3">
             <FitRingWithLabel fit={c.roleFit} size={44} />
             <div className="min-w-0 flex-1">
-              <p className="text-[#0f172a] font-bold text-sm leading-tight truncate">{c.name}</p>
+              <p className="text-[#0f172a] font-bold text-sm leading-tight truncate">{displayName}</p>
               <p className="text-slate-400 text-xs mt-0.5 truncate">{c.currentRole}</p>
             </div>
           </div>
@@ -1272,6 +1284,7 @@ function PortraitBottomPanel({
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
   const vacantPos = activeVacancyId ? POSITIONS.find(p => p.id === activeVacancyId)! : null
   const selectedCandidate = selectedCandidateId ? getCandidateById(selectedCandidateId) : null
+  const selectedDisplayName = useDisplayName(selectedCandidateId ?? '', selectedCandidate?.name ?? '')
   const remaining = vacancyQueue.length
 
   // Determine content mode
@@ -1422,10 +1435,10 @@ function PortraitBottomPanel({
                   <span className="flex items-center gap-1">
                     <span className="inline-block flex-shrink-0 rounded-full overflow-hidden" style={{ width: 16, height: 16 }}>
                       <div style={{ width: 24, height: 24, transform: 'scale(0.667)', transformOrigin: '0 0' }}>
-                        <Avatar id={selectedCandidateId!} name={selectedCandidate.name} size="xs" />
+                        <Avatar id={selectedCandidateId!} name={selectedDisplayName} size="xs" />
                       </div>
                     </span>
-                    <span className="text-slate-500 font-semibold">{selectedCandidate.name.split(' ')[0]}</span>
+                    <span className="text-slate-500 font-semibold">{selectedDisplayName.split(' ')[0]}</span>
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="inline-block flex-shrink-0 rounded-full" style={{ width: 1.5, height: 8, background: 'rgba(100,116,139,0.55)' }} />
@@ -2198,6 +2211,7 @@ export function ExploreScreen() {
   }
 
   return (
+    <NameMapCtx.Provider value={state.nameMap}>
     <div ref={walkthroughContainerRef} className="relative flex flex-col h-full overflow-hidden bg-[#f4f7fb]">
 
       <div className="flex flex-col flex-1 min-h-0 relative">
@@ -2298,5 +2312,6 @@ export function ExploreScreen() {
       )}
 
     </div>
+    </NameMapCtx.Provider>
   )
 }

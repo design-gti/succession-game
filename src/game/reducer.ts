@@ -1,5 +1,6 @@
 import type { GameState, GameAction } from './types'
 import { computeScore } from './scoring'
+import { generateNameMap } from '../data/scenario'
 
 function makeSessionId(): string {
   return crypto.randomUUID()
@@ -14,6 +15,7 @@ export const initialState: GameState = {
   finalPickId: null,
   score: null,
   startedAt: null,
+  nameMap: generateNameMap(),
 }
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -58,7 +60,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'RESTART': {
-      return { ...initialState, sessionId: makeSessionId() }
+      return { ...initialState, sessionId: makeSessionId(), nameMap: generateNameMap() }
     }
 
     default:

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
@@ -75,6 +76,30 @@ export function ResultScreen() {
   const { state, actions } = useGame()
   const score = state.score!
   const finalPick = state.finalPickId ? getCandidateById(state.finalPickId) : null
+  const finalPickDisplayName = state.finalPickId ? (state.nameMap[state.finalPickId] || finalPick?.name || '') : ''
+
+  useEffect(() => {
+    const ttf = score.timeFill
+    fetch('/api/save-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId:    state.sessionId,
+        playerName:   state.playerName,
+        playerEmail:  state.playerEmail,
+        playerCompany: state.playerCompany,
+        startedAt:    state.startedAt,
+        finalPickId:  state.finalPickId,
+        overallFit:   score.overallFit,
+        hiringSpeed:  score.hiringSpeed,
+        total:        score.total,
+        persona:      score.persona,
+        avgTTF:       ttf.avgTTF,
+        currentDay:   ttf.currentDay,
+        placements:   ttf.placements,
+      }),
+    }).catch(err => console.error('save-session failed:', err))
+  }, [])
   const persona = PERSONA_CONFIG[score.persona] ?? PERSONA_CONFIG['TALENT EXPLORER']
   const ttf = score.timeFill ?? null
 
@@ -166,11 +191,11 @@ export function ResultScreen() {
             transition={{ delay: 0.7 }}
             className="w-full flex items-center gap-3 bg-white border border-slate-200 rounded-2xl p-3"
           >
-            <Avatar id={state.finalPickId!} name={finalPick.name} size="sm"
+            <Avatar id={state.finalPickId!} name={finalPickDisplayName} size="sm"
               ringColor={finalPick.source === 'external' ? '#f59e0b' : undefined} />
             <div className="text-left flex-1 min-w-0">
               <p className="text-slate-400 text-[8px] uppercase tracking-wider">Sales Manager</p>
-              <p className="text-[#0f172a] font-bold text-sm leading-tight">{finalPick.name}</p>
+              <p className="text-[#0f172a] font-bold text-sm leading-tight">{finalPickDisplayName}</p>
               <p className="text-[9px] text-slate-400">{finalPick.currentRole}</p>
             </div>
           </motion.div>

@@ -48,6 +48,7 @@ export interface GameState {
   finalPickId: CandidateId | null
   score: ScoreBreakdown | null
   startedAt: number | null
+  nameMap: Record<string, string>
 }
 
 export type GameAction =
