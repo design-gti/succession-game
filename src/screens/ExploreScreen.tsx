@@ -1448,15 +1448,15 @@ function PortraitBottomPanel({
               <p className="text-[8.5px] text-slate-600 italic leading-snug">{vacantPos.brief}</p>
               <div data-tutorial="aspects">
                 <NeutralBars standard={vacantPos.standard} />
-              </div>
-              <div className="flex items-center justify-between mt-0.5">
-                <p className="text-[8px] text-slate-400">Tap kandidat untuk membandingkan</p>
-                <button
-                  onClick={() => onAspectInfo?.()}
-                  className="text-[8px] text-brand font-semibold"
-                >
-                  Apa itu LEAD · DRIVE · INFL? →
-                </button>
+                <div className="flex items-center justify-between mt-0.5">
+                  <p className="text-[8px] text-slate-400">Tap kandidat untuk membandingkan</p>
+                  <button
+                    onClick={() => onAspectInfo?.()}
+                    className="text-[8px] text-brand font-semibold"
+                  >
+                    Apa itu LEAD · DRIVE · INFL? →
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -1493,13 +1493,13 @@ function PortraitBottomPanel({
               </div>
               <div data-tutorial="aspects">
                 <ComparisonBars standard={vacantPos.standard} assessment={selectedCandidate.assessment} />
+                <button
+                  onClick={() => onAspectInfo?.()}
+                  className="text-[8px] text-brand font-semibold self-end mt-0.5 block ml-auto"
+                >
+                  Apa itu LEAD · DRIVE · INFL? →
+                </button>
               </div>
-              <button
-                onClick={() => onAspectInfo?.()}
-                className="text-[8px] text-brand font-semibold self-end mt-0.5"
-              >
-                Apa itu LEAD · DRIVE · INFL? →
-              </button>
             </motion.div>
           )}
 
@@ -1979,8 +1979,7 @@ const WALK_STEPS = [
   { target: 'vacant',        pos: 'bottom' as const, text: 'Sales Manager resign. Kursi merah ini harus kamu isi!' },
   { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam. Tarik siapa pun di org chart, tap kartu untuk lihat profil.' },
   { target: 'external-pool', pos: 'top'    as const, text: 'Atau rekrut dari luar. Tidak meninggalkan lubang di tim, tapi cek readiness-nya.' },
-  { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis = level minimum yang dibutuhkan.' },
-  { target: 'aspects',       pos: 'top'    as const, text: 'Tiga aspek ini dari iProfile Kelola: Leadership (memimpin tim), Drive (mengejar target), Influencing (meyakinkan orang). Tap ⓘ untuk detail.' },
+  { target: 'aspects',       pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi — dinilai dari tiga aspek: Leadership, Drive, dan Influencing. Tap teks di bawah bar untuk detail.' },
   { target: 'calendar',      pos: 'bottom' as const, text: 'Ini jam organisasimu. Setiap hari ada biaya posisi kosong, makin cepat diisi makin kecil dampaknya ke bisnis.' },
 ]
 
