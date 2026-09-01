@@ -28,7 +28,7 @@ export function LeadCaptureScreen() {
      ${required && !val.trim() && error ? 'border-red-400' : 'border-slate-200'}`
 
   return (
-    <div className="flex flex-col h-full px-6 py-8 bg-[#f4f7fb]">
+    <div className="flex flex-col h-full px-6 py-8 bg-white">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

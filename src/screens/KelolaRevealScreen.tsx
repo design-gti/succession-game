@@ -214,7 +214,8 @@ export function KelolaRevealScreen() {
 
   if (isFinal) {
     return (
-      <div className="flex flex-col h-full overflow-y-auto bg-[#f4f7fb]" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex flex-col h-full overflow-y-auto bg-white" style={{ scrollbarWidth: 'none' }}>
+
         <div className="flex flex-col items-center px-6 pt-6 pb-8 gap-5 max-w-sm mx-auto w-full">
 
           {/* Badge */}
@@ -359,8 +360,8 @@ export function KelolaRevealScreen() {
               onClick={() => actions.finish()}
               className="w-full py-4 rounded-2xl font-black text-white text-[15px] tracking-wide flex items-center justify-center gap-2"
               style={{
-                background: 'linear-gradient(135deg, #1D6FF2, #06B6D4)',
-                boxShadow: '0 4px 20px rgba(29,111,242,0.35)',
+                background: 'linear-gradient(135deg, #1D6FF2 0%, #6366f1 100%)',
+                boxShadow: '0 8px 28px rgba(29,111,242,0.30)',
               }}
             >
               Lanjut ke Demo Kelola
@@ -380,7 +381,7 @@ export function KelolaRevealScreen() {
 
   return (
     <div
-      className="relative flex flex-col h-full items-center justify-center px-6 text-center overflow-hidden bg-[#f4f7fb]"
+      className="relative flex flex-col h-full items-center justify-center px-6 text-center overflow-hidden bg-white"
       onClick={() => { if (!isFinal) advance() }}
       onWheel={handleWheel}
       onTouchStart={e => { touchStartY.current = e.touches[0].clientY }}

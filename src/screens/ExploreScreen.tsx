@@ -1536,8 +1536,11 @@ function PortraitBottomPanel({
           disabled={!allFilled}
           className="flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-bold transition-all"
           style={{
-            background: allFilled ? '#1D6FF2' : '#e2e8f0',
+            background: allFilled
+              ? 'linear-gradient(135deg, #1D6FF2 0%, #6366f1 100%)'
+              : '#e2e8f0',
             color: allFilled ? 'white' : '#94a3b8',
+            boxShadow: allFilled ? '0 4px 14px rgba(29,111,242,0.28)' : 'none',
           }}
         >
           Review Organisasi →

@@ -30,16 +30,24 @@ body {
   color: #0f172a;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 #root {
   width: 100%;
-  max-width: 390px;
+  max-width: 430px;
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
   position: relative;
   flex-shrink: 0;
+}
+
+/* Tablet: full-width, same as mobile */
+@media (min-width: 768px) {
+  #root {
+    max-width: 100%;
+  }
 }
 
 * {
