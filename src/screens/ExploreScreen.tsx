@@ -1933,7 +1933,6 @@ function AspectInfoModal({ onClose }: { onClose: () => void }) {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand mb-0.5">iProfile · Kelola</p>
             <h3 className="text-[#0f172a] text-base font-black leading-snug">3 Aspek Kompetensi</h3>
           </div>
           <button
