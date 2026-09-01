@@ -98,7 +98,9 @@ export function ResultScreen() {
         currentDay:   ttf.currentDay,
         placements:   ttf.placements,
       }),
-    }).catch(err => console.error('save-session failed:', err))
+    })
+      .then(res => res.json().then(body => console.log('[save-session]', res.status, body)))
+      .catch(err => console.error('[save-session] fetch failed:', err))
   }, [])
   const persona = PERSONA_CONFIG[score.persona] ?? PERSONA_CONFIG['TALENT EXPLORER']
   const ttf = score.timeFill ?? null
