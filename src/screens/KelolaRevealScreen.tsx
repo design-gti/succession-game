@@ -214,9 +214,28 @@ export function KelolaRevealScreen() {
 
   if (isFinal) {
     return (
-      <div className="flex flex-col h-full overflow-y-auto bg-white" style={{ scrollbarWidth: 'none' }}>
+      <div
+        className="flex flex-col h-full overflow-y-auto bg-white"
+        style={{ scrollbarWidth: 'none' }}
+        onWheel={e => { if (e.deltaY < 0) goBack() }}
+        onTouchStart={e => { touchStartY.current = e.touches[0].clientY }}
+        onTouchEnd={e => {
+          const dy = touchStartY.current - e.changedTouches[0].clientY
+          if (dy < -40) goBack()
+        }}
+      >
 
         <div className="flex flex-col items-center px-6 pt-6 pb-8 gap-5 max-w-sm mx-auto w-full">
+
+          {/* Back */}
+          <div className="w-full">
+            <button
+              onClick={goBack}
+              className="flex items-center gap-1 text-slate-400 text-[11px] font-semibold"
+            >
+              ← Kembali
+            </button>
+          </div>
 
           {/* Badge */}
           <motion.div
