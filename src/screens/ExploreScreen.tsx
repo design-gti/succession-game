@@ -1287,7 +1287,7 @@ function PortraitBottomPanel({
   onExternalDrop, onExternalDragMove, onConfirm,
   activeDragId, onDragStart, onDragEnd, onSelect,
   selectedCandidateId, inspectedPosId = null, vacancyQueue, currentDay = 1,
-  panelHeight = null, onHeightChange, onHeightCommit,
+  panelHeight = null, onHeightChange, onHeightCommit, onAspectInfo,
 }: {
   assignments: Partial<Record<PositionId, CandidateId>>
   activeVacancyId: PositionId | null
@@ -1306,6 +1306,7 @@ function PortraitBottomPanel({
   panelHeight?: number | null
   onHeightChange?: (h: number) => void
   onHeightCommit?: (h: number, naturalH: number, workspaceH: number) => void
+  onAspectInfo?: () => void
 }) {
   const usedCandidateIds = new Set(Object.values(assignments).filter(Boolean))
   // Benchmark position: active vacancy while filling; inspected position after all filled
@@ -1445,8 +1446,18 @@ function PortraitBottomPanel({
             >
               <p className="text-[8px] text-slate-400 uppercase tracking-widest">Standar Peran</p>
               <p className="text-[8.5px] text-slate-600 italic leading-snug">{vacantPos.brief}</p>
-              <NeutralBars standard={vacantPos.standard} />
-              <p className="text-[8px] text-slate-400 text-center mt-0.5">Tap kandidat untuk membandingkan</p>
+              <div data-tutorial="aspects">
+                <NeutralBars standard={vacantPos.standard} />
+              </div>
+              <div className="flex items-center justify-between mt-0.5">
+                <p className="text-[8px] text-slate-400">Tap kandidat untuk membandingkan</p>
+                <button
+                  onClick={() => onAspectInfo?.()}
+                  className="text-[8px] text-brand font-semibold"
+                >
+                  Apa itu LEAD · DRIVE · INFL? →
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -1480,7 +1491,15 @@ function PortraitBottomPanel({
                   </span>
                 </div>
               </div>
-              <ComparisonBars standard={vacantPos.standard} assessment={selectedCandidate.assessment} />
+              <div data-tutorial="aspects">
+                <ComparisonBars standard={vacantPos.standard} assessment={selectedCandidate.assessment} />
+              </div>
+              <button
+                onClick={() => onAspectInfo?.()}
+                className="text-[8px] text-brand font-semibold self-end mt-0.5"
+              >
+                Apa itu LEAD · DRIVE · INFL? →
+              </button>
             </motion.div>
           )}
 
@@ -1866,12 +1885,103 @@ function GestureDemo({ step, containerRef }: {
 
 // ─── Walkthrough Overlay ──────────────────────────────────────────────────────
 
+// ─── Aspect Info Modal ────────────────────────────────────────────────────────
+
+const ASPECT_DESCRIPTIONS = [
+  {
+    key: 'leadership' as const,
+    label: 'Leadership',
+    short: 'LEAD',
+    desc: 'Kemampuan memimpin, mengarahkan tim, dan bertanggung jawab atas hasil orang lain. Kritis untuk peran manajerial.',
+  },
+  {
+    key: 'drive' as const,
+    label: 'Drive',
+    short: 'DRIVE',
+    desc: 'Orientasi hasil, inisiatif, dan motivasi mencapai target. Mengukur seberapa besar dorongan mengejar revenue.',
+  },
+  {
+    key: 'influence' as const,
+    label: 'Influencing',
+    short: 'INFL',
+    desc: 'Kemampuan mempengaruhi dan meyakinkan orang lain — klien, tim, stakeholder. Inti dari peran sales.',
+  },
+]
+
+function AspectInfoModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      className="absolute inset-0 z-50 flex items-end"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Sheet */}
+      <motion.div
+        className="relative w-full bg-white rounded-t-2xl px-5 pt-5 pb-8 z-10"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand mb-0.5">iProfile · Kelola</p>
+            <h3 className="text-[#0f172a] text-base font-black leading-snug">3 Aspek Kompetensi</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: 'rgba(100,116,139,0.10)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Aspect list */}
+        <div className="flex flex-col gap-3">
+          {ASPECT_DESCRIPTIONS.map(({ key, label, short, desc }) => {
+            const cfg = ASPECT_CONFIG[key]
+            return (
+              <div key={key} className="flex items-start gap-3 rounded-xl p-3" style={{ background: cfg.rowBg }}>
+                <div
+                  className="flex-shrink-0 flex items-center justify-center rounded-md mt-0.5"
+                  style={{ width: 28, height: 28, background: cfg.iconBg }}
+                >
+                  {cfg.icon}
+                </div>
+                <div>
+                  <p className="text-[11px] font-black" style={{ color: cfg.color }}>
+                    {label} <span className="opacity-50 font-semibold text-[9px] tracking-wider">({short})</span>
+                  </p>
+                  <p className="text-slate-500 text-[11px] leading-snug mt-0.5">{desc}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+      </motion.div>
+    </motion.div>
+  )
+}
+
 const WALK_STEPS = [
   { target: 'canvas',        pos: 'bottom' as const, text: 'Ini org chart perusahaanmu. Drag untuk jelajahi, pinch untuk zoom.' },
   { target: 'vacant',        pos: 'bottom' as const, text: 'Sales Manager resign. Kursi merah ini harus kamu isi!' },
   { target: 'internal-card', pos: 'bottom' as const, text: 'Kandidat bisa dari dalam. Tarik siapa pun di org chart, tap kartu untuk lihat profil.' },
   { target: 'external-pool', pos: 'top'    as const, text: 'Atau rekrut dari luar. Tidak meninggalkan lubang di tim, tapi cek readiness-nya.' },
   { target: 'needs-panel',   pos: 'top'    as const, text: 'Setiap posisi punya standar kompetensi. Garis = level minimum yang dibutuhkan.' },
+  { target: 'aspects',       pos: 'top'    as const, text: 'Tiga aspek ini dari iProfile Kelola: Leadership (memimpin tim), Drive (mengejar target), Influencing (meyakinkan orang). Tap ⓘ untuk detail.' },
   { target: 'calendar',      pos: 'bottom' as const, text: 'Ini jam organisasimu. Setiap hari ada biaya posisi kosong, makin cepat diisi makin kecil dampaknya ke bisnis.' },
 ]
 
@@ -2085,6 +2195,7 @@ export function ExploreScreen() {
   const [walkthroughDone, setWalkthroughDone] = useState(false)
   const [walkthroughStep, setWalkthroughStep] = useState(0)
   const walkthroughContainerRef = useRef<HTMLDivElement>(null)
+  const [showAspectInfo, setShowAspectInfo] = useState(false)
 
   // Simulated calendar: 1 day passes every 2 real minutes
   const [currentDay, setCurrentDay] = useState(1)
@@ -2477,10 +2588,11 @@ export function ExploreScreen() {
             const mid = (workspaceH + naturalH) / 2
             setPanelHeight(h < mid ? workspaceH : null)
           }}
+          onAspectInfo={() => setShowAspectInfo(true)}
         />
       </div>
 
-      {/* 5-step walkthrough — shown until dismissed */}
+      {/* Walkthrough */}
       {!walkthroughDone && (
         <WalkthroughOverlay
           step={walkthroughStep}
@@ -2489,6 +2601,13 @@ export function ExploreScreen() {
           containerRef={walkthroughContainerRef}
         />
       )}
+
+      {/* Aspect info modal */}
+      <AnimatePresence>
+        {showAspectInfo && (
+          <AspectInfoModal onClose={() => setShowAspectInfo(false)} />
+        )}
+      </AnimatePresence>
 
     </div>
     </NameMapCtx.Provider>
