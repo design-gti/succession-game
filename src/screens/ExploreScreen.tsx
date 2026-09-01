@@ -1028,8 +1028,8 @@ function OrgTree({
             <line
               key={i}
               x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke={isDragging ? 'rgba(148,163,184,0.55)' : 'rgba(148,163,184,0.35)'}
-              strokeWidth="1.5"
+              stroke={isDragging ? 'rgba(184,199,224,0.25)' : 'rgba(184,199,224,0.40)'}
+              strokeWidth="2"
               strokeLinecap="round"
             />
           ))}
