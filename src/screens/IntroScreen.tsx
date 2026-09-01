@@ -28,14 +28,14 @@ function IconClock({ size = 16, color = 'currentColor' }: { size?: number; color
 // ── Org node positions (mini org chart) ───────────────────────────────────────
 // Layout: 1 boss top, 3 mid row (left, center=vacancy, right), 3 bottom row
 const NODES = [
-  { id: 'boss',    x: 50,  y: 0,   color: '#1D6FF2', size: 36, isVacancy: false, isBoss: true },
-  { id: 'left',   x: 15,  y: 68,  color: '#7C3AED', size: 30, isVacancy: false, isBoss: false },
-  { id: 'center', x: 50,  y: 68,  color: '#ef4444', size: 30, isVacancy: true,  isBoss: false },
-  { id: 'right',  x: 85,  y: 68,  color: '#0891B2', size: 30, isVacancy: false, isBoss: false },
-  { id: 'bl',     x: 8,   y: 130, color: '#D97706', size: 22, isVacancy: false, isBoss: false },
-  { id: 'bm1',    x: 35,  y: 130, color: '#1D6FF2', size: 22, isVacancy: false, isBoss: false },
-  { id: 'bm2',    x: 58,  y: 130, color: '#7C3AED', size: 22, isVacancy: false, isBoss: false },
-  { id: 'br',     x: 85,  y: 130, color: '#0891B2', size: 22, isVacancy: false, isBoss: false },
+  { id: 'boss',    x: 50,  y: 0,   color: '#1D6FF2', size: 44, isVacancy: false, isBoss: true },
+  { id: 'left',   x: 15,  y: 82,  color: '#7C3AED', size: 36, isVacancy: false, isBoss: false },
+  { id: 'center', x: 50,  y: 82,  color: '#ef4444', size: 36, isVacancy: true,  isBoss: false },
+  { id: 'right',  x: 85,  y: 82,  color: '#0891B2', size: 36, isVacancy: false, isBoss: false },
+  { id: 'bl',     x: 8,   y: 156, color: '#D97706', size: 27, isVacancy: false, isBoss: false },
+  { id: 'bm1',    x: 35,  y: 156, color: '#1D6FF2', size: 27, isVacancy: false, isBoss: false },
+  { id: 'bm2',    x: 58,  y: 156, color: '#7C3AED', size: 27, isVacancy: false, isBoss: false },
+  { id: 'br',     x: 85,  y: 156, color: '#0891B2', size: 27, isVacancy: false, isBoss: false },
 ]
 
 // Edges as [fromId, toId]
@@ -50,7 +50,7 @@ function nodeCenter(n: typeof NODES[0]) {
 }
 
 function MiniOrgChart({ showVacancy, ripple }: { showVacancy: boolean; ripple: boolean }) {
-  const W = 200, H = 160
+  const W = 200, H = 186
 
   return (
     <div style={{ position: 'relative', width: W, height: H }}>

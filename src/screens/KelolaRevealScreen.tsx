@@ -117,7 +117,7 @@ const REVEALS = [
     inGame: '3 aspek di setiap kartu kandidat',
     module: 'iProfile',
     inKelola: 'Laporan asesmen lengkap yang bisa dibaca dalam sekali pandang.',
-    mockup: <MiniIProfile />,
+    mockup: <img src="/iprofile.gif" alt="iProfile" className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" />,
   },
 ]
 
@@ -300,14 +300,25 @@ export function KelolaRevealScreen() {
             className="w-full flex flex-col gap-2"
           >
             {[
-              { icon: '→', text: 'Jalan ke bagian kanan booth' },
-              { icon: '👋', text: 'Temui tim Talentlytica' },
-              { icon: '🔍', text: 'Lihat demo Kelola langsung' },
-            ].map(({ icon, text }, i) => (
+              {
+                text: 'Jalan ke bagian kanan booth',
+                svg: <><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></>,
+              },
+              {
+                text: 'Temui tim Talentlytica',
+                svg: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+              },
+              {
+                text: 'Lihat demo Kelola langsung',
+                svg: <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></>,
+              },
+            ].map(({ svg, text }, i) => (
               <div key={i} className="flex items-center gap-3 bg-white rounded-xl px-3 py-2.5 border border-slate-100">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-sm"
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ background: 'rgba(29,111,242,0.08)' }}>
-                  {icon}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D6FF2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {svg}
+                  </svg>
                 </div>
                 <p className="text-[#0f172a] text-[12px] font-semibold">{text}</p>
               </div>
