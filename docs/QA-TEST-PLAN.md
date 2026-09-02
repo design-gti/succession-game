@@ -80,7 +80,7 @@ Tidak ada tombol "main lagi". Untuk sesi baru, refresh halaman (state di-reset, 
 |---|---|
 | FR-01 | Intro menampilkan animasi resign lalu CTA. CTA tidak bisa ditekan sebelum animasi selesai. |
 | FR-02 | Lead capture wajib Nama dan No. HP. Perusahaan opsional. |
-| FR-03 | Validasi No. HP: setelah karakter non-digit dibuang, panjang 9–15 digit. Format `08…`, `+62…`, `62…`, dengan spasi atau strip, semuanya diterima. |
+| FR-03 | Input No. HP terdiri dari dua bagian: dropdown kode negara (default `+62` Indonesia) dan field nomor lokal. Validasi: setelah karakter non-digit dan leading `0` dibuang, panjang 6–13 digit. Nomor disimpan dalam format E.164 (contoh `+6281234567890`). |
 | FR-04 | Pesan error: "Nama dan nomor HP harus diisi." dan "Nomor HP tidak valid." Field yang kosong diberi border merah. |
 | FR-05 | Satu No. HP hanya bisa main sekali. Nomor yang sudah ada langsung diarahkan ke skor lama, bukan ditolak. |
 | FR-06 | Jika API cek nomor gagal, game tetap bisa dimainkan. |
@@ -140,17 +140,18 @@ Format: **ID · Judul** — Prasyarat → Langkah → Hasil yang diharapkan. Pri
 
 | ID | P | Judul | Langkah | Hasil diharapkan |
 |---|---|---|---|---|
-| TC-LC-01 | P0 | Submit lengkap, nomor baru | Isi Nama, Perusahaan, No. HP baru (contoh `0812 3456 7890`), tap "Mulai Game →" | Label berubah "Mengecek…" sebentar, lalu masuk layar gameplay |
+| TC-LC-01 | P0 | Submit lengkap, nomor baru | Dropdown default `+62`, field diisi `812 3456 7890`, tap "Mulai Game →" | Label berubah "Mengecek…" sebentar, lalu masuk layar gameplay |
 | TC-LC-02 | P0 | Nama kosong | Kosongkan Nama, isi No. HP, submit | Error "Nama dan nomor HP harus diisi.", border Nama merah, tetap di layar |
 | TC-LC-03 | P0 | No. HP kosong | Isi Nama, kosongkan No. HP, submit | Error yang sama, border No. HP merah |
-| TC-LC-04 | P1 | Nomor terlalu pendek | No. HP `0812345` (7 digit) | Error "Nomor HP tidak valid." |
-| TC-LC-05 | P1 | Nomor terlalu panjang | No. HP 16 digit | Error "Nomor HP tidak valid." |
-| TC-LC-06 | P1 | Format +62 diterima | No. HP `+62 812-3456-7890` | Lolos validasi, masuk game |
-| TC-LC-07 | P1 | Huruf di nomor | No. HP `08abc123456` | Digit yang tersisa dihitung. Jika < 9 digit, error "Nomor HP tidak valid." |
-| TC-LC-08 | P2 | Perusahaan opsional | Kosongkan Perusahaan, lainnya valid | Lolos, masuk game |
-| TC-LC-09 | P2 | Error hilang saat mengetik | Munculkan error, lalu ketik di field mana pun | Pesan error hilang |
-| TC-LC-10 | P2 | Keyboard numerik | Tap field No. HP di HP | Keyboard yang muncul bertipe angka/telepon |
-| TC-LC-11 | P1 | Double tap tombol | Tap "Mulai Game →" dua kali cepat | Hanya satu request, tidak dobel masuk atau error |
+| TC-LC-04 | P1 | Nomor terlalu pendek | Field `81234` (5 digit setelah strip) | Error "Nomor HP tidak valid." |
+| TC-LC-05 | P1 | Nomor terlalu panjang | Field 14 digit atau lebih | Error "Nomor HP tidak valid." |
+| TC-LC-06 | P1 | Ganti kode negara | Pilih `+65` (Singapore) dari dropdown, isi nomor lokal, submit | Disimpan sebagai `+65XXXXXXXX`. Dedup juga mencari format ini |
+| TC-LC-07 | P1 | Huruf di nomor | Field `8abc12345` | Digit yang tersisa dihitung setelah strip non-digit. Jika < 6, error |
+| TC-LC-08 | P2 | Nomor dengan leading 0 | Field `081234567890` | Leading `0` dibuang otomatis, tersimpan sebagai `+6281234567890` |
+| TC-LC-09 | P2 | Perusahaan opsional | Kosongkan Perusahaan, lainnya valid | Lolos, masuk game |
+| TC-LC-10 | P2 | Error hilang saat mengetik | Munculkan error, lalu ketik di field mana pun | Pesan error hilang |
+| TC-LC-11 | P2 | Keyboard numerik | Tap field No. HP di HP | Keyboard yang muncul bertipe angka/telepon |
+| TC-LC-12 | P1 | Double tap tombol | Tap "Mulai Game →" dua kali cepat | Hanya satu request, tidak dobel masuk atau error |
 
 ### 3.3 Dedup No. HP (sekali main)
 
@@ -159,7 +160,7 @@ Format: **ID · Judul** — Prasyarat → Langkah → Hasil yang diharapkan. Pri
 | TC-DD-01 | P0 | Nomor sudah main, ada skor | Nomor X sudah menyelesaikan game sampai Result | Refresh, isi nama apa pun + nomor X, submit | Langsung tampil layar Result dengan skor lama (total, persona sama seperti sesi pertama), tidak masuk gameplay |
 | TC-DD-02 | P0 | Lanjut dari skor lama | Lanjutan TC-DD-01 | Tap "Lihat Plot Twist" | Masuk Kelola Reveal normal sampai Finished |
 | TC-DD-03 | P0 | Skor lama tidak dobel tersimpan | Lanjutan TC-DD-01 | Cek tabel `sessions` dan `scores` untuk nomor X | Tetap satu baris per tabel, tidak bertambah |
-| TC-DD-04 | P1 | Nomor sama, format beda | Nomor X tersimpan sebagai `081234567890` | Isi `0812-3456-7890` | **Catatan:** saat ini dianggap nomor berbeda karena pencocokan string mentah. Laporkan sebagai temuan jika dianggap harus sama |
+| TC-DD-04 | P1 | Nomor sama, format beda | Nomor X tersimpan sebagai `+6281234567890` | Isi `0812-3456-7890` (dengan dropdown `+62`) | Keduanya dinormalisasi ke E.164 yang sama → dianggap sama, langsung ke Result |
 | TC-DD-05 | P1 | Nomor sama, spasi di ujung | Nomor X tersimpan | Isi ` 081234567890 ` dengan spasi di depan/belakang | Dianggap sama (trim), langsung ke Result |
 | TC-DD-06 | P1 | Nomor ada tanpa skor | Baris di `sessions` tanpa pasangan di `scores` (buat manual di DB) | Submit nomor tersebut | Langsung ke Kelola Reveal beat 0, bukan layar blank |
 | TC-DD-07 | P0 | Backend mati | Blokir request ke `/api/check-email` di DevTools atau matikan jaringan setelah halaman termuat | Submit nomor yang sudah ada | Game tetap masuk gameplay (fail-open), tidak ada layar blank atau error |
@@ -251,10 +252,11 @@ Format: **ID · Judul** — Prasyarat → Langkah → Hasil yang diharapkan. Pri
 
 | Kebutuhan | Nilai contoh |
 |---|---|
-| Nomor baru (ganti setiap run) | `0812 0000 0001`, `0812 0000 0002`, … |
+| Nomor baru (ganti setiap run) | Dropdown `+62`, field `812 0000 0001` / `812 0000 0002`, … |
 | Nomor sudah main | Gunakan nomor dari run sebelumnya di device yang sama |
-| Nomor tidak valid | `0812345`, `1234567890123456`, `abcdefghij` |
-| Format alternatif valid | `+62 812-0000-0003`, `62 812 0000 0004` |
+| Nomor tidak valid | Field `81234` (< 6 digit), field 14 digit lebih, `abcdefghij` |
+| Format alternatif (harus dedup sama) | `0812-0000-0001` dan `812 0000 0001` dengan dropdown `+62` — keduanya → `+6281200000001` |
+| Nomor negara lain | Dropdown `+65`, field `8123 4567` → tersimpan `+6581234567` |
 
 Untuk memverifikasi DB, gunakan Supabase dashboard tabel `sessions`, `scores`, dan `leads`. Kolom kunci: `player_phone` (sessions), `phone` (leads).
 
@@ -262,11 +264,12 @@ Untuk memverifikasi DB, gunakan Supabase dashboard tabel `sessions`, `scores`, d
 
 ## 5. Temuan yang sudah diketahui (tidak perlu dilaporkan ulang)
 
-1. Pencocokan nomor HP memakai string mentah setelah trim. `0812-3456-7890` dan `081234567890` dianggap dua nomor berbeda. Perlu normalisasi digit jika ingin ketat.
+1. ~~Pencocokan nomor HP memakai string mentah~~ — **Resolved.** Semua nomor dinormalisasi ke E.164 (`+62…`) sebelum disimpan dan dicek. Format `08…`, `8…`, `+62…`, dengan spasi/strip, semuanya menghasilkan string yang sama.
 2. Endpoint dedup masih bernama `/api/check-email` walau isinya nomor HP. Fungsional, hanya penamaan.
 3. Kolom `player_email` dan `email` di DB masih ada, sengaja dibiarkan nullable sementara.
 4. Tidak ada tombol "main lagi". Reset hanya lewat refresh.
 5. Dev lokal tanpa env Supabase: `save-session` mengembalikan 404 di console. Tidak terjadi di production.
+6. Nomor dari negara lain (bukan `+62`) disimpan apa adanya sesuai kode negara yang dipilih di dropdown. Dedup antar negara tidak dikecualikan — jika nomor `+6512345678` (SG) sudah main, nomor yang sama dengan dropdown SG akan terdedup dengan benar.
 
 ---
 
