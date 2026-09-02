@@ -273,6 +273,55 @@ Untuk memverifikasi DB, gunakan Supabase dashboard tabel `sessions`, `scores`, d
 
 ---
 
+## 5b. Negative Flow & Edge Cases
+
+Skenario di mana pengguna melakukan sesuatu yang tidak diharapkan atau koneksi terganggu di tengah jalan. Semua kasus ini harus diselesaikan tanpa layar blank, crash, atau data rusak di DB.
+
+### 5b.1 Interupsi sesi
+
+| ID | P | Judul | Langkah | Hasil diharapkan |
+|---|---|---|---|---|
+| TC-NF-01 | P0 | Refresh di Lead Capture | Isi form sebagian, refresh | Kembali ke Intro. Tidak ada baris tersimpan di DB |
+| TC-NF-02 | P0 | Refresh di tengah gameplay | Drag beberapa kandidat, refresh | Kembali ke Intro. State hilang, tidak ada sesi orphan di `sessions` |
+| TC-NF-03 | P1 | Refresh saat animasi Result | Refresh saat ring skor masih berputar | Kembali ke Intro. Cek `sessions` — tidak ada duplikat (session ID lama belum tersimpan) |
+| TC-NF-04 | P1 | Refresh setelah Result tampil penuh | Tunggu skor muncul sepenuhnya, refresh | Kembali ke Intro. Baris di `sessions` dan `scores` sudah tersimpan sebelum refresh, tidak bertambah |
+| TC-NF-05 | P1 | Browser back button | Tekan tombol back di tiap layar (Intro, LeadCapture, Exploring, Result, Kelola Reveal) | App tidak crash. Karena SPA tanpa routing, back kemungkinan keluar dari app — catat perilaku aktual per layar |
+| TC-NF-06 | P2 | Pindah tab lalu kembali | Di layar Exploring, pindah ke tab lain ±30 detik, kembali | Kalender tetap berjalan (tidak freeze), kandidat tidak hilang dari posisi |
+| TC-NF-07 | P2 | Pindah tab lalu kembali saat animasi | Pindah tab saat animasi intro berjalan | Animasi selesai normal setelah kembali, CTA dapat ditekan |
+
+### 5b.2 Input ekstrem
+
+| ID | P | Judul | Langkah | Hasil diharapkan |
+|---|---|---|---|---|
+| TC-NF-08 | P1 | Nama hanya spasi | Nama `   ` (spasi), No. HP valid, submit | Error "Nama dan nomor HP harus diisi." — trim() menghapus spasi |
+| TC-NF-09 | P1 | Nomor hanya simbol | Field `---` atau `+++ ` | Setelah strip non-digit, panjang 0 → error "Nomor HP tidak valid." |
+| TC-NF-10 | P1 | Nomor hanya nol | Field `0000000000` | Strip leading `0` → `000000000` (9 digit). Lolos validasi panjang, tersimpan sebagai `+62000000000`. Catat sebagai accepted edge case |
+| TC-NF-11 | P1 | Nama sangat panjang | Nama 200+ karakter | Disimpan apa adanya atau terpotong oleh DB. Tidak ada crash. Cek tampilan di Result dan Kelola Reveal apakah overflow |
+| TC-NF-12 | P2 | Emoji di nama | Nama `Andi 😊🔥` | Tersimpan dan ditampilkan dengan benar di Result |
+| TC-NF-13 | P2 | Copy-paste nomor dengan format aneh | Paste `+62 (812) 345-6789` | Digit diekstrak, lolos validasi, tersimpan `+6281234567890` |
+
+### 5b.3 Interaksi cepat / race condition
+
+| ID | P | Judul | Langkah | Hasil diharapkan |
+|---|---|---|---|---|
+| TC-NF-14 | P1 | Tap CTA intro sebelum animasi, lalu tepat saat selesai | Tap sebelum 2 detik tidak berhasil, tap tepat di batas | Berpindah ke Lead Capture satu kali, tidak dua kali |
+| TC-NF-15 | P1 | Drag lalu langsung tap Review | Isi kursi terakhir, langsung tap "Review Organisasi →" sebelum UI update | Skor dihitung satu kali, tidak masuk Result dua kali |
+| TC-NF-16 | P1 | Tap "Mulai Game →" saat loading | Tap tombol berkali-kali saat label "Mengecek…" | Hanya satu request `/api/check-email` yang dikirim. Tidak ada duplikat call |
+| TC-NF-17 | P2 | Swipe cepat di Kelola Reveal | Swipe berulang cepat (5x dalam 1 detik) | Beat tidak melompat lebih dari satu per gesture. Throttle 600ms aktif |
+| TC-NF-18 | P2 | Tap Skip + tap Lanjut bersamaan | Tap "Skip →" dan area layar hampir bersamaan | Hanya satu transisi, tidak ada beat yang di-skip dua kali |
+
+### 5b.4 Konten dan layout ekstrem
+
+| ID | P | Judul | Langkah | Hasil diharapkan |
+|---|---|---|---|---|
+| TC-NF-19 | P1 | Zoom browser | Set browser zoom 150% di desktop | Tidak ada overflow horizontal, layout tetap terbaca |
+| TC-NF-20 | P1 | Pinch zoom ekstrem di canvas | Pinch out canvas sampai org chart sangat besar | Canvas bergeser, tidak keluar dari area yang dapat dijangkau kembali |
+| TC-NF-21 | P2 | Dark mode sistem | Aktifkan dark mode di HP | App tetap tampil putih (light mode hardcoded). Tidak ada teks putih-di-putih atau hitam-di-hitam |
+| TC-NF-22 | P2 | Font tidak termuat (Google Fonts diblokir) | Blokir `fonts.googleapis.com` di DevTools → Network → Block | Fallback ke system font, tidak ada layout yang hancur atau teks hilang |
+| TC-NF-23 | P2 | GIF iProfile tidak termuat | Blokir `/iprofile.gif` di DevTools | Beat 3 Kelola Reveal menampilkan area kosong atau alt text "iProfile", tidak crash |
+
+---
+
 ## 6. Kriteria lulus
 
 - Semua P0 lulus tanpa pengecualian.
