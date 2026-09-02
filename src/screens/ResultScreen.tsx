@@ -236,7 +236,7 @@ export function ResultScreen() {
       body: JSON.stringify({
         sessionId:    state.sessionId,
         playerName:   state.playerName,
-        playerEmail:  state.playerEmail,
+        playerPhone:  state.playerPhone,
         playerCompany: state.playerCompany,
         startedAt:    state.startedAt,
         finalPickId:  state.finalPickId,

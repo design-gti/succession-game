@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const {
     sessionId,
     playerName,
-    playerEmail,
+    playerPhone,
     playerCompany,
     startedAt,
     finalPickId,
@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     placements,
   } = req.body
 
-  if (!sessionId || !playerEmail || !finalPickId) {
+  if (!sessionId || !playerPhone || !finalPickId) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .insert({
       session_id:     sessionId,
       player_name:    playerName,
-      player_email:   playerEmail,
+      player_phone:   playerPhone,
       player_company: playerCompany,
       started_at:     new Date(startedAt).toISOString(),
       final_pick_id:  finalPickId,

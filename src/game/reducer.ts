@@ -10,7 +10,7 @@ export const initialState: GameState = {
   phase: { name: 'intro' },
   sessionId: makeSessionId(),
   playerName: '',
-  playerEmail: '',
+  playerPhone: '',
   playerCompany: '',
   finalPickId: null,
   score: null,
@@ -31,7 +31,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         playerName: action.name,
-        playerEmail: action.email,
+        playerPhone: action.phone,
         playerCompany: action.company,
         phase: p.name === 'leadCapture' ? { name: 'exploring' } : state.phase,
         startedAt: p.name === 'leadCapture' ? Date.now() : state.startedAt,
@@ -64,7 +64,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         playerName: action.name,
-        playerEmail: action.email,
+        playerPhone: action.phone,
         playerCompany: action.company,
         score: action.score,
         phase: action.score ? { name: 'result' } : { name: 'kelolaReveal' },

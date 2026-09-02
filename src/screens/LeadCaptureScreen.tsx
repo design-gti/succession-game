@@ -7,17 +7,18 @@ export function LeadCaptureScreen() {
   const { actions } = useGame()
   const [name, setName] = useState('')
   const [company, setCompany] = useState('')
-  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleStart() {
-    if (!name.trim() || !email.trim()) {
-      setError('Nama dan email harus diisi.')
+    if (!name.trim() || !phone.trim()) {
+      setError('Nama dan nomor HP harus diisi.')
       return
     }
-    if (!email.includes('@')) {
-      setError('Format email tidak valid.')
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length < 9 || digits.length > 15) {
+      setError('Nomor HP tidak valid.')
       return
     }
 
@@ -26,12 +27,12 @@ export function LeadCaptureScreen() {
       const res = await fetch('/api/check-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ phone: phone.trim() }),
       })
       if (res.ok) {
         const data = await res.json()
         if (data.exists) {
-          actions.skipToReveal(name.trim(), email.trim(), company.trim(), data.score ?? null)
+          actions.skipToReveal(name.trim(), phone.trim(), company.trim(), data.score ?? null)
           return
         }
       }
@@ -41,13 +42,14 @@ export function LeadCaptureScreen() {
       setLoading(false)
     }
 
-    actions.submitLeadInfo(name.trim(), email.trim(), company.trim())
+    actions.submitLeadInfo(name.trim(), phone.trim(), company.trim())
   }
 
   const inputCls = (val: string, required = true) =>
     `w-full px-4 py-3 rounded-xl border text-[#0f172a] text-sm placeholder:text-slate-400
      outline-none focus:border-brand transition-colors bg-white
      ${required && !val.trim() && error ? 'border-red-400' : 'border-slate-200'}`
+
 
   return (
     <div className="flex flex-col h-full px-6 py-8 bg-white">
@@ -105,15 +107,16 @@ export function LeadCaptureScreen() {
 
           <div className="flex flex-col gap-1">
             <label className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">
-              Email <span className="text-red-400">*</span>
+              No. HP <span className="text-red-400">*</span>
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setError('') }}
-              placeholder="nama@email.com"
-              className={inputCls(email)}
-              autoComplete="email"
+              type="tel"
+              value={phone}
+              onChange={e => { setPhone(e.target.value); setError('') }}
+              placeholder="08xx xxxx xxxx"
+              className={inputCls(phone)}
+              autoComplete="tel"
+              inputMode="numeric"
             />
           </div>
 

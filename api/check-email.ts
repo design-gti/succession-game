@@ -11,13 +11,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { email } = req.body
-  if (!email) return res.status(400).json({ error: 'Missing email' })
+  const { phone } = req.body
+  if (!phone) return res.status(400).json({ error: 'Missing phone' })
 
   const { data: session, error: sessionError } = await supabase
     .from('sessions')
     .select('session_id, player_name')
-    .eq('player_email', email.toLowerCase().trim())
+    .eq('player_phone', phone.trim())
     .limit(1)
     .maybeSingle()
 

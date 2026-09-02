@@ -7,8 +7,8 @@ interface GameContextValue {
   state: GameState
   actions: {
     startGame: () => void
-    submitLeadInfo: (name: string, email: string, company: string) => void
-    skipToReveal: (name: string, email: string, company: string, score: import('./types').ScoreBreakdown | null) => void
+    submitLeadInfo: (name: string, phone: string, company: string) => void
+    skipToReveal: (name: string, phone: string, company: string, score: import('./types').ScoreBreakdown | null) => void
     confirmExplore: (finalPickId: CandidateId, overallFit: number, timeFill: TimeFillData) => void
     showKelolaReveal: () => void
     finish: () => void
@@ -56,16 +56,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         })
       }
 
-      if (currPhase === 'finished' && state.score && state.playerEmail) {
+      if (currPhase === 'finished' && state.score && state.playerPhone) {
         submitLead({
           session_id: sid,
           name: state.playerName,
           company: state.playerCompany,
-          email: state.playerEmail,
+          phone: state.playerPhone,
           score: state.score.total,
           persona: state.score.persona,
         })
-        logEvent('lead_submitted', sid, { email_domain: state.playerEmail.split('@')[1] })
+        logEvent('lead_submitted', sid, { phone: state.playerPhone })
       }
     }
 
@@ -79,11 +79,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const actions: GameContextValue['actions'] = {
     startGame: () => dispatch({ type: 'START_GAME' }),
 
-    skipToReveal: (name: string, email: string, company: string, score) => {
-      dispatch({ type: 'SKIP_TO_REVEAL', name, email, company, score })
+    skipToReveal: (name: string, phone: string, company: string, score) => {
+      dispatch({ type: 'SKIP_TO_REVEAL', name, phone, company, score })
     },
-    submitLeadInfo: (name: string, email: string, company: string) => {
-      dispatch({ type: 'SUBMIT_LEAD_INFO', name, email, company })
+    submitLeadInfo: (name: string, phone: string, company: string) => {
+      dispatch({ type: 'SUBMIT_LEAD_INFO', name, phone, company })
     },
 
     confirmExplore: (finalPickId: CandidateId, overallFit: number, timeFill: TimeFillData) => {

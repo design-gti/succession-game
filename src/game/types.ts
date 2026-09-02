@@ -43,7 +43,7 @@ export interface GameState {
   phase: Phase
   sessionId: string
   playerName: string
-  playerEmail: string
+  playerPhone: string
   playerCompany: string
   finalPickId: CandidateId | null
   score: ScoreBreakdown | null
@@ -55,7 +55,7 @@ export type GameAction =
   | { type: 'START_GAME' }
   | { type: 'CONFIRM_EXPLORE'; finalPickId: CandidateId; overallFit: number; timeFill: TimeFillData }
   | { type: 'SHOW_KELOLA_REVEAL' }
-  | { type: 'SUBMIT_LEAD_INFO'; name: string; email: string; company: string }
+  | { type: 'SUBMIT_LEAD_INFO'; name: string; phone: string; company: string }
   | { type: 'FINISH' }
   | { type: 'RESTART' }
-  | { type: 'SKIP_TO_REVEAL'; name: string; email: string; company: string; score: ScoreBreakdown | null }
+  | { type: 'SKIP_TO_REVEAL'; name: string; phone: string; company: string; score: ScoreBreakdown | null }
