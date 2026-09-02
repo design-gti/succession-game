@@ -30,7 +30,7 @@ export interface ScoreBreakdown {
   hiringSpeed: number
   total: number        // Talent Decision Score = 70% orgFit + 30% hiringSpeed
   persona: Persona
-  timeFill: TimeFillData
+  timeFill?: TimeFillData
 }
 
 export type Persona =

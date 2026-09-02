@@ -229,6 +229,7 @@ export function ResultScreen() {
     hasSentRef.current = true
 
     const ttf = score.timeFill
+    if (!ttf) return  // skip save for replayed sessions (email dedup)
     fetch('/api/save-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -263,7 +264,7 @@ export function ResultScreen() {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  const ttf = score.timeFill
+  const ttf = score.timeFill ?? null
   const bestFit = finalPick?.roleFit ?? score.overallFit
 
   const showStats = ['stats','achievement','cards','cta'].includes(phase)
