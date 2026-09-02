@@ -31,7 +31,7 @@ export function LeadCaptureScreen() {
       if (res.ok) {
         const data = await res.json()
         if (data.exists) {
-          actions.skipToReveal(name.trim(), email.trim(), company.trim())
+          actions.skipToReveal(name.trim(), email.trim(), company.trim(), data.score ?? null)
           return
         }
       }

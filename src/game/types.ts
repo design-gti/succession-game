@@ -58,4 +58,4 @@ export type GameAction =
   | { type: 'SUBMIT_LEAD_INFO'; name: string; email: string; company: string }
   | { type: 'FINISH' }
   | { type: 'RESTART' }
-  | { type: 'SKIP_TO_REVEAL'; name: string; email: string; company: string }
+  | { type: 'SKIP_TO_REVEAL'; name: string; email: string; company: string; score: ScoreBreakdown | null }

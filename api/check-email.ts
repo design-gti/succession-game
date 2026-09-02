@@ -14,17 +14,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { email } = req.body
   if (!email) return res.status(400).json({ error: 'Missing email' })
 
-  const { data, error } = await supabase
+  const { data: session, error: sessionError } = await supabase
     .from('sessions')
     .select('session_id, player_name')
     .eq('player_email', email.toLowerCase().trim())
     .limit(1)
     .maybeSingle()
 
-  if (error) {
-    console.error('check-email error:', error)
-    return res.status(500).json({ error: error.message })
+  if (sessionError) {
+    console.error('check-email error:', sessionError)
+    return res.status(500).json({ error: sessionError.message })
   }
 
-  return res.status(200).json({ exists: !!data, playerName: data?.player_name ?? null })
+  if (!session) {
+    return res.status(200).json({ exists: false })
+  }
+
+  const { data: score, error: scoreError } = await supabase
+    .from('scores')
+    .select('overall_fit, hiring_speed, total, persona')
+    .eq('session_id', session.session_id)
+    .limit(1)
+    .maybeSingle()
+
+  if (scoreError) {
+    console.error('check-email score error:', scoreError)
+  }
+
+  return res.status(200).json({
+    exists: true,
+    playerName: session.player_name,
+    score: score ? {
+      overallFit: score.overall_fit,
+      hiringSpeed: score.hiring_speed,
+      total: score.total,
+      persona: score.persona,
+    } : null,
+  })
 }

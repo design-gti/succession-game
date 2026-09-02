@@ -66,7 +66,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         playerName: action.name,
         playerEmail: action.email,
         playerCompany: action.company,
-        phase: { name: 'kelolaReveal' },
+        score: action.score,
+        phase: action.score ? { name: 'result' } : { name: 'kelolaReveal' },
       }
     }
 
