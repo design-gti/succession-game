@@ -59,6 +59,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, phase: { name: 'finished' } }
     }
 
+    case 'SKIP_TO_REVEAL': {
+      if (p.name !== 'leadCapture') return state
+      return {
+        ...state,
+        playerName: action.name,
+        playerEmail: action.email,
+        playerCompany: action.company,
+        phase: { name: 'kelolaReveal' },
+      }
+    }
+
     case 'RESTART': {
       return { ...initialState, sessionId: makeSessionId(), nameMap: generateNameMap() }
     }

@@ -8,6 +8,7 @@ interface GameContextValue {
   actions: {
     startGame: () => void
     submitLeadInfo: (name: string, email: string, company: string) => void
+    skipToReveal: (name: string, email: string, company: string) => void
     confirmExplore: (finalPickId: CandidateId, overallFit: number, timeFill: TimeFillData) => void
     showKelolaReveal: () => void
     finish: () => void
@@ -78,6 +79,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const actions: GameContextValue['actions'] = {
     startGame: () => dispatch({ type: 'START_GAME' }),
 
+    skipToReveal: (name: string, email: string, company: string) => {
+      dispatch({ type: 'SKIP_TO_REVEAL', name, email, company })
+    },
     submitLeadInfo: (name: string, email: string, company: string) => {
       dispatch({ type: 'SUBMIT_LEAD_INFO', name, email, company })
     },

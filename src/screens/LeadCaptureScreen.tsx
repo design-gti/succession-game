@@ -9,8 +9,9 @@ export function LeadCaptureScreen() {
   const [company, setCompany] = useState('')
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleStart() {
+  async function handleStart() {
     if (!name.trim() || !email.trim()) {
       setError('Nama dan email harus diisi.')
       return
@@ -19,6 +20,27 @@ export function LeadCaptureScreen() {
       setError('Format email tidak valid.')
       return
     }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.exists) {
+          actions.skipToReveal(name.trim(), email.trim(), company.trim())
+          return
+        }
+      }
+    } catch {
+      // Network/API unavailable — proceed normally
+    } finally {
+      setLoading(false)
+    }
+
     actions.submitLeadInfo(name.trim(), email.trim(), company.trim())
   }
 
@@ -107,8 +129,8 @@ export function LeadCaptureScreen() {
 
           <div className="flex-1" />
 
-          <PrimaryButton onClick={handleStart}>
-            Mulai Game →
+          <PrimaryButton onClick={handleStart} disabled={loading}>
+            {loading ? 'Mengecek…' : 'Mulai Game →'}
           </PrimaryButton>
         </div>
       </motion.div>
