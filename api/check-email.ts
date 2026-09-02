@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { normalizePhone } from './_phone'
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -17,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { data: session, error: sessionError } = await supabase
     .from('sessions')
     .select('session_id, player_name')
-    .eq('player_phone', phone.trim())
+    .eq('player_phone', normalizePhone(phone))
     .limit(1)
     .maybeSingle()
 

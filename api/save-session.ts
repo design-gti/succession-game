@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { normalizePhone } from './_phone'
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -37,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .insert({
       session_id:     sessionId,
       player_name:    playerName,
-      player_phone:   playerPhone,
+      player_phone:   normalizePhone(playerPhone),
       player_company: playerCompany,
       started_at:     new Date(startedAt).toISOString(),
       final_pick_id:  finalPickId,
