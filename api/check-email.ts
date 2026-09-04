@@ -1,6 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { normalizePhone } from './_phone'
+
+function normalizePhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '')
+  if (digits.startsWith('0')) return '+62' + digits.slice(1)
+  if (digits.startsWith('62')) return '+' + digits
+  if (digits.startsWith('8')) return '+62' + digits
+  return '+' + digits
+}
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
