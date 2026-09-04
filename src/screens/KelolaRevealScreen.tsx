@@ -105,7 +105,7 @@ const REVEALS = [
     inGame: 'Org chart dengan posisi kosong',
     module: 'Visibility Map',
     inKelola: 'Struktur organisasi nyata Anda dengan peta risiko suksesi. Posisi rentan terdeteksi secara otomatis.',
-    mockup: <MiniVisibilityMap />,
+    mockup: <video src="/visibility-map.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" />,
   },
   {
     inGame: 'Perbandingan kandidat berdasarkan skor',
