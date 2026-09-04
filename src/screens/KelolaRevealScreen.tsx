@@ -111,13 +111,13 @@ const REVEALS = [
     inGame: 'Perbandingan kandidat berdasarkan skor',
     module: 'Talent Decision Platform',
     inKelola: 'Bandingkan kandidat secara berdampingan menggunakan data asesmen nyata. Bandingkan dulu, baru putuskan.',
-    mockup: <MiniTDP />,
+    mockup: <video src="/tdp.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" />,
   },
   {
     inGame: '3 aspek di setiap kartu kandidat',
     module: 'iProfile',
     inKelola: 'Laporan asesmen lengkap yang bisa dibaca dalam sekali pandang.',
-    mockup: <img src="/iprofile.gif" alt="iProfile" className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" />,
+    mockup: <video src="/iprofile.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" />,
   },
 ]
 
