@@ -352,31 +352,22 @@ export function KelolaRevealScreen() {
             className="w-full"
           >
             <p className="text-slate-400 text-[9px] text-center mb-2">Tidak sempat ngobrol sekarang? Hubungi kami:</p>
-            <div className="flex gap-2">
-              <div className="flex-1 flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3 py-2">
-                <div className="w-6 h-6 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1D6FF2" strokeWidth="2" strokeLinecap="round">
-                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.0 2.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/>
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-slate-400 text-[8px] uppercase tracking-wide">WhatsApp</p>
-                  <p className="text-[#0f172a] text-[10px] font-semibold truncate">+62 XXX-XXXX-XXXX</p>
-                </div>
+            <a
+              href="https://wa.me/628173111131"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3 py-2 w-full"
+            >
+              <div className="w-6 h-6 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1D6FF2" strokeWidth="2" strokeLinecap="round">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.0 2.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/>
+                </svg>
               </div>
-              <div className="flex-1 flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3 py-2">
-                <div className="w-6 h-6 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1D6FF2" strokeWidth="2" strokeLinecap="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-slate-400 text-[8px] uppercase tracking-wide">Email</p>
-                  <p className="text-[#0f172a] text-[10px] font-semibold truncate">hello@talentlytica.com</p>
-                </div>
+              <div className="min-w-0">
+                <p className="text-slate-400 text-[8px] uppercase tracking-wide">WhatsApp</p>
+                <p className="text-[#0f172a] text-[10px] font-semibold truncate">+62 817-311-131</p>
               </div>
-            </div>
+            </a>
           </motion.div>
 
           {/* CTA */}
