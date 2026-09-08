@@ -47,9 +47,23 @@ function GameRouter() {
   )
 }
 
+function LandscapeGate() {
+  return (
+    <div id="portrait-gate">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" />
+        <circle cx="12" cy="17" r="1" fill="#94a3b8" stroke="none" />
+      </svg>
+      <p style={{ fontWeight: 700, fontSize: 16, margin: 0 }}>Putar HP ke portrait</p>
+      <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>Game ini didesain untuk mode vertikal</p>
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <div className="h-full bg-[#f4f7fb] text-[#0f172a] relative overflow-hidden">
+      <LandscapeGate />
       <GameProvider>
         <GameRouter />
       </GameProvider>

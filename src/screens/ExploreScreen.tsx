@@ -658,6 +658,7 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
       className={`relative cursor-grab active:cursor-grabbing select-none ${isDragging ? 'bubble-dragging' : 'animate-bubble-reform'}`}
       style={{ touchAction: 'none', zIndex: isDragging ? 999 : 'auto' }}
       drag
+      dragSnapToOrigin
       dragMomentum={false}
       dragElastic={0.3}
       onTap={() => onSelect?.()}
@@ -683,7 +684,7 @@ function PlacedSlot({ id, posId, onMove, onUnplace, onDragMove, onDragStart, onD
         const dist = Math.abs(info.offset.x) + Math.abs(info.offset.y)
         if (dist <= 20) return
         if (pt && onMove(pt)) { setRemoved(true); return }
-        setRemoved(true); onUnplace()
+        // missed drop — snap back, nobody disappears
       }}
     >
       {showPop && (
@@ -2385,11 +2386,11 @@ export function ExploreScreen() {
       applyConfirmedDrop(candidateId, activeVacancyId, null, assignments, vacancyQueue.slice(1))
       return true
     }
-    // When allFilled: drag onto another slot = swap
+    // When allFilled: drag onto another slot = swap (internal-to-internal only)
     if (allFilled) {
       const fromPosId = candidateId as unknown as PositionId
       const targetPosId = getPosIdAtPoint(point)
-      if (targetPosId && targetPosId !== fromPosId && assignments[targetPosId]) {
+      if (targetPosId && targetPosId !== fromPosId && assignments[fromPosId] === candidateId && assignments[targetPosId]) {
         handleSwapPositions(fromPosId, targetPosId)
         return true
       }
