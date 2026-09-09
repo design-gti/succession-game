@@ -57,7 +57,7 @@ export type GameAction =
   | { type: 'CONFIRM_EXPLORE'; finalPickId: CandidateId; overallFit: number; timeFill: TimeFillData }
   | { type: 'SHOW_KELOLA_REVEAL' }
   | { type: 'SUBMIT_LEAD_INFO'; name: string; phone: string; company: string }
+  | { type: 'SHOW_LEADERBOARD' }
   | { type: 'FINISH' }
-  | { type: 'SHOW_FINISHED' }
   | { type: 'RESTART' }
   | { type: 'SKIP_TO_REVEAL'; name: string; phone: string; company: string; score: ScoreBreakdown | null }

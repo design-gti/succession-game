@@ -49,18 +49,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
 
-    case 'SHOW_KELOLA_REVEAL': {
+    case 'SHOW_LEADERBOARD': {
       if (p.name !== 'result') return state
+      return { ...state, phase: { name: 'leaderboard' } }
+    }
+
+    case 'SHOW_KELOLA_REVEAL': {
+      if (p.name !== 'leaderboard') return state
       return { ...state, phase: { name: 'kelolaReveal' } }
     }
 
     case 'FINISH': {
       if (p.name !== 'kelolaReveal') return state
-      return { ...state, phase: { name: 'leaderboard' } }
-    }
-
-    case 'SHOW_FINISHED': {
-      if (p.name !== 'leaderboard') return state
       return { ...state, phase: { name: 'finished' } }
     }
 

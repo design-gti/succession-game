@@ -586,7 +586,7 @@ export function ResultScreen() {
               </div>
 
               <button
-                onClick={() => actions.showKelolaReveal()}
+                onClick={() => actions.showLeaderboard()}
                 style={{
                   width: '100%', padding: '15px 24px', borderRadius: 16,
                   background: `linear-gradient(135deg, #1D6FF2 0%, #6366f1 100%)`,

@@ -245,8 +245,8 @@ export function LeaderboardScreen() {
         transition={{ delay: 0.4 }}
         style={{ padding: '12px 20px 24px' }}
       >
-        <PrimaryButton onClick={() => actions.showFinished()}>
-          Selesai →
+        <PrimaryButton onClick={() => actions.showKelolaReveal()}>
+          Lihat Plot Twist →
         </PrimaryButton>
       </motion.div>
     </div>
