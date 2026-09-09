@@ -5,7 +5,6 @@ import { LeadCaptureScreen } from './screens/LeadCaptureScreen'
 import { ExploreScreen } from './screens/ExploreScreen'
 import { ResultScreen } from './screens/ResultScreen'
 import { KelolaRevealScreen } from './screens/KelolaRevealScreen'
-import { LeaderboardScreen } from './screens/LeaderboardScreen'
 
 function FinishedScreen() {
   return (
@@ -37,7 +36,6 @@ function GameRouter() {
     if (phase === 'exploring') return <ExploreScreen />
     if (phase === 'result') return <ResultScreen />
     if (phase === 'kelolaReveal') return <KelolaRevealScreen />
-    if (phase === 'leaderboard') return <LeaderboardScreen />
     if (phase === 'finished') return <FinishedScreen />
     return null
   }

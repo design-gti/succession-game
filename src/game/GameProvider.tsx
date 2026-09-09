@@ -10,7 +10,6 @@ interface GameContextValue {
     submitLeadInfo: (name: string, phone: string, company: string) => void
     skipToReveal: (name: string, phone: string, company: string, score: import('./types').ScoreBreakdown | null) => void
     confirmExplore: (finalPickId: CandidateId, overallFit: number, timeFill: TimeFillData) => void
-    showLeaderboard: () => void
     showKelolaReveal: () => void
     finish: () => void
     restart: () => void
@@ -91,8 +90,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'CONFIRM_EXPLORE', finalPickId, overallFit, timeFill })
       logEvent('explore_confirmed', state.sessionId, { finalPickId, overallFit, avgTTF: timeFill.avgTTF })
     },
-
-    showLeaderboard: () => dispatch({ type: 'SHOW_LEADERBOARD' }),
 
     showKelolaReveal: () => {
       dispatch({ type: 'SHOW_KELOLA_REVEAL' })

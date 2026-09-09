@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { fetchLeaderboard, type LeaderboardRow } from '../lib/api'
+import type { Persona } from '../game/types'
 
 // ─── Mini-mockups ─────────────────────────────────────────────────────────────
 
@@ -121,7 +123,174 @@ const REVEALS = [
   },
 ]
 
-const N_BEATS = 4
+const N_BEATS = 5
+
+const PERSONA_COLOR: Record<Persona, string> = {
+  'TALENT STRATEGIST': '#1D6FF2',
+  'QUALITY ARCHITECT': '#16a34a',
+  'RAPID RECRUITER':   '#d97706',
+  'TALENT EXPLORER':   '#6366f1',
+}
+
+const MEDALS = ['🥇', '🥈', '🥉']
+
+function LeaderboardBeat() {
+  const { state } = useGame()
+  const [rows, setRows] = useState<LeaderboardRow[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [retrying, setRetrying] = useState(false)
+
+  const playerName  = state.playerName
+  const playerScore = state.score?.total ?? 0
+  const playerPersona = state.score?.persona
+
+  const load = async () => {
+    setLoading(true)
+    const data = await fetchLeaderboard()
+    setRows(data)
+    setLoading(false)
+    setRetrying(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  const playerRankInBoard = rows?.findIndex(
+    r => r.player_name === playerName && r.score === playerScore,
+  ) ?? -1
+
+  const isMe = (r: LeaderboardRow, i: number) =>
+    r.player_name === playerName && r.score === playerScore && i === playerRankInBoard
+
+  return (
+    <div className="flex flex-col w-full max-w-sm" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
+      {/* Header */}
+      <div className="flex flex-col items-center gap-1 mb-3">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 21h8M12 17v4M6 3H4a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h.5M18 3h2a2 2 0 0 1 2 2v1a4 4 0 0 0-4 4h-.5" />
+          <path d="M6 3h12v8a6 6 0 0 1-12 0V3z" />
+        </svg>
+        <p className="text-brand text-[9px] font-bold uppercase tracking-[0.2em]">Hari Ini</p>
+        <h2 className="text-xl font-black text-[#0f172a] tracking-tight">Top Talent Deciders</h2>
+      </div>
+
+      {/* My score chip */}
+      {playerPersona && (
+        <div style={{
+          borderRadius: 12,
+          background: `${PERSONA_COLOR[playerPersona]}12`,
+          border: `1.5px solid ${PERSONA_COLOR[playerPersona]}30`,
+          padding: '8px 12px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: 10,
+        }}>
+          <div>
+            <p style={{ fontSize: 8, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#94a3b8', margin: 0 }}>Skor kamu</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', margin: '1px 0 0' }}>{playerName || 'Kamu'}</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+            <span style={{ fontSize: 28, fontWeight: 900, color: PERSONA_COLOR[playerPersona], lineHeight: 1 }}>{playerScore}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: PERSONA_COLOR[playerPersona] }}>%</span>
+          </div>
+        </div>
+      )}
+
+      {/* List */}
+      <AnimatePresence mode="wait">
+        {loading ? (
+          <motion.div key="ld-loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+            <p style={{ fontSize: 12, color: '#94a3b8' }}>Memuat leaderboard…</p>
+          </motion.div>
+        ) : rows === null ? (
+          <motion.div key="ld-offline" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <p style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>Leaderboard tidak bisa dimuat.</p>
+            <button
+              onClick={() => { setRetrying(true); load() }}
+              disabled={retrying}
+              style={{
+                fontSize: 11, fontWeight: 700, color: '#1D6FF2',
+                background: 'none', border: '1px solid #1D6FF2', borderRadius: 8,
+                padding: '5px 12px', cursor: retrying ? 'not-allowed' : 'pointer',
+                opacity: retrying ? 0.5 : 1,
+              }}
+            >
+              {retrying ? 'Mencoba…' : 'Coba lagi'}
+            </button>
+          </motion.div>
+        ) : (
+          <motion.div key="ld-list" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {rows.map((row, i) => {
+              const mine = isMe(row, i)
+              return (
+                <motion.div
+                  key={row.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04, duration: 0.25 }}
+                  style={{
+                    borderRadius: 12,
+                    background: mine ? 'linear-gradient(135deg,#eff6ff,#dbeafe)' : 'white',
+                    border: mine ? '1.5px solid #93c5fd' : '1.5px solid #e2e8f0',
+                    padding: '9px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                  }}
+                >
+                  <div style={{ width: 24, textAlign: 'center', flexShrink: 0 }}>
+                    {i < 3
+                      ? <span style={{ fontSize: 16 }}>{MEDALS[i]}</span>
+                      : <span style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8' }}>{i + 1}</span>
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: 12, fontWeight: mine ? 900 : 700,
+                      color: mine ? '#1D6FF2' : '#0f172a',
+                      margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {row.player_name}
+                      {mine && <span style={{ fontSize: 9, fontWeight: 700, color: '#60a5fa', marginLeft: 5 }}>(Kamu)</span>}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 1, flexShrink: 0 }}>
+                    <span style={{ fontSize: 20, fontWeight: 900, lineHeight: 1, color: mine ? '#1D6FF2' : '#475569' }}>{row.score}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: mine ? '#3b82f6' : '#94a3b8' }}>%</span>
+                  </div>
+                </motion.div>
+              )
+            })}
+
+            {playerRankInBoard === -1 && rows.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
+                style={{
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg,#eff6ff,#dbeafe)',
+                  border: '1.5px dashed #93c5fd',
+                  padding: '9px 12px',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}
+              >
+                <div style={{ width: 24, textAlign: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8' }}>…</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, fontWeight: 900, color: '#1D6FF2', margin: 0 }}>
+                    {playerName || 'Kamu'} <span style={{ fontSize: 9, fontWeight: 700, color: '#60a5fa' }}>(Kamu)</span>
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 1, flexShrink: 0 }}>
+                  <span style={{ fontSize: 20, fontWeight: 900, lineHeight: 1, color: '#1D6FF2' }}>{playerScore}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#3b82f6' }}>%</span>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
 
 function KelolaBeat({ beat }: { beat: number }) {
   if (beat === 0) {
@@ -144,6 +313,10 @@ function KelolaBeat({ beat }: { beat: number }) {
         </p>
       </div>
     )
+  }
+
+  if (beat === 4) {
+    return <LeaderboardBeat />
   }
 
   if (beat >= 1 && beat <= 3) {
@@ -353,7 +526,7 @@ export function KelolaRevealScreen() {
           >
             <p className="text-slate-400 text-[9px] text-center mb-2">Tidak sempat ngobrol sekarang? Hubungi kami:</p>
             <a
-              href="https://wa.me/628173111131"
+              href="https://wa.link/c5ulne"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3 py-2 w-full"
@@ -365,7 +538,7 @@ export function KelolaRevealScreen() {
               </div>
               <div className="min-w-0">
                 <p className="text-slate-400 text-[8px] uppercase tracking-wide">WhatsApp</p>
-                <p className="text-[#0f172a] text-[10px] font-semibold truncate">+62 817-311-131</p>
+                <p className="text-[#0f172a] text-[10px] font-semibold truncate">wa.link/c5ulne</p>
               </div>
             </a>
           </motion.div>
