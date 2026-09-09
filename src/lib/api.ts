@@ -105,6 +105,22 @@ export interface LeadRow {
   persona?: Persona
 }
 
+export async function checkNameAvailable(name: string): Promise<boolean> {
+  if (!supabase) return true
+  try {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const { count } = await supabase
+      .from('plays')
+      .select('*', { count: 'exact', head: true })
+      .eq('player_name', name)
+      .gte('created_at', today.toISOString())
+    return (count ?? 0) === 0
+  } catch {
+    return true
+  }
+}
+
 export async function submitLead(lead: LeadRow): Promise<boolean> {
   if (!supabase) return false
   try {
