@@ -7,7 +7,6 @@ import { checkNameAvailable } from '../lib/api'
 export function LeadCaptureScreen() {
   const { actions } = useGame()
   const [name, setName] = useState('')
-  const [company, setCompany] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -35,7 +34,7 @@ export function LeadCaptureScreen() {
       setLoading(false)
     }
 
-    actions.submitLeadInfo(trimmedName, '', company.trim())
+    actions.submitLeadInfo(trimmedName, '', '')
   }
 
   const inputCls = (hasError: boolean) =>
@@ -81,21 +80,6 @@ export function LeadCaptureScreen() {
               className={inputCls(!name.trim() && !!error)}
               autoComplete="name"
               maxLength={30}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">
-              Perusahaan
-            </label>
-            <input
-              type="text"
-              value={company}
-              onChange={e => setCompany(e.target.value)}
-              placeholder="Perusahaan Anda bekerja (opsional)"
-              className={inputCls(false)}
-              autoComplete="organization"
-              maxLength={50}
             />
           </div>
 
