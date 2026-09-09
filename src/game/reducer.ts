@@ -56,6 +56,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'FINISH': {
       if (p.name !== 'kelolaReveal') return state
+      return { ...state, phase: { name: 'leaderboard' } }
+    }
+
+    case 'SHOW_FINISHED': {
+      if (p.name !== 'leaderboard') return state
       return { ...state, phase: { name: 'finished' } }
     }
 

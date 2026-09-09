@@ -12,6 +12,7 @@ interface GameContextValue {
     confirmExplore: (finalPickId: CandidateId, overallFit: number, timeFill: TimeFillData) => void
     showKelolaReveal: () => void
     finish: () => void
+    showFinished: () => void
     restart: () => void
   }
 }
@@ -97,6 +98,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     },
 
     finish: () => dispatch({ type: 'FINISH' }),
+
+    showFinished: () => dispatch({ type: 'SHOW_FINISHED' }),
 
     restart: () => {
       playSubmittedRef.current = false

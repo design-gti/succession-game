@@ -9,6 +9,7 @@ export type Phase =
   | { name: 'exploring' }
   | { name: 'result' }
   | { name: 'kelolaReveal' }
+  | { name: 'leaderboard' }
   | { name: 'finished' }
 
 export interface PlacementEntry {
@@ -57,5 +58,6 @@ export type GameAction =
   | { type: 'SHOW_KELOLA_REVEAL' }
   | { type: 'SUBMIT_LEAD_INFO'; name: string; phone: string; company: string }
   | { type: 'FINISH' }
+  | { type: 'SHOW_FINISHED' }
   | { type: 'RESTART' }
   | { type: 'SKIP_TO_REVEAL'; name: string; phone: string; company: string; score: ScoreBreakdown | null }
