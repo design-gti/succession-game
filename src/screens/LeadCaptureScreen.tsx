@@ -121,7 +121,7 @@ export function LeadCaptureScreen() {
               type="text"
               value={company}
               onChange={e => setCompany(e.target.value)}
-              placeholder="Perusahaan Anda bekerja"
+              placeholder="Perusahaan Anda bekerja (opsional)"
               className={inputCls(company, false)}
               autoComplete="organization"
             />
