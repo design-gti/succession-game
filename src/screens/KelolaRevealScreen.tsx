@@ -4,6 +4,7 @@ import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { fetchLeaderboard, type LeaderboardRow } from '../lib/api'
 import type { Persona } from '../game/types'
+import { isKiosk } from '../lib/kiosk'
 
 // ─── Mini-mockups ─────────────────────────────────────────────────────────────
 
@@ -162,7 +163,7 @@ function LeaderboardBeat() {
     r.player_name === playerName && r.score === playerScore && i === playerRankInBoard
 
   return (
-    <div className="flex flex-col w-full max-w-sm" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
+    <div className="flex flex-col w-full max-w-sm" style={{ maxHeight: isKiosk ? '540px' : '72vh', overflowY: 'auto' }}>
       {/* Header */}
       <div className="flex flex-col items-center gap-1 mb-3">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -398,7 +399,7 @@ export function KelolaRevealScreen() {
         }}
       >
 
-        <div className="flex flex-col items-center px-6 pt-6 pb-8 gap-5 max-w-sm mx-auto w-full">
+        <div className={`flex flex-col items-center px-6 max-w-sm mx-auto w-full ${isKiosk ? 'pt-3 pb-4 gap-3' : 'pt-6 pb-8 gap-5'}`}>
 
           {/* Back */}
           <div className="w-full">

@@ -4,6 +4,7 @@ import { useGame } from '../game/GameProvider'
 import { Avatar } from '../components/Avatar'
 import { getCandidateById } from '../data/scenario'
 import type { Persona } from '../game/types'
+import { isKiosk } from '../lib/kiosk'
 
 // ── Inline SVG icons ────────────────────────────────────────────────────────
 function IconTarget({ size = 20, color = 'currentColor' }: { size?: number; color?: string }) {
@@ -316,7 +317,7 @@ export function ResultScreen() {
         background: `radial-gradient(circle, ${persona.color}22 0%, transparent 70%)`,
       }} />
 
-      <div className="relative z-10 flex flex-col items-center px-4 pb-8 gap-4 pt-6">
+      <div className={`relative z-10 flex flex-col items-center px-4 ${isKiosk ? 'pt-3 pb-4 gap-2' : 'pt-6 pb-8 gap-4'}`}>
 
         {/* ── 1. HERO SCORE ── */}
         <div className="flex flex-col items-center gap-1">
