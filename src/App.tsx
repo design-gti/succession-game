@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { GameProvider, useGame } from './game/GameProvider'
 import { IntroScreen } from './screens/IntroScreen'
@@ -5,6 +6,8 @@ import { LeadCaptureScreen } from './screens/LeadCaptureScreen'
 import { ExploreScreen } from './screens/ExploreScreen'
 import { ResultScreen } from './screens/ResultScreen'
 import { KelolaRevealScreen } from './screens/KelolaRevealScreen'
+import { AttractOverlay } from './components/AttractOverlay'
+import { useIdleTimer } from './hooks/useIdleTimer'
 
 function FinishedScreen() {
   return (
@@ -47,6 +50,29 @@ function GameRouter() {
   )
 }
 
+function KioskController({ isKiosk }: { isKiosk: boolean }) {
+  const { state, actions } = useGame()
+  const [showAttract, setShowAttract] = useState(false)
+  const isIntro = state.phase.name === 'intro'
+
+  // Intro → 60s idle, other phases → 90s idle then auto-reset
+  useIdleTimer(
+    useCallback(() => {
+      if (!isIntro) actions.restart()
+      setShowAttract(true)
+    }, [isIntro, actions]),
+    isIntro ? 60_000 : 90_000,
+    isKiosk,
+  )
+
+  return (
+    <AttractOverlay
+      visible={showAttract}
+      onDismiss={() => setShowAttract(false)}
+    />
+  )
+}
+
 function LandscapeGate() {
   return (
     <div id="portrait-gate">
@@ -60,12 +86,15 @@ function LandscapeGate() {
   )
 }
 
+const isKiosk = new URLSearchParams(window.location.search).get('kiosk') === '1'
+
 export default function App() {
   return (
     <div className="h-full bg-[#f4f7fb] text-[#0f172a] relative overflow-hidden">
       <LandscapeGate />
       <GameProvider>
         <GameRouter />
+        <KioskController isKiosk={isKiosk} />
       </GameProvider>
     </div>
   )
