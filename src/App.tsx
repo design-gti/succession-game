@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { GameProvider, useGame } from './game/GameProvider'
 import { IntroScreen } from './screens/IntroScreen'
@@ -7,6 +8,7 @@ import { ExploreScreen } from './screens/ExploreScreen'
 import { ResultScreen } from './screens/ResultScreen'
 import { KelolaRevealScreen } from './screens/KelolaRevealScreen'
 import { AttractOverlay } from './components/AttractOverlay'
+import { KioskScaler } from './components/KioskScaler'
 import { useIdleTimer } from './hooks/useIdleTimer'
 
 function FinishedScreen() {
@@ -55,7 +57,6 @@ function KioskController({ isKiosk }: { isKiosk: boolean }) {
   const [showAttract, setShowAttract] = useState(isKiosk)
   const isIntro = state.phase.name === 'intro'
 
-  // Intro → 60s idle, other phases → 90s idle then auto-reset
   useIdleTimer(
     useCallback(() => {
       if (!isIntro) actions.restart()
@@ -65,11 +66,12 @@ function KioskController({ isKiosk }: { isKiosk: boolean }) {
     isKiosk,
   )
 
-  return (
-    <AttractOverlay
-      visible={showAttract}
-      onDismiss={() => setShowAttract(false)}
-    />
+  if (!isKiosk) return null
+
+  // Portal: render outside any CSS transform context so position:fixed works at viewport level
+  return createPortal(
+    <AttractOverlay visible={showAttract} onDismiss={() => setShowAttract(false)} />,
+    document.body
   )
 }
 
@@ -89,13 +91,23 @@ function LandscapeGate() {
 const isKiosk = new URLSearchParams(window.location.search).get('kiosk') === '1'
 
 export default function App() {
-  return (
+  const gameCanvas = (
     <div className="h-full bg-[#f4f7fb] text-[#0f172a] relative overflow-hidden">
-      <LandscapeGate />
-      <GameProvider>
-        <GameRouter />
-        <KioskController isKiosk={isKiosk} />
-      </GameProvider>
+      <GameRouter />
     </div>
+  )
+
+  return (
+    <GameProvider>
+      {isKiosk ? (
+        <KioskScaler>{gameCanvas}</KioskScaler>
+      ) : (
+        <>
+          <LandscapeGate />
+          {gameCanvas}
+        </>
+      )}
+      <KioskController isKiosk={isKiosk} />
+    </GameProvider>
   )
 }
