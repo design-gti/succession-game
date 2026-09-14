@@ -10,6 +10,7 @@ import { KelolaRevealScreen } from './screens/KelolaRevealScreen'
 import { AttractOverlay } from './components/AttractOverlay'
 import { KioskScaler } from './components/KioskScaler'
 import { useIdleTimer } from './hooks/useIdleTimer'
+import { isKiosk } from './lib/kiosk'
 
 function FinishedScreen() {
   return (
@@ -87,8 +88,6 @@ function LandscapeGate() {
     </div>
   )
 }
-
-const isKiosk = new URLSearchParams(window.location.search).get('kiosk') === '1'
 
 export default function App() {
   const gameCanvas = (
