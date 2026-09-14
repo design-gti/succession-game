@@ -52,7 +52,7 @@ function GameRouter() {
 
 function KioskController({ isKiosk }: { isKiosk: boolean }) {
   const { state, actions } = useGame()
-  const [showAttract, setShowAttract] = useState(false)
+  const [showAttract, setShowAttract] = useState(isKiosk)
   const isIntro = state.phase.name === 'intro'
 
   // Intro → 60s idle, other phases → 90s idle then auto-reset
