@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, type CSSProperties } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../game/GameProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
@@ -103,24 +103,28 @@ function MiniIProfile() {
 
 // ─── Beat content ─────────────────────────────────────────────────────────────
 
+const VIDEO_KIOSK_STYLE: CSSProperties | undefined = isKiosk
+  ? { maxHeight: 220, objectFit: 'contain' as const }
+  : undefined
+
 const REVEALS = [
   {
     inGame: 'Org chart dengan posisi kosong',
     module: 'Visibility Map',
     inKelola: 'Struktur organisasi nyata Anda dengan peta risiko suksesi. Posisi rentan terdeteksi secara otomatis.',
-    mockup: <video src="/visibility-map.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" />,
+    mockup: <video src="/visibility-map.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" style={VIDEO_KIOSK_STYLE} />,
   },
   {
     inGame: 'Perbandingan kandidat berdasarkan skor',
     module: 'Talent Decision Platform',
     inKelola: 'Bandingkan kandidat secara berdampingan menggunakan data asesmen nyata. Bandingkan dulu, baru putuskan.',
-    mockup: <video src="/tdp.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" />,
+    mockup: <video src="/tdp.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" style={VIDEO_KIOSK_STYLE} />,
   },
   {
     inGame: '3 aspek di setiap kartu kandidat',
     module: 'iProfile',
     inKelola: 'Laporan asesmen lengkap yang bisa dibaca dalam sekali pandang.',
-    mockup: <video src="/iprofile.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" />,
+    mockup: <video src="/iprofile.mp4" autoPlay loop muted playsInline className="w-[340px] rounded-[10px] shadow-sm border border-slate-200" style={VIDEO_KIOSK_STYLE} />,
   },
 ]
 
